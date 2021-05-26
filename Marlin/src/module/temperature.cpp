@@ -48,6 +48,10 @@
   #include "../lcd/extui/ui_api.h"
 #endif
 
+#if ENABLED(DWIN_CREALITY_LCD)
+  #include "../lcd/dwin/creality_dwin.h"
+#endif
+
 #if ENABLED(HOST_PROMPT_SUPPORT)
   #include "../feature/host_actions.h"
 #endif
@@ -544,10 +548,13 @@ volatile bool Temperature::raw_temps_ready = false;
     TERN_(HAS_AUTO_FAN, next_auto_fan_check_ms = next_temp_ms + 2500UL);
 
     TERN_(EXTENSIBLE_UI, ExtUI::onPidTuning(ExtUI::result_t::PID_STARTED));
+    TERN_(DWIN_CREALITY_LCD, CrealityDWIN.onPidTuning(CrealityDWIN.result_t::PID_STARTED));
+
 
     if (target > GHV(CHAMBER_MAX_TARGET, BED_MAX_TARGET, temp_range[heater_id].maxtemp - (HOTEND_OVERSHOOT))) {
       SERIAL_ECHOLNPGM(STR_PID_TEMP_TOO_HIGH);
       TERN_(EXTENSIBLE_UI, ExtUI::onPidTuning(ExtUI::result_t::PID_TEMP_TOO_HIGH));
+      TERN_(DWIN_CREALITY_LCD, CrealityDWIN.onPidTuning(CrealityDWIN.result_t::PID_TEMP_TOO_HIGH));
       return;
     }
 
@@ -641,6 +648,7 @@ volatile bool Temperature::raw_temps_ready = false;
       if (current_temp > target + MAX_OVERSHOOT_PID_AUTOTUNE) {
         SERIAL_ECHOLNPGM(STR_PID_TEMP_TOO_HIGH);
         TERN_(EXTENSIBLE_UI, ExtUI::onPidTuning(ExtUI::result_t::PID_TEMP_TOO_HIGH));
+        TERN_(DWIN_CREALITY_LCD, CrealityDWIN.onPidTuning(CrealityDWIN.result_t::PID_TEMP_TOO_HIGH));
         break;
       }
 
@@ -676,6 +684,7 @@ volatile bool Temperature::raw_temps_ready = false;
       #endif
       if ((ms - _MIN(t1, t2)) > (MAX_CYCLE_TIME_PID_AUTOTUNE * 60L * 1000L)) {
         TERN_(EXTENSIBLE_UI, ExtUI::onPidTuning(ExtUI::result_t::PID_TUNING_TIMEOUT));
+        TERN_(DWIN_CREALITY_LCD, CrealityDWIN.onPidTuning(CrealityDWIN.result_t::PID_TUNING_TIMEOUT));
         SERIAL_ECHOLNPGM(STR_PID_TIMEOUT);
         break;
       }
@@ -728,6 +737,8 @@ volatile bool Temperature::raw_temps_ready = false;
         TERN_(PRINTER_EVENT_LEDS, printerEventLEDs.onPidTuningDone(color));
 
         TERN_(EXTENSIBLE_UI, ExtUI::onPidTuning(ExtUI::result_t::PID_DONE));
+        TERN_(DWIN_CREALITY_LCD, CrealityDWIN.onPidTuning(CrealityDWIN.result_t::PID_DONE));
+        
 
         goto EXIT_M303;
       }
@@ -745,6 +756,7 @@ volatile bool Temperature::raw_temps_ready = false;
     TERN_(PRINTER_EVENT_LEDS, printerEventLEDs.onPidTuningDone(color));
 
     TERN_(EXTENSIBLE_UI, ExtUI::onPidTuning(ExtUI::result_t::PID_DONE));
+    TERN_(DWIN_CREALITY_LCD, CrealityDWIN.onPidTuning(CrealityDWIN.result_t::PID_DONE));
 
     EXIT_M303:
       TERN_(NO_FAN_SLOWING_IN_PID_TUNING, adaptive_fan_slowing = true);
