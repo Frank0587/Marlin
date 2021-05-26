@@ -31,19 +31,29 @@
 #include "../../libs/BL24CXX.h"
 #include "../../inc/MarlinConfigPre.h"
 
+
 enum processID : uint8_t {
   Main, Print, Menu, Value, Option, File, Popup, Confirm, Wait
 };
 
-enum popupID : uint8_t {
-  Pause, Stop, Resume, SaveLevel, ETemp, ConfFilChange, PurgeMore, Level, Home, MoveWait, Heating, Complete, FilLoad, FilChange, UI, TempWarn, Runout, PIDWait
+enum PopupID : uint8_t {
+  Pause, Stop, Resume, SaveLevel, ETemp, ConfFilChange, PurgeMore,
+  Level, Home, MoveWait, Heating,  FilLoad, FilChange, TempWarn, Runout, PIDHotend, PIDBed, Resuming,
+  FilInsert, HeaterTime, UserInput, LevelError, InvalidMesh, NocreatePlane, UI, Complete, BadextruderNumber,
+  TemptooHigh, PIDTimeout, PIDDone, QMovePosOK, Homingtodo, BaudrateSwitch 
 };
 
 enum menuID : uint8_t {
   MainMenu,
     Prepare,
       Move,
+      Quickmove,
+      Qmovesettings,
+      QmovesettingsA,
+      QmovesettingsB,
+      QmovesettingsC,
       HomeMenu,
+      Sethomeoffsets,
       ManualLevel,
       ZOffset,
       Preheat,
@@ -51,8 +61,8 @@ enum menuID : uint8_t {
     Control,
       TempMenu,
         PID,
-          HotendPID,
-          BedPID,
+        HOTENDPID,
+        BEDPID,
         Preheat1,
         Preheat2,
         Preheat3,
@@ -67,7 +77,8 @@ enum menuID : uint8_t {
       Visual,
         ColorSettings,
       Advanced,
-        ProbeMenu,
+        ProbeSensor,
+        ViewMesh,
       Info,
     Leveling,
       LevelManual,
@@ -87,6 +98,7 @@ enum menuID : uint8_t {
 #define Language_Chinese    2
 
 #define ICON                      0x09
+#define ICON_PACK                 0x03
 #define ICON_LOGO                  0
 #define ICON_Print_0               1
 #define ICON_Print_1               2
@@ -185,6 +197,7 @@ enum menuID : uint8_t {
 #define ICON_Info_1               91
 
 // Custom icons
+//#if ENABLED(CREALITY_DWIN_EXTUI_CUSTOM_ICONS)
 #if ENABLED(DWIN_CREALITY_LCD_CUSTOM_ICONS)
   // index of every custom icon should be >= CUSTOM_ICON_START
   #define CUSTOM_ICON_START         ICON_Checkbox_F 
@@ -194,17 +207,30 @@ enum menuID : uint8_t {
   #define ICON_Mesh                 203
   #define ICON_Tilt                 204
   #define ICON_Brightness           205
+  #define ICON_Backlight_Off        206
+  #define ICON_Probe                207
+  #define ICON_QMove                230
+  #define ICON_QMoveTo              231
+  #define ICON_SetQMove             232
+  #define ICON_QMoveOnlyXY          233
   #define ICON_AxisD                249
   #define ICON_AxisBR               250
   #define ICON_AxisTR               251
   #define ICON_AxisBL               252
   #define ICON_AxisTL               253
   #define ICON_AxisC                254
+  
 #else
   #define ICON_Fade                 ICON_Version
   #define ICON_Mesh                 ICON_Version
   #define ICON_Tilt                 ICON_Version
   #define ICON_Brightness           ICON_Version
+  #define ICON_Backlight_Off        ICON_Version
+  #define ICON_Probe                ICON_StockConfiguraton
+  #define ICON_QMove                ICON_MaxSpeed
+  #define ICON_QMoveTo              ICON_SetHome
+  #define ICON_SetQMove             ICON_Motion
+  #define ICON_QMoveOnlyXY          ICON_Zoffset
   #define ICON_AxisD                ICON_Axis
   #define ICON_AxisBR               ICON_Axis
   #define ICON_AxisTR               ICON_Axis
@@ -212,6 +238,8 @@ enum menuID : uint8_t {
   #define ICON_AxisTL               ICON_Axis
   #define ICON_AxisC                ICON_Axis
 #endif
+
+// Custom pack icons
 
 
 #define font6x12  0x00
@@ -226,16 +254,16 @@ enum menuID : uint8_t {
 #define font32x64 0x09
 
 enum colorID : uint8_t {
-  Default, White, Green, Cyan, Blue, Magenta, Red, Orange, Yellow, Brown, Black
+  Default, White, Light_White, Blue, Light_Blue, Yellow, Light_Yellow, Orange, Light_Orange, Red, Light_Red, Green, Light_Green, Magenta, Light_Magenta, Cyan, Light_Cyan, Brown, Light_Brown, Black, Grey
 };
 
-#define Custom_Colors       10
+#define Custom_Colors_no_Black       18
+#define Custom_Colors_no_Grey       19
+#define Custom_Colors       20
 #define Color_White         0xFFFF
 #define Color_Light_White   0xBDD7
 #define Color_Green         0x07E0
 #define Color_Light_Green   0x3460
-#define Color_Cyan          0x07FF
-#define Color_Light_Cyan    0x04F3
 #define Color_Blue          0x015F
 #define Color_Light_Blue    0x3A6A
 #define Color_Magenta       0xF81F
@@ -250,6 +278,8 @@ enum colorID : uint8_t {
 #define Color_Light_Brown   0x6204
 #define Color_Black         0x0000
 #define Color_Grey          0x18E3
+#define Color_Cyan          0x07FF
+#define Color_Light_Cyan    0x04F3
 #define Color_Bg_Window     0x31E8  // Popup background color
 #define Color_Bg_Blue       0x1125  // Dark blue background color
 #define Color_Bg_Black      0x0841  // Black background color
@@ -265,40 +295,71 @@ enum colorID : uint8_t {
 class CrealityDWINClass {
 
 public:
-  static constexpr size_t eeprom_data_size = 48;
+  static constexpr size_t eeprom_data_size = 64;
   struct EEPROM_Settings { // use bit fields to save space, max 48 bytes
     bool time_format_textual : 1;
-    bool beeperenable : 1;
     #if ENABLED(AUTO_BED_LEVELING_UBL)
       uint8_t tilt_grid_size : 3;
     #endif
-    uint8_t cursor_color : 4;
-    uint8_t menu_split_line : 4;
-    uint8_t menu_top_bg : 4;
-    uint8_t menu_top_txt : 4;
-    uint8_t highlight_box : 4;
-    uint8_t progress_percent : 4;
-    uint8_t progress_time : 4;
-    uint8_t status_bar_text : 4;
-    uint8_t status_area_text : 4;
-    uint8_t coordinates_text : 4;
-    uint8_t coordinates_split_line : 4;
+    uint8_t cursor_color : 5;
+    uint8_t menu_split_line : 5;
+    uint8_t items_menu_text : 5;
+    uint8_t icons_menu_text : 5;
+    uint8_t popup_highlight : 5;
+    uint8_t popup_text : 5;
+    uint8_t popup_bg : 5;
+    uint8_t menu_top_bg : 5;
+    uint8_t menu_top_txt : 5;
+    uint8_t highlight_box : 5;
+    uint8_t ico_confirm_txt : 5;
+    uint8_t ico_confirm_bg : 5;
+    uint8_t ico_cancel_txt : 5;
+    uint8_t ico_cancel_bg : 5;
+    uint8_t ico_continue_txt : 5;
+    uint8_t ico_continue_bg : 5;
+    uint8_t print_screen_txt : 5;
+    uint8_t print_filename : 5;
+    uint8_t progress_bar : 5;
+    uint8_t progress_percent : 5;
+    uint8_t remain_time : 5;
+    uint8_t elapsed_time : 5;
+    uint8_t status_bar_text : 5;
+    uint8_t status_area_text : 5;
+    uint8_t status_area_percent : 5;
+    uint8_t coordinates_text : 5;
+    uint8_t coordinates_split_line : 5;
+    bool beeper_status : 1;
+    bool customicons_status : 1;
+    bool setoffsets : 1;
+    bool LCDFlashed : 1;
+    bool only_xy_A : 1;
+    bool only_xy_B : 1;
+    bool only_xy_C : 1;
+    float PositionA_x, PositionA_y, PositionA_z;
+    float PositionB_x, PositionB_y, PositionB_z;
+    float PositionC_x, PositionC_y, PositionC_z;
+    uint8_t baudratemode : 1;
   } eeprom_settings;
 
-  char *color_names[11] = {(char*)"Default",(char*)"White",(char*)"Green",(char*)"Cyan",(char*)"Blue",(char*)"Magenta",(char*)"Red",(char*)"Orange",(char*)"Yellow",(char*)"Brown",(char*)"Black"};
+  const char * const color_names[21] = {"Default","White","L_White","Blue","L_Blue","Yellow","L_Yello","Orange","L_Orang","Red","L_Red","Green","L_Green","Magenta","L_Magen","Cyan","L_Cyan","Brown","L_Brown","Black","Grey"};
+  const char * const preheat_modes[3] = {"Both", "Hotend", "Bed"};
+  const char * const baudrate_modes[2] = {"250000", "115200"};
 
+  bool beeperenable = true;
+  bool customicons = false;
+  uint8_t BAUD_PORT = 0;
+  uint8_t brm = 0;
 
-  inline void Clear_Screen(uint8_t e=3);
-  inline void Draw_Float(float value, uint8_t row, bool selected=false, uint8_t minunit=10);
-  inline void Draw_Option(uint8_t value, char** options, uint8_t row, bool selected=false, bool color=false);
-  inline uint16_t GetColor(uint8_t color, uint16_t original, bool light=false);
-  inline void Draw_Checkbox(uint8_t row, bool value);
-  inline void Draw_Title(char* title);
-  inline void Draw_Menu_Item(uint8_t row, uint8_t icon=0, char * const label1=NULL, char * const label2=NULL, bool more=false, bool centered=false);
-  inline void Draw_Menu(uint8_t menu, uint8_t select=0, uint8_t scroll=0);
-  inline void Redraw_Menu(bool lastselection=false, bool lastmenu=false);
-  inline void Redraw_Screen();
-
+  void Clear_Screen(uint8_t e=3);
+  void Draw_Float(float value, uint8_t row, bool selected=false, uint8_t minunit=10);
+  void Draw_Option(uint8_t value, const char * const * options, uint8_t row, bool selected=false, bool color=false);
+  uint16_t GetColor(uint8_t color, uint16_t original, bool light=false);
+  void Draw_Checkbox(uint8_t row, bool value);
+  void Draw_Title(const char * title);
+  void Draw_Menu_Item(uint8_t row, uint8_t icon=0, bool pack=false, const char * const label1=NULL, const char * const label2=NULL, bool more=false, bool centered=false);
+  void Draw_Menu(uint8_t menu, uint8_t select=0, uint8_t scroll=0);
+  void Redraw_Menu(bool lastprocess=true, bool lastselection=false, bool lastmenu=false);
+  void Redraw_Screen();
 
   void Main_Menu_Icons();
   void Draw_Main_Menu(uint8_t select=0);
@@ -312,7 +373,7 @@ public:
   void Draw_SD_Item(uint8_t item, uint8_t row);
   void Draw_SD_List(bool removed=false);
   void Draw_Status_Area(bool icons=false);
-  void Draw_Popup(const char *line1, const char *line2, const char *line3, uint8_t mode, uint8_t icon=0);
+  void Draw_Popup(const char * line1, const char * line2, const char * line3, uint8_t mode, uint8_t icon=0);
   void Popup_Select();
   void Update_Status_Bar(bool refresh=false);
 
@@ -321,23 +382,23 @@ public:
     void Set_Mesh_Viewer_Status();
   #endif
 
-  char* Get_Menu_Title(uint8_t menu);
+  const char * Get_Menu_Title(uint8_t menu);
   uint8_t Get_Menu_Size(uint8_t menu);
   void Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw=true);
 
 
-  void Popup_Handler(uint8_t popupid, bool option = false);
-  void Confirm_Handler(const char * const msg);
+  void Popup_Handler(PopupID popupid, bool option = false);
+  void Confirm_Handler(PopupID popupid);
 
 
-  inline void Main_Menu_Control();
-  inline void Menu_Control();
-  inline void Value_Control();
-  inline void Option_Control();
-  inline void File_Control();
-  inline void Print_Screen_Control();
-  inline void Popup_Control();
-  inline void Confirm_Control();
+  void Main_Menu_Control();
+  void Menu_Control();
+  void Value_Control();
+  void Option_Control();
+  void File_Control();
+  void Print_Screen_Control();
+  void Popup_Control();
+  void Confirm_Control();
 
 
   void Setup_Value(float value, float min, float max, float unit, uint8_t type);
@@ -347,18 +408,26 @@ public:
   void Modify_Value(int16_t &value, float min, float max, float unit, void (*f)()=NULL);
   void Modify_Value(uint32_t &value, float min, float max, float unit, void (*f)()=NULL);
   void Modify_Value(int8_t &value, float min, float max, float unit, void (*f)()=NULL);
-  void Modify_Option(uint8_t value, char** options, uint8_t max);
+  void Modify_Option(uint8_t value, const char * const * options, uint8_t max);
 
 
   void Update_Status(const char * const text);
   void Start_Print(bool sd);
   void Stop_Print();
   void Update();
+  void State_Update();
   void Screen_Update();
   void AudioFeedback(const bool success=true);
   void Save_Settings(char *buff);
   void Load_Settings(const char *buff);
 
+  enum result_t   : uint8_t { PID_STARTED, PID_BAD_EXTRUDER_NUM, PID_TEMP_TOO_HIGH, PID_TUNING_TIMEOUT, PID_DONE };
+  void onPidTuning(const result_t rst);
+
+  void Quick_Move_Item_Menu(uint8_t row, float pos_x, float pos_y, float pos_z, bool only_xy);
+  void Quick_Move(float pos_x, float pos_y, float pos_z, bool only_xy);
+  float pos_xx, pos_yy, pos_zz;
+  bool only_xxyy;
 };
 
 extern CrealityDWINClass CrealityDWIN;
