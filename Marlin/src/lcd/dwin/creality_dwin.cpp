@@ -89,7 +89,7 @@
 
 #define CORP_WEBSITE_E "L.Christophe"
 
-#define BUILD_NUMBER "2.0.2.d"
+#define BUILD_NUMBER "2.0.3.f"
 
 #define DWIN_FONT_MENU font8x16
 #define DWIN_FONT_STAT font10x20
@@ -588,50 +588,50 @@ void CrealityDWINClass::Redraw_Screen() {
 
 void CrealityDWINClass::Main_Menu_Icons() {
   if (selection == 0) {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Print_1, 17, 130);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Print_A1 : ICON_Print_1, 17, 130);
     DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 17, 130, 126, 229);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 52, 200, F("Print"));
   }
   else {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Print_0, 17, 130);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Print_A0 : ICON_Print_0, 17, 130);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 52, 200, F("Print"));
   }
   if (selection == 1) {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Prepare_1, 145, 130);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Prepare_A1 : ICON_Prepare_1, 145, 130);
     DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 145, 130, 254, 229);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 170, 200, F("Prepare"));
   }
   else {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Prepare_0, 145, 130);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Prepare_A0: ICON_Prepare_0, 145, 130);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 170, 200, F("Prepare"));
   }
   if (selection == 2) {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Control_1, 17, 246);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Control_A1 : ICON_Control_1, 17, 246);
     DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 17, 246, 126, 345);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 43, 317, F("Control"));
   }
   else {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Control_0, 17, 246);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Control_A0 : ICON_Control_0, 17, 246);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 43, 317, F("Control"));
   }
   #if ANY(HAS_ONESTEP_LEVELING, AUTO_BED_LEVELING_UBL, PROBE_MANUALLY) 
     if (selection == 3) {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Leveling_1, 145, 246);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Leveling_A1 : ICON_Leveling_1, 145, 246);
       DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 145, 246, 254, 345);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 179, 317, F("Level"));
     }
     else {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Leveling_0, 145, 246);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Leveling_A0 : ICON_Leveling_0, 145, 246);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 179, 317, F("Level"));
     }
   #else
     if (selection == 3) {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Info_1, 145, 246);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Info_A1 : ICON_Info_1, 145, 246);
       DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 145, 246, 254, 345);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 181, 317, F("Info"));
     }
     else {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Info_0, 145, 246);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Info_A0 : ICON_Info_0, 145, 246);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 181, 317, F("Info"));
       //DWIN_Frame_AreaCopy(1, 132, 423, 159, 435, 186, 318);
     }
@@ -651,42 +651,42 @@ void CrealityDWINClass::Draw_Main_Menu(uint8_t select/*=0*/) {
 
 void CrealityDWINClass::Print_Screen_Icons() {
   if (selection == 0) {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Setup_1, 8, 252);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Setup_A1 : ICON_Setup_1, 8, 252);
     DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 8, 252, 87, 351);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 30, 322, F("Tune"));
   }
   else {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Setup_0, 8, 252);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Setup_A0 : ICON_Setup_0, 8, 252);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 30, 322, F("Tune"));
   }
   if (selection == 2) {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Stop_1, 184, 252);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Stop_A1 : ICON_Stop_1, 184, 252);
     DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 184, 252, 263, 351);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 205, 322, F("Stop"));
   }
   else {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Stop_0, 184, 252);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Stop_A0 : ICON_Stop_0, 184, 252);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 205, 322, F("Stop"));
   }
   if (paused) {
     if (selection == 1) {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Continue_1, 96, 252);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Continue_A1 : ICON_Continue_1, 96, 252);
       DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 96, 252, 175, 351);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 114, 322, F("Print"));
     }
     else {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Continue_0, 96, 252);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Continue_A0 : ICON_Continue_0, 96, 252);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 114, 322, F("Print"));
     }
   }
   else {
     if (selection == 1) {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Pause_1, 96, 252);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Pause_A1 : ICON_Pause_1, 96, 252);
       DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 96, 252, 175, 351);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 114, 322, F("Pause"));
     }
     else {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_Pause_0, 96, 252);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Pause_A0 : ICON_Pause_0, 96, 252);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 114, 322, F("Pause"));
     }
   }
@@ -952,8 +952,8 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
     y = -1;
     z = -1;
     DWIN_Draw_Line(GetColor(eeprom_settings.coordinates_split_line, Line_Color, true), 16, 450, 256, 450);
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_MaxSpeedX,   10, 456);
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, ICON_MaxSpeedY,   95, 456);
+    DWIN_ICON_Show(ICON, ICON_MaxSpeedX,   10, 456);
+    DWIN_ICON_Show(ICON, ICON_MaxSpeedY,   95, 456);
     DWIN_ICON_Show(ICON, ICON_MaxSpeedZ,   180, 456);
   }
 
@@ -1645,7 +1645,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           break;
         case HOME_X:
           if (draw) {
-            Draw_Menu_Item(row, ICON_MoveX, customicons, "Home X Axis");
+            Draw_Menu_Item(row, ICON_MoveX, false, "Home X Axis");
           }
           else {
             Popup_Handler(Home);
@@ -1657,7 +1657,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           break;
         case HOME_Y:
           if (draw) {
-            Draw_Menu_Item(row, ICON_MoveY, customicons, "Home Y Axis");
+            Draw_Menu_Item(row, ICON_MoveY, false, "Home Y Axis");
           }
           else {
             Popup_Handler(Home);
@@ -1669,7 +1669,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           break;
         case HOME_Z:
           if (draw) {
-            Draw_Menu_Item(row, ICON_MoveZ, customicons, "Home Z Axis");
+            Draw_Menu_Item(row, ICON_MoveZ, false, "Home Z Axis");
           }
           else {
             Popup_Handler(Home);
@@ -1720,7 +1720,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           break;
         case MOVE_X:
           if (draw) {
-            Draw_Menu_Item(row, ICON_MoveX, customicons, "Move X");
+            Draw_Menu_Item(row, ICON_MoveX, false, "Move X");
             Draw_Float(current_position.x, row, false);
           }
           else {
@@ -1729,7 +1729,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           break;
         case MOVE_Y:
           if (draw) {
-            Draw_Menu_Item(row, ICON_MoveY, customicons, "Move Y");
+            Draw_Menu_Item(row, ICON_MoveY, false, "Move Y");
             Draw_Float(current_position.y, row);
           }
           else {
@@ -1738,7 +1738,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           break;
         case MOVE_Z:
           if (draw) {
-            Draw_Menu_Item(row, ICON_MoveZ, customicons, "Move Z");
+            Draw_Menu_Item(row, ICON_MoveZ, false, "Move Z");
             Draw_Float(current_position.z, row);
           }
           else {
@@ -1748,7 +1748,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if HAS_HOTEND
           case MOVE_E:
             if (draw) {
-              Draw_Menu_Item(row, ICON_Extruder, customicons, "Extruder");
+              Draw_Menu_Item(row, ICON_Extruder, false, "Extruder");
               current_position.e = 0;
               sync_plan_position();
               Draw_Float(current_position.e, row);
@@ -1817,7 +1817,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           break;
         case SETOFFSETS_X:
           if (draw) {
-            Draw_Menu_Item(row, ICON_MoveX, customicons, "Move X");
+            Draw_Menu_Item(row, ICON_MoveX, false, "Move X");
             Draw_Float(current_position.x, row, false);
           }
           else {
@@ -1826,7 +1826,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           break;
         case SETOFFSETS_Y:
           if (draw) {
-            Draw_Menu_Item(row, ICON_MoveY, customicons, "Move Y");
+            Draw_Menu_Item(row, ICON_MoveY, false, "Move Y");
             Draw_Float(current_position.y, row);
           }
           else {
@@ -1835,7 +1835,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           break;
         case SETOFFSETS_Z:
           if (draw) {
-            Draw_Menu_Item(row, ICON_MoveZ, customicons, "Move Z");
+            Draw_Menu_Item(row, ICON_MoveZ, false, "Move Z");
             Draw_Float(current_position.z, row);
           }
           else {
@@ -2465,7 +2465,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if ANY(HAS_HOTEND, HAS_HEATED_BED)
           case TEMP_PID:
             if (draw) {
-              Draw_Menu_Item(row, ICON_Step, customicons, "PID Autotune", NULL, true);
+              Draw_Menu_Item(row, ICON_Step, false, "PID Autotune", NULL, true);
             }
             else {
               Draw_Menu(PID);
@@ -2475,7 +2475,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if (PREHEAT_COUNT >= 1)
           case TEMP_PREHEAT1:
             if (draw) {
-              Draw_Menu_Item(row, ICON_Step, customicons, PREHEAT_1_LABEL, NULL, true);
+              Draw_Menu_Item(row, ICON_Step, false, PREHEAT_1_LABEL, NULL, true);
             }
             else {
               Draw_Menu(Preheat1);
@@ -2485,7 +2485,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if (PREHEAT_COUNT >= 2)
           case TEMP_PREHEAT2:
             if (draw) {
-              Draw_Menu_Item(row, ICON_Step, customicons, PREHEAT_2_LABEL, NULL, true);
+              Draw_Menu_Item(row, ICON_Step, false, PREHEAT_2_LABEL, NULL, true);
             }
             else {
               Draw_Menu(Preheat2);
@@ -2495,7 +2495,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if (PREHEAT_COUNT >= 3)
           case TEMP_PREHEAT3:
             if (draw) {
-              Draw_Menu_Item(row, ICON_Step, customicons, PREHEAT_3_LABEL, NULL, true);
+              Draw_Menu_Item(row, ICON_Step, false, PREHEAT_3_LABEL, NULL, true);
             }
             else {
               Draw_Menu(Preheat3);
@@ -2505,7 +2505,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if (PREHEAT_COUNT >= 4)
           case TEMP_PREHEAT4:
             if (draw) {
-              Draw_Menu_Item(row, ICON_Step, customicons, PREHEAT_4_LABEL, NULL, true);
+              Draw_Menu_Item(row, ICON_Step, false, PREHEAT_4_LABEL, NULL, true);
             }
             else {
               Draw_Menu(Preheat4);
@@ -2515,7 +2515,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if (PREHEAT_COUNT >= 5)
           case TEMP_PREHEAT5:
             if (draw) {
-              Draw_Menu_Item(row, ICON_Step, customicons, PREHEAT_5_LABEL);
+              Draw_Menu_Item(row, ICON_Step, false, PREHEAT_5_LABEL);
             }
             else {
               Draw_Menu(Preheat5);
@@ -3087,7 +3087,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           break;
         case MOTION_ACCEL:
           if (draw) {
-            Draw_Menu_Item(row, ICON_MaxAccelerated, customicons, "Max Acceleration", NULL, true);
+            Draw_Menu_Item(row, ICON_MaxAccelerated, false, "Max Acceleration", NULL, true);
           }
           else {
             Draw_Menu(MaxAcceleration);
@@ -3096,7 +3096,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if HAS_CLASSIC_JERK
           case MOTION_JERK:
             if (draw) {
-              Draw_Menu_Item(row, ICON_MaxJerk, customicons, "Max Jerk", NULL, true);
+              Draw_Menu_Item(row, ICON_MaxJerk, false, "Max Jerk", NULL, true);
             }
             else {
               Draw_Menu(MaxJerk);
@@ -3105,7 +3105,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #endif
         case MOTION_STEPS:
           if (draw) {
-            Draw_Menu_Item(row, ICON_Step, customicons, "Steps/mm", NULL, true);
+            Draw_Menu_Item(row, ICON_Step, false, "Steps/mm", NULL, true);
           }
           else {
             Draw_Menu(Steps);
@@ -3114,7 +3114,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if HAS_HOTEND
           case MOTION_FLOW:
             if (draw) {
-              Draw_Menu_Item(row, ICON_MaxSpeedE, customicons, "Flow Rate");
+              Draw_Menu_Item(row, ICON_MaxSpeedE, false, "Flow Rate");
               Draw_Float(planner.flow_percentage[0], row, false, 1);
             }
             else {
@@ -3180,7 +3180,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           break;
         case SPEED_X:
           if (draw) {
-            Draw_Menu_Item(row, ICON_MaxSpeedX, customicons, "X Axis");
+            Draw_Menu_Item(row, ICON_MaxSpeedX, false, "X Axis");
             Draw_Float(planner.settings.max_feedrate_mm_s[X_AXIS], row, false, 1);
           }
           else {
@@ -3189,7 +3189,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           break;
         case SPEED_Y:
           if (draw) {
-            Draw_Menu_Item(row, ICON_MaxSpeedY, customicons, "Y Axis");
+            Draw_Menu_Item(row, ICON_MaxSpeedY, false, "Y Axis");
             Draw_Float(planner.settings.max_feedrate_mm_s[Y_AXIS], row, false, 1);
           }
           else {
@@ -3208,7 +3208,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if HAS_HOTEND
           case SPEED_E:
             if (draw) {
-              Draw_Menu_Item(row, ICON_MaxSpeedE, customicons, "Extruder");
+              Draw_Menu_Item(row, ICON_MaxSpeedE, false, "Extruder");
               Draw_Float(planner.settings.max_feedrate_mm_s[E_AXIS], row, false, 1);
             }
             else {
@@ -3238,7 +3238,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           break;
         case ACCEL_X:
           if (draw) {
-            Draw_Menu_Item(row, ICON_MaxAccX, customicons, "X Axis");
+            Draw_Menu_Item(row, ICON_MaxAccX, false, "X Axis");
             Draw_Float(planner.settings.max_acceleration_mm_per_s2[X_AXIS], row, false, 1);
           }
           else {
@@ -3247,7 +3247,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           break;
         case ACCEL_Y:
           if (draw) {
-            Draw_Menu_Item(row, ICON_MaxAccY, customicons, "Y Axis");
+            Draw_Menu_Item(row, ICON_MaxAccY, false, "Y Axis");
             Draw_Float(planner.settings.max_acceleration_mm_per_s2[Y_AXIS], row, false, 1);
           }
           else {
@@ -3256,7 +3256,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           break;
         case ACCEL_Z:
           if (draw) {
-            Draw_Menu_Item(row, ICON_MaxAccZ, customicons, "Z Axis");
+            Draw_Menu_Item(row, ICON_MaxAccZ, false, "Z Axis");
             Draw_Float(planner.settings.max_acceleration_mm_per_s2[Z_AXIS], row, false, 1);
           }
           else {
@@ -3266,7 +3266,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if HAS_HOTEND
           case ACCEL_E:
             if (draw) {
-              Draw_Menu_Item(row, ICON_MaxAccE, customicons, "Extruder");
+              Draw_Menu_Item(row, ICON_MaxAccE, false, "Extruder");
               Draw_Float(planner.settings.max_acceleration_mm_per_s2[E_AXIS], row, false, 1);
             }
             else {
@@ -3297,7 +3297,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             break;
           case JERK_X:
             if (draw) {
-              Draw_Menu_Item(row, ICON_MaxSpeedJerkX, customicons, "X Axis");
+              Draw_Menu_Item(row, ICON_MaxSpeedJerkX, false, "X Axis");
               Draw_Float(planner.max_jerk[X_AXIS], row, false, 10);
             }
             else {
@@ -3306,7 +3306,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             break;
           case JERK_Y:
             if (draw) {
-              Draw_Menu_Item(row, ICON_MaxSpeedJerkY, customicons, "Y Axis");
+              Draw_Menu_Item(row, ICON_MaxSpeedJerkY, false, "Y Axis");
               Draw_Float(planner.max_jerk[Y_AXIS], row, false, 10);
             }
             else {
@@ -3325,7 +3325,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           #if HAS_HOTEND
             case JERK_E:
               if (draw) {
-                Draw_Menu_Item(row, ICON_MaxSpeedJerkE, customicons, "Extruder");
+                Draw_Menu_Item(row, ICON_MaxSpeedJerkE, false, "Extruder");
                 Draw_Float(planner.max_jerk[E_AXIS], row, false, 10);
               }
               else {
@@ -3458,12 +3458,14 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           case VISUAL_CUSTOM_ICONS:
             if (draw) {
               customicons = (eeprom_settings.LCDFlashed ? customicons : false);
+              eeprom_settings.mainiconpack = (customicons ? eeprom_settings.mainiconpack : 0);
               Draw_Menu_Item(row, ICON_Version, customicons, "Use Custom Icons");
               DWIN_Draw_Rectangle(1, Color_Bg_Black, 202, MBASE(row) + 14, 258, MBASE(row) - 2);
               DWIN_Draw_String(false, true, DWIN_FONT_MENU,  Color_White, Color_Bg_Black, 202, MBASE(row), (customicons ? F("Enable") : F("Disable")));
             }
             else {
               customicons = (eeprom_settings.LCDFlashed ? !customicons : false);
+              eeprom_settings.mainiconpack = (customicons ? eeprom_settings.mainiconpack : 0);
               DWIN_Draw_Rectangle(1, Color_Bg_Black, 202, MBASE(row) + 14, 258, MBASE(row) - 2);
               DWIN_Draw_String(false, true, DWIN_FONT_MENU, Color_White, Color_Bg_Black, 202, MBASE(row), (customicons ? F("Enable") : F("Disable")));
               Redraw_Screen();
@@ -3483,7 +3485,8 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
     case ColorSettings:
 
         #define COLORSETTINGS_BACK 0
-        #define COLORSETTINGS_CURSOR (COLORSETTINGS_BACK + 1)
+        #define COLORSETTINGS_MAIN_ICONS (COLORSETTINGS_BACK + ENABLED(DWIN_CREALITY_LCD_CUSTOM_ICONS))
+        #define COLORSETTINGS_CURSOR (COLORSETTINGS_MAIN_ICONS + 1)
         #define COLORSETTINGS_SPLIT_LINE (COLORSETTINGS_CURSOR + 1)
         #define COLORSETTINGS_ITEMS_MENU_TEXT (COLORSETTINGS_SPLIT_LINE + 1)
         #define COLORSETTINGS_ICONS_MENU_TEXT (COLORSETTINGS_ITEMS_MENU_TEXT + 1)
@@ -3521,6 +3524,17 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               Draw_Menu(Visual, VISUAL_COLOR_THEMES);
             }
             break;
+          #if ENABLED(DWIN_CREALITY_LCD_CUSTOM_ICONS)
+            case COLORSETTINGS_MAIN_ICONS:
+              if (draw) {
+                eeprom_settings.mainiconpack = (customicons ? eeprom_settings.mainiconpack : 0);
+                Draw_Menu_Item(row, ICON_MaxSpeed, false,"Style Main Icons");
+                Draw_Option(eeprom_settings.mainiconpack, ico_pack, row);
+              }
+              else if (customicons) Modify_Option(eeprom_settings.mainiconpack, ico_pack, 2);
+              
+              break;
+          #endif
           case COLORSETTINGS_CURSOR:
             if (draw) {
               Draw_Menu_Item(row, ICON_MaxSpeed, false, "Cursor");
@@ -3814,7 +3828,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if ENABLED(LIN_ADVANCE)
           case ADVANCED_LA:
             if (draw) {
-              Draw_Menu_Item(row, ICON_MaxAccelerated, customicons, "Lin Advance Kp");
+              Draw_Menu_Item(row, ICON_MaxAccelerated, false, "Lin Advance Kp");
               Draw_Float(planner.extruder_advance_K[0], row, false, 100);
             }
             else {
@@ -3857,7 +3871,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if ENABLED(FILAMENT_RUNOUT_SENSOR)
           case ADVANCED_FILSENSORENABLED:
             if (draw) {
-              Draw_Menu_Item(row, ICON_Extruder, customicons, "Filament Sensor");
+              Draw_Menu_Item(row, ICON_Extruder, false, "Filament Sensor");
               //Draw_Checkbox(row, ExtUI::getFilamentRunoutEnabled());
               Draw_Checkbox(row, runout.enabled);
             }
@@ -3871,7 +3885,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           #if ENABLED(HAS_FILAMENT_RUNOUT_DISTANCE)
             case ADVANCED_FILSENSORDISTANCE:
               if (draw) {
-                Draw_Menu_Item(row, ICON_MaxAccE, customicons, "Runout Distance");
+                Draw_Menu_Item(row, ICON_MaxAccE, false, "Runout Distance");
                 Draw_Float(runout.runout_distance(), row, false, 10);
               }
               else {
@@ -4352,7 +4366,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             break;
           case LEVELING_SETTINGS:
             if (draw) {
-              Draw_Menu_Item(row, ICON_Step, customicons, "Leveling Settings", NULL, true);
+              Draw_Menu_Item(row, ICON_Step, false, "Leveling Settings", NULL, true);
             }
             else {
               Draw_Menu(LevelSettings);
@@ -4567,7 +4581,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             break;
           case LEVELING_M_X:
             if (draw) {
-              Draw_Menu_Item(row, ICON_MoveX, customicons, "Mesh Point X");
+              Draw_Menu_Item(row, ICON_MoveX, false, "Mesh Point X");
               Draw_Float(mesh_conf.mesh_x, row, 0, 1);
             }
             else {
@@ -4576,7 +4590,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             break;
           case LEVELING_M_Y:
             if (draw) {
-              Draw_Menu_Item(row, ICON_MoveY, customicons, "Mesh Point Y");
+              Draw_Menu_Item(row, ICON_MoveY, false, "Mesh Point Y");
               Draw_Float(mesh_conf.mesh_y, row, 0, 1);
             }
             else {
@@ -4983,7 +4997,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if HAS_HOTEND
           case TUNE_FLOW:
             if (draw) {
-              Draw_Menu_Item(row, ICON_MaxSpeedE, customicons, "Flow Rate");
+              Draw_Menu_Item(row, ICON_MaxSpeedE, false, "Flow Rate");
               Draw_Float(planner.flow_percentage[0], row, false, 1);
             }
             else {
@@ -5070,7 +5084,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if ENABLED(FILAMENT_RUNOUT_SENSOR)
           case TUNE_FILSENSORENABLED:
             if (draw) {
-              Draw_Menu_Item(row, ICON_Extruder, customicons, "Filament Sensor");
+              Draw_Menu_Item(row, ICON_Extruder, false, "Filament Sensor");
               //Draw_Checkbox(row, ExtUI::getFilamentRunoutEnabled());
               Draw_Checkbox(row, runout.enabled);
             }
@@ -5806,6 +5820,7 @@ void CrealityDWINClass::Option_Control() {
         if (!(brm == eeprom_settings.baudratemode)) Popup_Handler(BaudrateSwitch);
         return;
       }
+      if (valuepointer == &ico_pack)  eeprom_settings.mainiconpack = tempvalue;
     }
     Draw_Option(tempvalue, static_cast<const char * const *>(valuepointer), selection-scrollpos, false, (valuepointer == &color_names));
     DWIN_UpdateLCD();

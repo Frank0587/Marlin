@@ -32,8 +32,9 @@
 #if ENABLED(ADVANCED_PAUSE_FEATURE)
   #include "../../feature/pause.h"
 #endif
-
+#include "../../module/temperature.h"
 #include "creality_dwin.h"
+#include "creality_marlinui.h"
 #include "../marlinui.h"
 
 uint8_t MarlinUI::brightness = DEFAULT_LCD_BRIGHTNESS;
@@ -62,6 +63,10 @@ void MarlinUI::set_brightness(const uint8_t value) {
         break;
       case PAUSE_MESSAGE_HEAT:
         CrealityDWIN.Confirm_Handler(HeaterTime);
+        break;
+      case PAUSE_MESSAGE_WAITING:
+        thermalManager.wait_for_hotend(0);
+        CrealityDWIN.Draw_Print_Screen();
         break;
       default:
         break;
@@ -100,6 +105,12 @@ void MarlinUI::init() {
   DWIN_JPG_CacheTo1(Language_English);
   //CrealityDWIN.Redraw_Screen();
 }
+
+#if ENABLED(POWER_LOSS_RECOVERY)   
+  void CrealityUI::onPowerLossResume() { 
+    CrealityDWIN.Popup_Handler(Resume); 
+  }
+#endif
 
 void MarlinUI::kill_screen(PGM_P const error, PGM_P const component) {
   CrealityDWIN.Draw_Popup((char*)"Printer Kill Reason:", error, (char*)"Restart Required", Wait, ICON_BLTouch);

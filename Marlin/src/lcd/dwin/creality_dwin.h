@@ -209,6 +209,24 @@ enum menuID : uint8_t {
   #define ICON_Brightness           205
   #define ICON_Backlight_Off        206
   #define ICON_Probe                207
+  #define ICON_Print_A0             210
+  #define ICON_Print_A1             211
+  #define ICON_Prepare_A0           212
+  #define ICON_Prepare_A1           213
+  #define ICON_Control_A0           214
+  #define ICON_Control_A1           215
+  #define ICON_Leveling_A0          216
+  #define ICON_Leveling_A1          217
+  #define ICON_Setup_A0             218
+  #define ICON_Setup_A1             219
+  #define ICON_Pause_A0             220
+  #define ICON_Pause_A1             221
+  #define ICON_Continue_A0          222
+  #define ICON_Continue_A1          223
+  #define ICON_Stop_A0              224
+  #define ICON_Stop_A1              225
+  #define ICON_Info_A0              226
+  #define ICON_Info_A1              227
   #define ICON_QMove                230
   #define ICON_QMoveTo              231
   #define ICON_SetQMove             232
@@ -219,7 +237,6 @@ enum menuID : uint8_t {
   #define ICON_AxisBL               252
   #define ICON_AxisTL               253
   #define ICON_AxisC                254
-  
 #else
   #define ICON_Fade                 ICON_Version
   #define ICON_Mesh                 ICON_Version
@@ -227,6 +244,24 @@ enum menuID : uint8_t {
   #define ICON_Brightness           ICON_Version
   #define ICON_Backlight_Off        ICON_Version
   #define ICON_Probe                ICON_StockConfiguraton
+  #define ICON_Print_A0             ICON_Print_0
+  #define ICON_Print_A1             ICON_Print_1
+  #define ICON_Prepare_A0           ICON_Prepare_0
+  #define ICON_Prepare_A1           ICON_Prepare_1
+  #define ICON_Control_A0           ICON_Control_0
+  #define ICON_Control_A1           ICON_Control_1
+  #define ICON_Leveling_A0          ICON_Leveling_0
+  #define ICON_Leveling_A1          ICON_Leveling_1
+  #define ICON_Setup_A0             ICON_Setup_0
+  #define ICON_Setup_A1             ICON_Setup_1
+  #define ICON_Pause_A0             ICON_Pause_0
+  #define ICON_Pause_A1             ICON_Pause_1
+  #define ICON_Continue_A0          ICON_Continue_0
+  #define ICON_Continue_A1          ICON_Continue_1
+  #define ICON_Stop_A0              ICON_Stop_0
+  #define ICON_Stop_A1              ICON_Stop_1
+  #define ICON_Info_A0              ICON_Info_0
+  #define ICON_Info_A1              ICON_Info_1
   #define ICON_QMove                ICON_MaxSpeed
   #define ICON_QMoveTo              ICON_SetHome
   #define ICON_SetQMove             ICON_Motion
@@ -339,11 +374,14 @@ public:
     float PositionB_x, PositionB_y, PositionB_z;
     float PositionC_x, PositionC_y, PositionC_z;
     uint8_t baudratemode : 1;
+    uint8_t mainiconpack : 1;
   } eeprom_settings;
 
   const char * const color_names[21] = {"Default","White","L_White","Blue","L_Blue","Yellow","L_Yello","Orange","L_Orang","Red","L_Red","Green","L_Green","Magenta","L_Magen","Cyan","L_Cyan","Brown","L_Brown","Black","Grey"};
   const char * const preheat_modes[3] = {"Both", "Hotend", "Bed"};
   const char * const baudrate_modes[2] = {"250000", "115200"};
+
+  const char * const ico_pack[2] = {"Custom", "Aquila"};
 
   bool beeperenable = true;
   bool customicons = false;
