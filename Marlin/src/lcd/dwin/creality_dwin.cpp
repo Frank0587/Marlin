@@ -3531,7 +3531,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 Draw_Menu_Item(row, ICON_MaxSpeed, false,"Style Main Icons");
                 Draw_Option(eeprom_settings.mainiconpack, ico_pack, row);
               }
-              else if (customicons) Modify_Option(eeprom_settings.mainiconpack, ico_pack, 2);
+              else if (customicons) Modify_Option(eeprom_settings.mainiconpack, ico_pack, 1);
               
               break;
           #endif
