@@ -89,7 +89,7 @@
 
 #define CORP_WEBSITE_E "L.Christophe"
 
-#define BUILD_NUMBER "2.0.3.f"
+#define BUILD_NUMBER "2.0.3.g"
 
 #define DWIN_FONT_MENU font8x16
 #define DWIN_FONT_STAT font10x20
@@ -574,6 +574,8 @@ void CrealityDWINClass::Redraw_Menu(bool lastprocess/*=true*/, bool lastselectio
       break;
     case File:
       Draw_SD_List();
+      break;
+    default:
       break;
   }
 }
@@ -6043,7 +6045,7 @@ void CrealityDWINClass::Popup_Control() {
           else {
             #if ENABLED(HOST_ACTION_COMMANDS)
               host_action_cancel();
-              Draw_Main_Menu();
+              //Draw_Main_Menu();
             #endif
           }
         }
@@ -6056,6 +6058,7 @@ void CrealityDWINClass::Popup_Control() {
           queue.inject_P(PSTR("M1000"));
         }
         else {
+          queue.inject_P(PSTR("M1000 C"));
           Draw_Main_Menu();
         }
         break;
@@ -6281,7 +6284,7 @@ void CrealityDWINClass::Start_Print(bool sd) {
     printing = true;
     statusmsg[0] = '\0';
     if (sd)
-      strcpy_P(filename, card.longest_filename());
+      strcpy_P(filename, (card.longest_filename()) ? card.longest_filename() : recovery.info.sd_filename);
     else
       strcpy_P(filename, "Host Print");
     ui.set_progress(0);
@@ -6334,7 +6337,7 @@ void CrealityDWINClass::Update() {
 
 void CrealityDWINClass::State_Update() {
   if ((print_job_timer.isRunning() || print_job_timer.isPaused()) != printing) {
-    if (!printing) Start_Print(card.isFileOpen());
+    if (!printing) Start_Print((card.isFileOpen() || recovery.valid()));
     else Stop_Print();
     //delay(500);
   }
@@ -6586,7 +6589,11 @@ void CrealityDWINClass::Load_Settings(const char *buff) {
     customicons = (eeprom_settings.LCDFlashed ? eeprom_settings.customicons_status : false);
   #endif
   Redraw_Screen();
-  queue.inject_P(PSTR("M1000 S"));
+  static bool init = true;
+  if (init) {
+    init = false;
+    queue.inject_P(PSTR("M1000 S"));
+  }
 }
 
 
