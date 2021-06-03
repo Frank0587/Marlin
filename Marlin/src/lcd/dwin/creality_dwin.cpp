@@ -6284,7 +6284,7 @@ void CrealityDWINClass::Start_Print(bool sd) {
     printing = true;
     statusmsg[0] = '\0';
     if (sd)
-      strcpy_P(filename, (card.longest_filename()) ? card.longest_filename() : recovery.info.sd_filename);
+      strcpy_P(filename, (card.longest_filename()) ? card.longest_filename() : "SD Print");
     else
       strcpy_P(filename, "Host Print");
     ui.set_progress(0);
