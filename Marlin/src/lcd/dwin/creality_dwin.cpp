@@ -89,7 +89,7 @@
 
 #define CORP_WEBSITE_E "L.Christophe"
 
-#define BUILD_NUMBER "2.0.3.g"
+#define BUILD_NUMBER "2.0.3.h"
 
 #define DWIN_FONT_MENU font8x16
 #define DWIN_FONT_STAT font10x20
@@ -5041,7 +5041,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #if HAS_ZOFFSET_ITEM
           case TUNE_ZOFFSET:
             if (draw) {
-              Draw_Menu_Item(row, ICON_FanSpeed, false, "Z-Offset");
+              Draw_Menu_Item(row, ICON_Zoffset, false, "Z-Offset");
               Draw_Float(zoffsetvalue, row, false, 100);
             }
             else {
@@ -6283,8 +6283,14 @@ void CrealityDWINClass::Start_Print(bool sd) {
   if (!printing) {
     printing = true;
     statusmsg[0] = '\0';
-    if (sd)
-      strcpy_P(filename, (recovery.valid()) ? "SD Recovery Print" : card.longest_filename());
+    if (sd) {
+      if (recovery.valid()) {
+        SdFile *diveDir = nullptr;
+        const char * const fname = card.diveToFile(true, diveDir, recovery.info.sd_filename);
+        card.selectFileByName(fname);
+      }
+      strcpy_P(filename, card.longest_filename());
+    }
     else
       strcpy_P(filename, "Host Print");
     ui.set_progress(0);
