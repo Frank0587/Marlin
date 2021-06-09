@@ -89,7 +89,7 @@
 
 #define CORP_WEBSITE_E "L.Christophe"
 
-#define BUILD_NUMBER "2.0.3.h"
+#define BUILD_NUMBER "2.0.3.i"
 
 #define DWIN_FONT_MENU font8x16
 #define DWIN_FONT_STAT font10x20
@@ -472,8 +472,10 @@ uint16_t CrealityDWINClass::GetColor(uint8_t color, uint16_t original, bool ligh
       break;
     case Orange:
       return (light) ? Color_Light_Orange : Color_Orange;
+      break;
     case Light_Orange:
       return Color_Light_Orange;
+      break;
     case Yellow:
       return (light) ? Color_Light_Yellow : Color_Yellow;
       break;
@@ -3914,6 +3916,12 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               Draw_Menu_Item(row, (customicons ? ICON_Mesh : ICON_Version), customicons, "View Mesh");
             }
             else {
+              #if ENABLED(AUTO_BED_LEVELING_UBL)
+                if (ubl.storage_slot <0) {
+                  Popup_Handler(MeshSlot);
+                  break;
+                }
+              #endif
               Draw_Menu(ViewMesh);
             }
             break;
@@ -4212,7 +4220,8 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #define LEVELING_MANUAL (LEVELING_GET_MESH + 1)
         #define LEVELING_VIEW (LEVELING_MANUAL + 1)
         #define LEVELING_SETTINGS (LEVELING_VIEW + 1)
-        #define LEVELING_LOAD (LEVELING_SETTINGS + ENABLED(AUTO_BED_LEVELING_UBL))
+        #define LEVELING_SETTINGS_SLOT (LEVELING_SETTINGS + ENABLED(AUTO_BED_LEVELING_UBL))
+        #define LEVELING_LOAD (LEVELING_SETTINGS_SLOT + ENABLED(AUTO_BED_LEVELING_UBL))
         #define LEVELING_SAVE (LEVELING_LOAD + ENABLED(AUTO_BED_LEVELING_UBL))
         #define LEVELING_TOTAL LEVELING_SAVE
 
@@ -4250,6 +4259,10 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 Draw_Menu_Item(row, (customicons ? ICON_Tilt : ICON_Version), customicons, "Autotilt Current Mesh");
               }
               else {
+                if (ubl.storage_slot <0) {
+                  Popup_Handler(MeshSlot);
+                  break;
+                }
                 #if ENABLED(PREHEAT_BEFORE_LEVELING)
                   Popup_Handler(Heating);
                   if (thermalManager.degTargetHotend(0) < LEVELING_NOZZLE_TEMP)
@@ -4281,6 +4294,12 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 Draw_Menu_Item(row, (customicons ? ICON_Mesh : ICON_Version), customicons, "Create New Mesh");
               }
               else {
+                #if ENABLED(AUTO_BED_LEVELING_UBL)
+                  if (ubl.storage_slot <0) {
+                    Popup_Handler(MeshSlot, true);
+                    break;
+                  }
+                  #endif
                 #if ENABLED(PREHEAT_BEFORE_LEVELING)
                   Popup_Handler(Heating);
                   if (thermalManager.degTargetHotend(0) < LEVELING_NOZZLE_TEMP)
@@ -4337,6 +4356,12 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 break;
               }
               #endif
+              #if ENABLED(AUTO_BED_LEVELING_UBL)
+                if (ubl.storage_slot <0) {
+                  Popup_Handler(MeshSlot);
+                  break;
+                }
+              #endif
               #if ENABLED(PREHEAT_BEFORE_LEVELING)
                 Popup_Handler(Heating);
                 if (thermalManager.degTargetHotend(0) < LEVELING_NOZZLE_TEMP)
@@ -4363,6 +4388,12 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               Draw_Menu_Item(row, (customicons ? ICON_Mesh : ICON_Version), customicons, "Mesh Viewer", NULL, true);
             }
             else {
+              #if ENABLED(AUTO_BED_LEVELING_UBL)
+                if (ubl.storage_slot < 0) {
+                  Popup_Handler(MeshSlot);
+                  break;
+                }
+              #endif
               Draw_Menu(LevelView);
             }
             break;
@@ -4375,11 +4406,24 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             }
             break;
           #if ENABLED(AUTO_BED_LEVELING_UBL)
+            case LEVELING_SETTINGS_SLOT:
+                if (draw) {
+                  Draw_Menu_Item(row, ICON_PrintSize, customicons, "Mesh Slot");
+                  Draw_Float(ubl.storage_slot, row, false, 1);
+                }
+                else {
+                  if (settings.calc_num_meshes() >1)  Modify_Value(ubl.storage_slot, 0, settings.calc_num_meshes() - 1, 1);
+                }
+                break;
             case LEVELING_LOAD:
               if (draw) {
                 Draw_Menu_Item(row, ICON_ReadEEPROM, customicons, "Load Mesh");
               }
               else {
+                if (ubl.storage_slot <0) {
+                  Popup_Handler(MeshSlot);
+                  break;
+                }
                 gcode.process_subcommands_now_P(PSTR("G29 L"));
                 planner.synchronize();
                 AudioFeedback(true);
@@ -4389,7 +4433,11 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               if(draw) {
                 Draw_Menu_Item(row, ICON_WriteEEPROM, customicons, "Save Mesh");
               }
-             else {
+              else {
+                if (ubl.storage_slot <0) {
+                  Popup_Handler(MeshSlot, true);
+                  break;
+                }
                 gcode.process_subcommands_now_P(PSTR("G29 S"));
                 planner.synchronize();
                 AudioFeedback(true);
@@ -4449,8 +4497,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
 
         #define LEVELING_SETTINGS_BACK 0
         #define LEVELING_SETTINGS_FADE (LEVELING_SETTINGS_BACK + 1)
-        #define LEVELING_SETTINGS_SLOT (LEVELING_SETTINGS_FADE + ENABLED(AUTO_BED_LEVELING_UBL))
-        #define LEVELING_SETTINGS_TILT (LEVELING_SETTINGS_SLOT + BOTH(HAS_BED_PROBE, AUTO_BED_LEVELING_UBL))
+        #define LEVELING_SETTINGS_TILT (LEVELING_SETTINGS_FADE + BOTH(HAS_BED_PROBE, AUTO_BED_LEVELING_UBL))
         #define LEVELING_SETTINGS_PLANE (LEVELING_SETTINGS_TILT + ENABLED(AUTO_BED_LEVELING_UBL))
         #define LEVELING_SETTINGS_ZERO (LEVELING_SETTINGS_PLANE + ENABLED(AUTO_BED_LEVELING_UBL))
         #define LEVELING_SETTINGS_UNDEF (LEVELING_SETTINGS_ZERO + ENABLED(AUTO_BED_LEVELING_UBL))
@@ -4476,17 +4523,6 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 set_z_fade_height(planner.z_fade_height);
               }
               break;
-          #if ENABLED(AUTO_BED_LEVELING_UBL)
-            case LEVELING_SETTINGS_SLOT:
-                if (draw) {
-                  Draw_Menu_Item(row, ICON_PrintSize, customicons, "Mesh Slot");
-                  Draw_Float(ubl.storage_slot, row, false, 1);
-                }
-                else {
-                  Modify_Value(ubl.storage_slot, 0, settings.calc_num_meshes(), 1);
-                }
-                break;
-          #endif
           #if BOTH(HAS_BED_PROBE, AUTO_BED_LEVELING_UBL)
             case LEVELING_SETTINGS_TILT:
               if (draw) {
@@ -4518,8 +4554,8 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 Draw_Menu_Item(row, (customicons ? ICON_Mesh : ICON_Version), customicons, "Zero Current Mesh");
                 }
                 else {
-                  gcode.process_subcommands_now_P(PSTR("G29 P0"));
-                  planner.synchronize();
+                  ZERO(mesh_conf.mesh_z_values);
+                  AudioFeedback(true);
                 }
                 break;
             case LEVELING_SETTINGS_UNDEF:
@@ -4528,6 +4564,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               }
               else {
                 ubl.invalidate();
+                AudioFeedback(true);
               }
               break;
           #endif
@@ -5566,6 +5603,9 @@ void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
     case BaudrateSwitch:
       Draw_Popup("Switch Baud Rate ?", "Continue to process", "(After Restart HOST !)", Popup);
       break;
+    case MeshSlot:
+      Draw_Popup("No slot defined", option ? "To save Mesh" : "To load Mesh", "Continue to process", Popup);
+      break;
     default:
       break;
 
@@ -6165,6 +6205,12 @@ void CrealityDWINClass::Popup_Control() {
           eeprom_settings.baudratemode = brm;
           Redraw_Menu(true, true, false);
           }
+        break;
+      #endif
+      #if ENABLED(AUTO_BED_LEVELING_UBL)
+        case MeshSlot:
+          if (selection==0) Draw_Menu(Leveling, LEVELING_SETTINGS_SLOT);
+          else Redraw_Menu(true, true, false);
         break;
       #endif
       default:
