@@ -592,50 +592,50 @@ void CrealityDWINClass::Redraw_Screen() {
 
 void CrealityDWINClass::Main_Menu_Icons() {
   if (selection == 0) {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Print_A1 : ICON_Print_1, 17, 130);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Print_A1 : ICON_Print_1, 17, 130);
     DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 17, 130, 126, 229);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 52, 200, F("Print"));
   }
   else {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Print_A0 : ICON_Print_0, 17, 130);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Print_A0 : ICON_Print_0, 17, 130);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 52, 200, F("Print"));
   }
   if (selection == 1) {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Prepare_A1 : ICON_Prepare_1, 145, 130);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Prepare_A1 : ICON_Prepare_1, 145, 130);
     DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 145, 130, 254, 229);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 170, 200, F("Prepare"));
   }
   else {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Prepare_A0: ICON_Prepare_0, 145, 130);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Prepare_A0: ICON_Prepare_0, 145, 130);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 170, 200, F("Prepare"));
   }
   if (selection == 2) {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Control_A1 : ICON_Control_1, 17, 246);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Control_A1 : ICON_Control_1, 17, 246);
     DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 17, 246, 126, 345);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 43, 317, F("Control"));
   }
   else {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Control_A0 : ICON_Control_0, 17, 246);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Control_A0 : ICON_Control_0, 17, 246);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 43, 317, F("Control"));
   }
   #if ANY(HAS_ONESTEP_LEVELING, AUTO_BED_LEVELING_UBL, PROBE_MANUALLY) 
     if (selection == 3) {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Leveling_A1 : ICON_Leveling_1, 145, 246);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Leveling_A1 : ICON_Leveling_1, 145, 246);
       DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 145, 246, 254, 345);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 179, 317, F("Level"));
     }
     else {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Leveling_A0 : ICON_Leveling_0, 145, 246);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Leveling_A0 : ICON_Leveling_0, 145, 246);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 179, 317, F("Level"));
     }
   #else
     if (selection == 3) {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Info_A1 : ICON_Info_1, 145, 246);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Info_A1 : ICON_Info_1, 145, 246);
       DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 145, 246, 254, 345);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 181, 317, F("Info"));
     }
     else {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Info_A0 : ICON_Info_0, 145, 246);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Info_A0 : ICON_Info_0, 145, 246);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 181, 317, F("Info"));
       //DWIN_Frame_AreaCopy(1, 132, 423, 159, 435, 186, 318);
     }
@@ -655,42 +655,42 @@ void CrealityDWINClass::Draw_Main_Menu(uint8_t select/*=0*/) {
 
 void CrealityDWINClass::Print_Screen_Icons() {
   if (selection == 0) {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Setup_A1 : ICON_Setup_1, 8, 252);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Setup_A1 : ICON_Setup_1, 8, 252);
     DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 8, 252, 87, 351);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 30, 322, F("Tune"));
   }
   else {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Setup_A0 : ICON_Setup_0, 8, 252);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Setup_A0 : ICON_Setup_0, 8, 252);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 30, 322, F("Tune"));
   }
   if (selection == 2) {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Stop_A1 : ICON_Stop_1, 184, 252);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Stop_A1 : ICON_Stop_1, 184, 252);
     DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 184, 252, 263, 351);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 205, 322, F("Stop"));
   }
   else {
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Stop_A0 : ICON_Stop_0, 184, 252);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Stop_A0 : ICON_Stop_0, 184, 252);
     DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 205, 322, F("Stop"));
   }
   if (paused) {
     if (selection == 1) {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Continue_A1 : ICON_Continue_1, 96, 252);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Continue_A1 : ICON_Continue_1, 96, 252);
       DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 96, 252, 175, 351);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 114, 322, F("Print"));
     }
     else {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Continue_A0 : ICON_Continue_0, 96, 252);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Continue_A0 : ICON_Continue_0, 96, 252);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 114, 322, F("Print"));
     }
   }
   else {
     if (selection == 1) {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Pause_A1 : ICON_Pause_1, 96, 252);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Pause_A1 : ICON_Pause_1, 96, 252);
       DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 96, 252, 175, 351);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 114, 322, F("Pause"));
     }
     else {
-      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (eeprom_settings.mainiconpack == 1) ? ICON_Pause_A0 : ICON_Pause_0, 96, 252);
+      DWIN_ICON_Show(customicons ? ICON_PACK : ICON, (mainpack == 1) ? ICON_Pause_A0 : ICON_Pause_0, 96, 252);
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.icons_menu_text, Color_White), Color_Bg_Blue, 114, 322, F("Pause"));
     }
   }
@@ -3462,14 +3462,14 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           case VISUAL_CUSTOM_ICONS:
             if (draw) {
               customicons = (eeprom_settings.LCDFlashed ? customicons : false);
-              eeprom_settings.mainiconpack = (customicons ? eeprom_settings.mainiconpack : 0);
+              mainpack = (customicons ? mainpack : 0);
               Draw_Menu_Item(row, ICON_Version, customicons, "Use Custom Icons");
               DWIN_Draw_Rectangle(1, Color_Bg_Black, 202, MBASE(row) + 14, 258, MBASE(row) - 2);
               DWIN_Draw_String(false, true, DWIN_FONT_MENU,  Color_White, Color_Bg_Black, 202, MBASE(row), (customicons ? F("Enable") : F("Disable")));
             }
             else {
               customicons = (eeprom_settings.LCDFlashed ? !customicons : false);
-              eeprom_settings.mainiconpack = (customicons ? eeprom_settings.mainiconpack : 0);
+              mainpack = (customicons ? mainpack : 0);
               DWIN_Draw_Rectangle(1, Color_Bg_Black, 202, MBASE(row) + 14, 258, MBASE(row) - 2);
               DWIN_Draw_String(false, true, DWIN_FONT_MENU, Color_White, Color_Bg_Black, 202, MBASE(row), (customicons ? F("Enable") : F("Disable")));
               Redraw_Screen();
@@ -3531,11 +3531,11 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           #if ENABLED(DWIN_CREALITY_LCD_CUSTOM_ICONS)
             case COLORSETTINGS_MAIN_ICONS:
               if (draw) {
-                eeprom_settings.mainiconpack = (customicons ? eeprom_settings.mainiconpack : 0);
+                mainpack = (customicons ? mainpack : 0);
                 Draw_Menu_Item(row, ICON_MaxSpeed, false,"Style Main Icons");
-                Draw_Option(eeprom_settings.mainiconpack, ico_pack, row);
+                Draw_Option(mainpack, ico_pack, row);
               }
-              else if (customicons) Modify_Option(eeprom_settings.mainiconpack, ico_pack, 1);
+              else if (customicons) Modify_Option(mainpack, ico_pack, 1);
               
               break;
           #endif
@@ -5862,7 +5862,7 @@ void CrealityDWINClass::Option_Control() {
         if (!(brm == eeprom_settings.baudratemode)) Popup_Handler(BaudrateSwitch);
         return;
       }
-      if (valuepointer == &ico_pack)  eeprom_settings.mainiconpack = tempvalue;
+      if (valuepointer == &ico_pack)  mainpack = tempvalue;
     }
     Draw_Option(tempvalue, static_cast<const char * const *>(valuepointer), selection-scrollpos, false, (valuepointer == &color_names));
     DWIN_UpdateLCD();
@@ -6620,6 +6620,7 @@ void CrealityDWINClass::Save_Settings(char * buff) {
   eeprom_settings.only_xy_A = p.a_xy ; eeprom_settings.only_xy_B = p.b_xy ; eeprom_settings.only_xy_C = p.c_xy;
   #if ENABLED(DWIN_CREALITY_LCD_CUSTOM_ICONS)
     eeprom_settings.customicons_status = customicons;
+    eeprom_settings.mainiconpack = mainpack;
   #endif
   memcpy(buff, &CrealityDWIN.eeprom_settings, min(sizeof(CrealityDWIN.eeprom_settings), eeprom_data_size));
   
@@ -6639,6 +6640,7 @@ void CrealityDWINClass::Load_Settings(const char *buff) {
   p.a_xy = eeprom_settings.only_xy_A ; p.b_xy = eeprom_settings.only_xy_B ; p.c_xy = eeprom_settings.only_xy_C ;
   #if ENABLED(DWIN_CREALITY_LCD_CUSTOM_ICONS)
     customicons = (eeprom_settings.LCDFlashed ? eeprom_settings.customicons_status : false);
+    mainpack = (customicons ? eeprom_settings.mainiconpack : 0);
   #endif
   Redraw_Screen();
   static bool init = true;

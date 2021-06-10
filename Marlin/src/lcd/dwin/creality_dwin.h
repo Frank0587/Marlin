@@ -369,14 +369,15 @@ public:
     bool customicons_status : 1;
     bool setoffsets : 1;
     bool LCDFlashed : 1;
+    uint8_t baudratemode : 1;
+    uint8_t mainiconpack : 1;
     bool only_xy_A : 1;
     bool only_xy_B : 1;
     bool only_xy_C : 1;
     float PositionA_x, PositionA_y, PositionA_z;
     float PositionB_x, PositionB_y, PositionB_z;
     float PositionC_x, PositionC_y, PositionC_z;
-    uint8_t baudratemode : 1;
-    uint8_t mainiconpack : 1;
+    
   } eeprom_settings;
 
   const char * const color_names[21] = {"Default","White","L_White","Blue","L_Blue","Yellow","L_Yello","Orange","L_Orang","Red","L_Red","Green","L_Green","Magenta","L_Magen","Cyan","L_Cyan","Brown","L_Brown","Black","Grey"};
@@ -387,6 +388,7 @@ public:
 
   bool beeperenable = true;
   bool customicons = false;
+  uint8_t mainpack = 0;
   uint8_t BAUD_PORT = 0;
   uint8_t brm = 0;
 
