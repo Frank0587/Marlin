@@ -29,7 +29,7 @@ with open(os.path.join(sys.path[0], sys.argv[1]), "r") as f:
 	for line in lines:         
             if line.startswith(';LAYER_CHANGE'):
                     count += 1 
-            if line.startswith(';LAYER:'):
+            if (line.startswith(';LAYER:') or line.startswith(';layer:')):
                     count += 1     
         
 with open(os.path.join(sys.path[0], sys.argv[1]), "w") as f:
@@ -38,6 +38,6 @@ with open(os.path.join(sys.path[0], sys.argv[1]), "w") as f:
             if line.startswith(';LAYER_CHANGE'):
 			            layer += 1
 			            f.write("M117 Layer %d/%s...\n" % (layer, count))
-            if line.startswith(';LAYER:'):
+            if (line.startswith(';LAYER:') or line.startswith(';layer:')):
 			            layer += 1
 			            f.write("M117 Layer %d/%s...\n" % (layer, count))
