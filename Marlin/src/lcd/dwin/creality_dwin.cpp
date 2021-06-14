@@ -89,7 +89,7 @@
 
 #define CORP_WEBSITE_E "L.Christophe"
 
-#define BUILD_NUMBER "2.0.3.i"
+#define BUILD_NUMBER "2.0.3.j"
 
 #define DWIN_FONT_MENU font8x16
 #define DWIN_FONT_STAT font10x20
@@ -184,6 +184,7 @@ bool blink = false;
 
 float zoffsetvalue = 0;
 uint8_t gridpoint;
+float corner_avg;
 
 bool probe_deployed = false;
 
@@ -990,19 +991,24 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
 
 void CrealityDWINClass::Draw_Popup(const char *line1, const char *line2,const char *line3, uint8_t mode, uint8_t icon/*=0*/) {
   if (process != Confirm && process != Popup && process != Wait) last_process = process;
-  if (process == Menu && mode == Popup) last_selection = selection;
+  if ((process == Menu || process == Wait) && mode == Popup) last_selection = selection;
   process = mode;
   Clear_Screen();
   const uint16_t color_bg = GetColor(eeprom_settings.popup_bg, Color_Bg_Window);
   DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.popup_highlight, color_bg), 13, 59, 259, 351);
   DWIN_Draw_Rectangle(1, GetColor(eeprom_settings.popup_bg, color_bg), 14, 60, 258, 350);
   uint8_t ypos;
-  if (mode == Popup || mode == Confirm)
+  uint8_t ypos_icon;
+  if (mode == Popup || mode == Confirm) {
     ypos = 150;
-  else
+    ypos_icon = 70;
+  }
+  else {
     ypos = 230;
+    ypos_icon = 101;
+  }
   if (icon > 0)
-    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, icon, 101, 105);
+    DWIN_ICON_Show(customicons ? ICON_PACK : ICON, icon, 101, ypos_icon);
   DWIN_Draw_String(false, true, DWIN_FONT_MENU, GetColor(eeprom_settings.popup_text, Popup_Text_Color), GetColor(eeprom_settings.popup_bg, Color_Bg_Window), (272 - 8 * strlen(line1)) / 2, ypos, F(line1));
   DWIN_Draw_String(false, true, DWIN_FONT_MENU, GetColor(eeprom_settings.popup_text, Popup_Text_Color), GetColor(eeprom_settings.popup_bg, Color_Bg_Window), (272 - 8 * strlen(line2)) / 2, ypos+30, F(line2));
   DWIN_Draw_String(false, true, DWIN_FONT_MENU, GetColor(eeprom_settings.popup_text, Popup_Text_Color), GetColor(eeprom_settings.popup_bg, Color_Bg_Window), (272 - 8 * strlen(line3)) / 2, ypos+60, F(line3));
@@ -1885,7 +1891,8 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
     case ManualLevel:
 
       #define MLEVEL_BACK 0
-      #define MLEVEL_BL (MLEVEL_BACK + 1)
+      #define MLEVEL_PROBE (MLEVEL_BACK + ENABLED(HAS_BED_PROBE))
+      #define MLEVEL_BL (MLEVEL_PROBE + 1)
       #define MLEVEL_TL (MLEVEL_BL + 1)
       #define MLEVEL_TR (MLEVEL_TL + 1)
       #define MLEVEL_BR (MLEVEL_TR + 1)
@@ -1894,6 +1901,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
       #define MLEVEL_TOTAL MLEVEL_ZPOS
 
       static float mlev_z_pos = 0;
+      static bool use_probe = false;
 
       switch (item) {
         case MLEVEL_BACK:
@@ -1907,6 +1915,28 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             Draw_Menu(Prepare, PREPARE_MANUALLEVEL);
           }
           break;
+        #if HAS_BED_PROBE
+          case MLEVEL_PROBE:
+            if (draw) {
+              Draw_Menu_Item(row, ICON_Zoffset, false, "Use Probe");
+              Draw_Checkbox(row, use_probe);
+            }
+            else {
+              use_probe = !use_probe;
+              Draw_Checkbox(row, use_probe);
+              if (use_probe) {
+                Popup_Handler(Level);
+                corner_avg = 0;
+                corner_avg += probe.probe_at_point(32.5f, 32.5f, PROBE_PT_RAISE);
+                corner_avg += probe.probe_at_point(32.5f, (Y_BED_SIZE + Y_MIN_POS) - 32.5f, PROBE_PT_RAISE);
+                corner_avg += probe.probe_at_point((X_BED_SIZE + X_MIN_POS) - 32.5f, (Y_BED_SIZE + Y_MIN_POS) - 32.5f, PROBE_PT_RAISE);
+                corner_avg += probe.probe_at_point((X_BED_SIZE + X_MIN_POS) - 32.5f, 32.5f, PROBE_PT_STOW);
+                corner_avg /= 4;
+                Redraw_Menu();
+              }
+            }
+            break;
+        #endif
         case MLEVEL_BL:
           if (draw) {
             Draw_Menu_Item(row, (customicons ? ICON_AxisBL : ICON_Axis), customicons, "Bottom Left");
@@ -1914,10 +1944,20 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           else {
             Popup_Handler(MoveWait);
             char buf[80];
-            sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", 32.5f, 32.5f, mlev_z_pos);
-            gcode.process_subcommands_now_P(buf);
-            planner.synchronize();
-            Redraw_Menu();
+            if (use_probe) {
+              #if HAS_BED_PROBE
+                sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f", 32.5f - probe.offset.x, 32.5f - probe.offset.y);
+                gcode.process_subcommands_now_P(buf);
+                planner.synchronize();
+                Popup_Handler(ManualProbing);
+              #endif
+            }
+            else {
+              sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", 32.5f, 32.5f, mlev_z_pos);
+              gcode.process_subcommands_now_P(buf);
+              planner.synchronize();
+              Redraw_Menu();
+            }
           }
           break;
         case MLEVEL_TL:
@@ -1927,10 +1967,20 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           else {
             Popup_Handler(MoveWait);
             char buf[80];
-            sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", 32.5f, (Y_BED_SIZE + Y_MIN_POS) - 32.5f, mlev_z_pos);
-            gcode.process_subcommands_now_P(buf);
-            planner.synchronize();
-            Redraw_Menu();
+            if (use_probe) {
+              #if HAS_BED_PROBE
+                sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f", 32.5f - probe.offset.x, (Y_BED_SIZE + Y_MIN_POS) - 32.5f - probe.offset.y);
+                gcode.process_subcommands_now_P(buf);
+                planner.synchronize();
+                Popup_Handler(ManualProbing);
+              #endif
+            }
+            else {
+              sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", 32.5f, (Y_BED_SIZE + Y_MIN_POS) - 32.5f, mlev_z_pos);
+              gcode.process_subcommands_now_P(buf);
+              planner.synchronize();
+              Redraw_Menu();
+            }
           }
           break;
         case MLEVEL_TR:
@@ -1940,10 +1990,20 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           else {
             Popup_Handler(MoveWait);
             char buf[80];
-            sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", (X_BED_SIZE + X_MIN_POS) - 32.5f, (Y_BED_SIZE + Y_MIN_POS) - 32.5f, mlev_z_pos);
-            gcode.process_subcommands_now_P(buf);
-            planner.synchronize();
-            Redraw_Menu();
+           if (use_probe) {
+              #if HAS_BED_PROBE
+                sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f", (X_BED_SIZE + X_MIN_POS) - 32.5f - probe.offset.x, (Y_BED_SIZE + Y_MIN_POS) - 32.5f - probe.offset.y);
+                gcode.process_subcommands_now_P(buf);
+                planner.synchronize();
+                Popup_Handler(ManualProbing);
+              #endif
+            }
+            else {
+              sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", (X_BED_SIZE + X_MIN_POS) - 32.5f, (Y_BED_SIZE + Y_MIN_POS) - 32.5f, mlev_z_pos);
+              gcode.process_subcommands_now_P(buf);
+              planner.synchronize();
+              Redraw_Menu();
+            }
           }
           break;
         case MLEVEL_BR:
@@ -1953,10 +2013,20 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           else {
             Popup_Handler(MoveWait);
             char buf[80];
-            sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", (X_BED_SIZE + X_MIN_POS) - 32.5f, 32.5f, mlev_z_pos);
-            gcode.process_subcommands_now_P(buf);
-            planner.synchronize();
-            Redraw_Menu();
+            if (use_probe) {
+              #if HAS_BED_PROBE
+                sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f", (X_BED_SIZE + X_MIN_POS) - 32.5f - probe.offset.x, 32.5f - probe.offset.y);
+                gcode.process_subcommands_now_P(buf);
+                planner.synchronize();
+                Popup_Handler(ManualProbing);
+              #endif
+            }
+            else {
+              sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", (X_BED_SIZE + X_MIN_POS) - 32.5f, 32.5f, mlev_z_pos);
+              gcode.process_subcommands_now_P(buf);
+              planner.synchronize();
+              Redraw_Menu();
+            }
           }
           break;
         case MLEVEL_C:
@@ -1966,10 +2036,20 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           else {
             Popup_Handler(MoveWait);
             char buf[80];
-            sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", (X_BED_SIZE + X_MIN_POS)/2.0f, (Y_BED_SIZE + Y_MIN_POS)/2.0f, mlev_z_pos);
-            gcode.process_subcommands_now_P(buf);
-            planner.synchronize();
-            Redraw_Menu();
+            if (use_probe) {
+              #if HAS_BED_PROBE
+                sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f", (X_BED_SIZE + X_MIN_POS)/2.0f - probe.offset.x, (Y_BED_SIZE + Y_MIN_POS)/2.0f - probe.offset.y);
+                gcode.process_subcommands_now_P(buf);
+                planner.synchronize();
+                Popup_Handler(ManualProbing);
+              #endif
+            }
+            else {
+              sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", (X_BED_SIZE + X_MIN_POS)/2.0f, (Y_BED_SIZE + Y_MIN_POS)/2.0f, mlev_z_pos);
+              gcode.process_subcommands_now_P(buf);
+              planner.synchronize();
+              Redraw_Menu();
+            }
           }
           break;
         case MLEVEL_ZPOS:
@@ -5563,6 +5643,9 @@ void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
     case ETemp:
       Draw_Popup("Nozzle is too cold", "Open Preheat Menu?", "", Popup);
       break;
+    case ManualProbing:
+      Draw_Popup("Manual Probing", "(Confirm to probe)", "(Cancel to exit)", Popup, ICON_AutoLeveling);
+      break;
     case Level:
       Draw_Popup("Auto Bed Leveling", "Please wait until done.", "", Wait, ICON_AutoLeveling);
       break;
@@ -5604,7 +5687,7 @@ void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
       Draw_Popup("Switch Baud Rate ?", "Continue to process", "(After Restart HOST !)", Popup);
       break;
     case MeshSlot:
-      Draw_Popup("No slot defined", option ? "To save Mesh" : "To load Mesh", "Continue to process", Popup);
+      Draw_Popup("No slot defined", option ? "To save Mesh" : "To load Mesh", "Continue to process", Popup, ICON_AutoLeveling);
       break;
     default:
       break;
@@ -6112,6 +6195,23 @@ void CrealityDWINClass::Popup_Control() {
           Redraw_Menu(true, true, false);
         }
         break;
+      #if HAS_BED_PROBE
+        case ManualProbing:
+          if (selection==0) {
+            char buf[80];
+            const float dif = probe.probe_at_point(current_position.x, current_position.y, PROBE_PT_STOW, 0, false) - corner_avg;
+            if (dif > 0)
+              sprintf(buf, "Corner is %.3fmm high", ABS(dif));
+            else
+              sprintf(buf, "Corner is %.3fmm low", ABS(dif));
+            Update_Status(buf);
+          }
+          else {
+            Redraw_Menu(true, true, false);
+            Update_Status("");
+          }
+          break;
+      #endif
       #if ENABLED(ADVANCED_PAUSE_FEATURE)
         case ConfFilChange:
           if (selection==0) {

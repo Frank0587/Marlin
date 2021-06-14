@@ -38,7 +38,7 @@ enum processID : uint8_t {
 
 enum PopupID : uint8_t {
   Pause, Stop, Resume, SaveLevel, ETemp, ConfFilChange, PurgeMore,
-  Level, Home, MoveWait, Heating,  FilLoad, FilChange, TempWarn, Runout, PIDHotend, PIDBed, Resuming,
+  Level, Home, MoveWait, Heating,  FilLoad, FilChange, TempWarn, Runout, PIDHotend, PIDBed, Resuming, ManualProbing,
   FilInsert, HeaterTime, UserInput, LevelError, InvalidMesh, NocreatePlane, UI, Complete, BadextruderNumber,
   TemptooHigh, PIDTimeout, PIDDone, QMovePosOK, Homingtodo, BaudrateSwitch, MeshSlot 
 };
