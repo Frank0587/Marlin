@@ -89,7 +89,7 @@
 
 #define CORP_WEBSITE_E "L.Christophe"
 
-#define BUILD_NUMBER "2.0.3.j"
+#define BUILD_NUMBER "2.0.3.k"
 
 #define DWIN_FONT_MENU font8x16
 #define DWIN_FONT_STAT font10x20
@@ -3877,7 +3877,8 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
       #define ADVANCED_FILSENSORDISTANCE (ADVANCED_FILSENSORENABLED + ENABLED(HAS_FILAMENT_RUNOUT_DISTANCE))
       #define ADVANCED_POWER_LOSS (ADVANCED_FILSENSORDISTANCE + ENABLED(POWER_LOSS_RECOVERY))
       #define ADVANCED_MESH (ADVANCED_POWER_LOSS + ENABLED(HAS_MESH))
-      #define ADVANCED_BAUDRATE_MODE (ADVANCED_MESH + ENABLED(BAUD_RATE_GCODE))
+      #define ADVANCED_RESET_PRINTCOUNTER (ADVANCED_MESH + ENABLED(PRINTCOUNTER))
+      #define ADVANCED_BAUDRATE_MODE (ADVANCED_RESET_PRINTCOUNTER + ENABLED(BAUD_RATE_GCODE))
       #define ADVANCED_TOTAL ADVANCED_BAUDRATE_MODE
 
       switch (item) {
@@ -4006,6 +4007,18 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             }
             break;
         #endif
+      #if ENABLED(PRINTCOUNTER)
+        case ADVANCED_RESET_PRINTCOUNTER:
+          if (draw) {
+            Draw_Menu_Item(row, ICON_HotendTemp, customicons, "Reset Print Counter");
+            }
+            else {
+              print_job_timer.initStats();
+              ui.reset_status();
+              AudioFeedback();
+              }
+          break;
+      #endif
       #if ENABLED(BAUD_RATE_GCODE)
         case ADVANCED_BAUDRATE_MODE:
           if (draw) {
