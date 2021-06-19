@@ -89,7 +89,7 @@
 
 #define CORP_WEBSITE_E "L.Christophe"
 
-#define BUILD_NUMBER "2.0.3.k"
+#define BUILD_NUMBER "2.0.3.l"
 
 #define DWIN_FONT_MENU font8x16
 #define DWIN_FONT_STAT font10x20
@@ -3469,10 +3469,10 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           case STEPS_E:
             if (draw) {
               Draw_Menu_Item(row, ICON_StepE, customicons, "Extruder");
-              Draw_Float(planner.settings.axis_steps_per_mm[E_AXIS], row, false, 10);
+              Draw_Float(planner.settings.axis_steps_per_mm[E_AXIS], row, false, 100);
             }
             else {
-              Modify_Value(planner.settings.axis_steps_per_mm[E_AXIS], 0, 1000, 10);
+              Modify_Value(planner.settings.axis_steps_per_mm[E_AXIS], 0, 2000, 100);
             }
             break;
         #endif
