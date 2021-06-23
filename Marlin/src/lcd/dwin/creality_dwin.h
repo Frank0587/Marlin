@@ -40,7 +40,7 @@ enum PopupID : uint8_t {
   Pause, Stop, Resume, SaveLevel, ETemp, ConfFilChange, PurgeMore,
   Level, Home, MoveWait, Heating,  FilLoad, FilChange, TempWarn, Runout, PIDHotend, PIDBed, Resuming, ManualProbing,
   FilInsert, HeaterTime, UserInput, LevelError, InvalidMesh, NocreatePlane, UI, Complete, BadextruderNumber,
-  TemptooHigh, PIDTimeout, PIDDone, QMovePosOK, Homingtodo, BaudrateSwitch, MeshSlot 
+  TemptooHigh, PIDTimeout, PIDDone, QMovePosOK, Homingtodo, BaudrateSwitch, MeshSlot
 };
 
 enum menuID : uint8_t {
@@ -289,12 +289,11 @@ enum menuID : uint8_t {
 #define font32x64 0x09
 
 enum colorID : uint8_t {
-  Default, White, Light_White, Blue, Light_Blue, Yellow, Light_Yellow, Orange, Light_Orange, Red, Light_Red, Green, Light_Green, Magenta, Light_Magenta, Cyan, Light_Cyan, Brown, Light_Brown, Black, Grey
+  Default, White, Light_White, Blue, Yellow, Orange, Red, Light_Red, Green, Light_Green, Magenta, Light_Magenta, Cyan, Light_Cyan, Brown, Black
 };
 
-#define Custom_Colors_no_Black       18
-#define Custom_Colors_no_Grey       19
-#define Custom_Colors       20
+#define Custom_Colors_no_Black       14
+#define Custom_Colors       15
 #define Color_White         0xFFFF
 #define Color_Light_White   0xBDD7
 #define Color_Green         0x07E0
@@ -338,49 +337,50 @@ public:
     #if ENABLED(AUTO_BED_LEVELING_UBL)
       uint8_t tilt_grid_size : 3;
     #endif
-    uint8_t cursor_color : 5;
-    uint8_t menu_split_line : 5;
-    uint8_t items_menu_text : 5;
-    uint8_t icons_menu_text : 5;
-    uint8_t popup_highlight : 5;
-    uint8_t popup_text : 5;
-    uint8_t popup_bg : 5;
-    uint8_t menu_top_bg : 5;
-    uint8_t menu_top_txt : 5;
-    uint8_t highlight_box : 5;
-    uint8_t ico_confirm_txt : 5;
-    uint8_t ico_confirm_bg : 5;
-    uint8_t ico_cancel_txt : 5;
-    uint8_t ico_cancel_bg : 5;
-    uint8_t ico_continue_txt : 5;
-    uint8_t ico_continue_bg : 5;
-    uint8_t print_screen_txt : 5;
-    uint8_t print_filename : 5;
-    uint8_t progress_bar : 5;
-    uint8_t progress_percent : 5;
-    uint8_t remain_time : 5;
-    uint8_t elapsed_time : 5;
-    uint8_t status_bar_text : 5;
-    uint8_t status_area_text : 5;
-    uint8_t status_area_percent : 5;
-    uint8_t coordinates_text : 5;
-    uint8_t coordinates_split_line : 5;
+    uint8_t cursor_color : 4;
+    uint8_t menu_split_line : 4;
+    uint8_t items_menu_text : 4;
+    uint8_t icons_menu_text : 4;
+    uint8_t popup_highlight : 4;
+    uint8_t popup_text : 4;
+    uint8_t popup_bg : 4;
+    uint8_t menu_top_bg : 4;
+    uint8_t menu_top_txt : 4;
+    uint8_t highlight_box : 4;
+    uint8_t ico_confirm_txt : 4;
+    uint8_t ico_confirm_bg : 4;
+    uint8_t ico_cancel_txt : 4;
+    uint8_t ico_cancel_bg : 4;
+    uint8_t ico_continue_txt : 4;
+    uint8_t ico_continue_bg : 4;
+    uint8_t print_screen_txt : 4;
+    uint8_t print_filename : 4;
+    uint8_t progress_bar : 4;
+    uint8_t progress_percent : 4;
+    uint8_t remain_time : 4;
+    uint8_t elapsed_time : 4;
+    uint8_t status_bar_text : 4;
+    uint8_t status_area_text : 4;
+    uint8_t status_area_percent : 4;
+    uint8_t coordinates_text : 4;
+    uint8_t coordinates_split_line : 4;
     bool beeper_status : 1;
     bool customicons_status : 1;
     bool setoffsets : 1;
     bool LCDFlashed : 1;
     uint8_t baudratemode : 1;
     uint8_t mainiconpack : 1;
+    bool icorners_saved : 1;
     bool only_xy_A : 1;
     bool only_xy_B : 1;
     bool only_xy_C : 1;
     float PositionA_x, PositionA_y, PositionA_z;
     float PositionB_x, PositionB_y, PositionB_z;
     float PositionC_x, PositionC_y, PositionC_z;
-    
+    float inset_corners;
   } eeprom_settings;
 
-  const char * const color_names[21] = {"Default","White","L_White","Blue","L_Blue","Yellow","L_Yello","Orange","L_Orang","Red","L_Red","Green","L_Green","Magenta","L_Magen","Cyan","L_Cyan","Brown","L_Brown","Black","Grey"};
+  const char * const color_names[16] = {"Default","White","L_White","Blue","Yellow","Orange","Red","L_Red","Green","L_Green","Magenta","L_Magen","Cyan","L_Cyan","Brown","Black"};
   const char * const preheat_modes[3] = {"Both", "Hotend", "Bed"};
   const char * const baudrate_modes[2] = {"250000", "115200"};
 

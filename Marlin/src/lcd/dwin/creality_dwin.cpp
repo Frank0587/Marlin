@@ -89,7 +89,7 @@
 
 #define CORP_WEBSITE_E "L.Christophe"
 
-#define BUILD_NUMBER "2.0.3.l"
+#define BUILD_NUMBER "2.0.4.a"
 
 #define DWIN_FONT_MENU font8x16
 #define DWIN_FONT_STAT font10x20
@@ -185,6 +185,8 @@ bool blink = false;
 float zoffsetvalue = 0;
 uint8_t gridpoint;
 float corner_avg;
+xy_pos_t lfmin;
+xy_pos_t rbmin;
 
 bool probe_deployed = false;
 
@@ -456,9 +458,6 @@ uint16_t CrealityDWINClass::GetColor(uint8_t color, uint16_t original, bool ligh
     case Blue:
       return (light) ? Color_Light_Blue : Color_Blue;
       break;
-    case Light_Blue:
-      return Color_Light_Blue;
-      break;
     case Magenta:
       return (light) ? Color_Light_Magenta : Color_Magenta;
       break;
@@ -474,20 +473,11 @@ uint16_t CrealityDWINClass::GetColor(uint8_t color, uint16_t original, bool ligh
     case Orange:
       return (light) ? Color_Light_Orange : Color_Orange;
       break;
-    case Light_Orange:
-      return Color_Light_Orange;
-      break;
     case Yellow:
       return (light) ? Color_Light_Yellow : Color_Yellow;
       break;
-    case Light_Yellow:
-      return Color_Light_Yellow;
-      break;
     case Brown:
       return (light) ? Color_Light_Brown : Color_Brown;
-      break;
-    case Light_Brown:
-      return Color_Light_Brown;
       break;
     case Cyan:
       return (light) ? Color_Light_Cyan : Color_Cyan;
@@ -495,9 +485,6 @@ uint16_t CrealityDWINClass::GetColor(uint8_t color, uint16_t original, bool ligh
     case Light_Cyan:
       return Color_Light_Cyan;
       break;
-    case Grey:
-      return Color_Grey;
-      break;      
     case Black:
       return Color_Black;
       break;           
@@ -1925,12 +1912,17 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               use_probe = !use_probe;
               Draw_Checkbox(row, use_probe);
               if (use_probe) {
+                lfmin.x = _MAX((X_MIN_BED) + (PROBING_MARGIN_LEFT), (X_MIN_POS) + probe.offset.x) ;
+                lfmin.y = _MAX((Y_MIN_BED) + (PROBING_MARGIN_FRONT), (Y_MIN_POS) + probe.offset.y);
+                rbmin.x = _MIN((X_MAX_BED) - (PROBING_MARGIN_RIGHT), (X_MAX_POS) + probe.offset.x) ;
+                rbmin.y = _MIN((Y_MAX_BED) - (PROBING_MARGIN_BACK), (Y_MAX_POS) + probe.offset.y) ;
+
                 Popup_Handler(Level);
                 corner_avg = 0;
-                corner_avg += probe.probe_at_point(32.5f, 32.5f, PROBE_PT_RAISE);
-                corner_avg += probe.probe_at_point(32.5f, (Y_BED_SIZE + Y_MIN_POS) - 32.5f, PROBE_PT_RAISE);
-                corner_avg += probe.probe_at_point((X_BED_SIZE + X_MIN_POS) - 32.5f, (Y_BED_SIZE + Y_MIN_POS) - 32.5f, PROBE_PT_RAISE);
-                corner_avg += probe.probe_at_point((X_BED_SIZE + X_MIN_POS) - 32.5f, 32.5f, PROBE_PT_STOW);
+                corner_avg += probe.probe_at_point(max(eeprom_settings.inset_corners, lfmin.x), max(eeprom_settings.inset_corners, lfmin.y), PROBE_PT_RAISE);
+                corner_avg += probe.probe_at_point(max(eeprom_settings.inset_corners, lfmin.x), min((Y_BED_SIZE + Y_MIN_POS) - eeprom_settings.inset_corners, rbmin.y), PROBE_PT_RAISE);
+                corner_avg += probe.probe_at_point(min((X_BED_SIZE + X_MIN_POS) - eeprom_settings.inset_corners, rbmin.x), min((Y_BED_SIZE + Y_MIN_POS) - eeprom_settings.inset_corners, rbmin.y), PROBE_PT_RAISE);
+                corner_avg += probe.probe_at_point(min((X_BED_SIZE + X_MIN_POS) - eeprom_settings.inset_corners, rbmin.x), max(eeprom_settings.inset_corners, lfmin.y), PROBE_PT_STOW);
                 corner_avg /= 4;
                 Redraw_Menu();
               }
@@ -1946,14 +1938,14 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             char buf[80];
             if (use_probe) {
               #if HAS_BED_PROBE
-                sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f", 32.5f - probe.offset.x, 32.5f - probe.offset.y);
+                sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f", max(eeprom_settings.inset_corners, lfmin.x) - probe.offset.x, max(eeprom_settings.inset_corners, lfmin.y) - probe.offset.y);
                 gcode.process_subcommands_now_P(buf);
                 planner.synchronize();
                 Popup_Handler(ManualProbing);
               #endif
             }
             else {
-              sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", 32.5f, 32.5f, mlev_z_pos);
+              sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", eeprom_settings.inset_corners, eeprom_settings.inset_corners, mlev_z_pos);
               gcode.process_subcommands_now_P(buf);
               planner.synchronize();
               Redraw_Menu();
@@ -1969,14 +1961,14 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             char buf[80];
             if (use_probe) {
               #if HAS_BED_PROBE
-                sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f", 32.5f - probe.offset.x, (Y_BED_SIZE + Y_MIN_POS) - 32.5f - probe.offset.y);
+                sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f", max(eeprom_settings.inset_corners, lfmin.x) - probe.offset.x, min((Y_BED_SIZE + Y_MIN_POS) - eeprom_settings.inset_corners, rbmin.y) - probe.offset.y);
                 gcode.process_subcommands_now_P(buf);
                 planner.synchronize();
                 Popup_Handler(ManualProbing);
               #endif
             }
             else {
-              sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", 32.5f, (Y_BED_SIZE + Y_MIN_POS) - 32.5f, mlev_z_pos);
+              sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", eeprom_settings.inset_corners, (Y_BED_SIZE + Y_MIN_POS) - eeprom_settings.inset_corners, mlev_z_pos);
               gcode.process_subcommands_now_P(buf);
               planner.synchronize();
               Redraw_Menu();
@@ -1992,14 +1984,14 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             char buf[80];
            if (use_probe) {
               #if HAS_BED_PROBE
-                sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f", (X_BED_SIZE + X_MIN_POS) - 32.5f - probe.offset.x, (Y_BED_SIZE + Y_MIN_POS) - 32.5f - probe.offset.y);
+                sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f", min((X_BED_SIZE + X_MIN_POS) - eeprom_settings.inset_corners, rbmin.x) - probe.offset.x, min((Y_BED_SIZE + Y_MIN_POS) - eeprom_settings.inset_corners, rbmin.y) - probe.offset.y);
                 gcode.process_subcommands_now_P(buf);
                 planner.synchronize();
                 Popup_Handler(ManualProbing);
               #endif
             }
             else {
-              sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", (X_BED_SIZE + X_MIN_POS) - 32.5f, (Y_BED_SIZE + Y_MIN_POS) - 32.5f, mlev_z_pos);
+              sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", (X_BED_SIZE + X_MIN_POS) - eeprom_settings.inset_corners, (Y_BED_SIZE + Y_MIN_POS) - eeprom_settings.inset_corners, mlev_z_pos);
               gcode.process_subcommands_now_P(buf);
               planner.synchronize();
               Redraw_Menu();
@@ -2015,14 +2007,14 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             char buf[80];
             if (use_probe) {
               #if HAS_BED_PROBE
-                sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f", (X_BED_SIZE + X_MIN_POS) - 32.5f - probe.offset.x, 32.5f - probe.offset.y);
+                sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f", min((X_BED_SIZE + X_MIN_POS) - eeprom_settings.inset_corners, rbmin.x) - probe.offset.x, max(eeprom_settings.inset_corners, lfmin.y) - probe.offset.y);
                 gcode.process_subcommands_now_P(buf);
                 planner.synchronize();
                 Popup_Handler(ManualProbing);
               #endif
             }
             else {
-              sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", (X_BED_SIZE + X_MIN_POS) - 32.5f, 32.5f, mlev_z_pos);
+              sprintf(buf, "G0 F4000\nG0 Z10\nG0 X%f Y%f\nG0 F300 Z%f", (X_BED_SIZE + X_MIN_POS) - eeprom_settings.inset_corners, eeprom_settings.inset_corners, mlev_z_pos);
               gcode.process_subcommands_now_P(buf);
               planner.synchronize();
               Redraw_Menu();
@@ -2475,6 +2467,9 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               Draw_Menu_Item(row, ICON_Temperature, customicons, "Reset to Defaults");
             }
             else {
+              #if HAS_BED_PROBE
+                eeprom_settings.icorners_saved = false ;
+              #endif
               settings.reset();
               AudioFeedback();
             }
@@ -3625,7 +3620,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               Draw_Option(eeprom_settings.cursor_color, color_names, row, false, true);
             }
             else {
-              Modify_Option(eeprom_settings.cursor_color, color_names, Custom_Colors_no_Grey);
+              Modify_Option(eeprom_settings.cursor_color, color_names, Custom_Colors);
             }
             break;
           case COLORSETTINGS_SPLIT_LINE:
@@ -3652,7 +3647,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               Draw_Option(eeprom_settings.icons_menu_text, color_names, row, false, true);
             }
             else {
-              Modify_Option(eeprom_settings.icons_menu_text, color_names, Custom_Colors_no_Grey);
+              Modify_Option(eeprom_settings.icons_menu_text, color_names, Custom_Colors);
             }
             break;
           case COLORSETTINGS_POPUP_HIGHLIGHT:
@@ -4040,7 +4035,8 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #define BLTOUCH_XOFFSET (BLTOUCH_BACK + 1)
         #define BLTOUCH_YOFFSET (BLTOUCH_XOFFSET + 1)
         #define BLTOUCH_ZOFFSET (BLTOUCH_YOFFSET + 1)
-        #define BLTOUCH_ALARMR (BLTOUCH_ZOFFSET + ENABLED(BLTOUCH))
+        #define BLTOUCH_INSET_CORNERS (BLTOUCH_ZOFFSET + 1)
+        #define BLTOUCH_ALARMR (BLTOUCH_INSET_CORNERS + ENABLED(BLTOUCH))
         #define BLTOUCH_SELFTEST (BLTOUCH_ALARMR + ENABLED(BLTOUCH))
         #define BLTOUCH_MOVEP (BLTOUCH_SELFTEST + ENABLED(BLTOUCH))
         #define BLTOUCH_ACCURACY (BLTOUCH_MOVEP + 1)
@@ -4088,6 +4084,15 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               }
               else {
                 Modify_Value(probe.offset.z, -10, 10, 100);
+              }
+              break;
+            case BLTOUCH_INSET_CORNERS:
+              if (draw) {
+                Draw_Menu_Item(row, ICON_PrintSize, customicons, "Inset Corners");
+                Draw_Float(eeprom_settings.inset_corners, row, false, 10);
+              }
+              else {
+                Modify_Value(eeprom_settings.inset_corners, 0, 100, 10);
               }
               break;
             #if ENABLED(BLTOUCH)
@@ -5660,7 +5665,7 @@ void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
       Draw_Popup("Manual Probing", "(Confirm to probe)", "(Cancel to exit)", Popup, ICON_AutoLeveling);
       break;
     case Level:
-      Draw_Popup("Auto Bed Leveling", "Please wait until done.", "", Wait, ICON_AutoLeveling);
+      Draw_Popup(option ? "Probing in process" : "Auto Bed Leveling", "Please wait until done.", "", Wait, ICON_AutoLeveling);
       break;
     case Home:
       Draw_Popup(option ? "Parking" : "Homing", "Please wait until done.", "", Wait, ICON_BLTouch);
@@ -6211,6 +6216,7 @@ void CrealityDWINClass::Popup_Control() {
       #if HAS_BED_PROBE
         case ManualProbing:
           if (selection==0) {
+            Popup_Handler(Level, true);
             char buf[80];
             const float dif = probe.probe_at_point(current_position.x, current_position.y, PROBE_PT_STOW, 0, false) - corner_avg;
             if (dif > 0)
@@ -6218,6 +6224,7 @@ void CrealityDWINClass::Popup_Control() {
             else
               sprintf(buf, "Corner is %.3fmm low", ABS(dif));
             Update_Status(buf);
+            Popup_Handler(ManualProbing);
           }
           else {
             Redraw_Menu(true, true, false);
@@ -6726,6 +6733,9 @@ void CrealityDWINClass::Save_Settings(char * buff) {
   #if ENABLED(AUTO_BED_LEVELING_UBL)
     eeprom_settings.tilt_grid_size = mesh_conf.tilt_grid-1;
   #endif
+  #if HAS_BED_PROBE
+    eeprom_settings.icorners_saved = true ;
+  #endif
   eeprom_settings.beeper_status = !beeperenable;
   eeprom_settings.PositionA_x = p.a_x ; eeprom_settings.PositionA_y = p.a_y ; eeprom_settings.PositionA_z = p.a_z;
   eeprom_settings.PositionB_x = p.b_x ; eeprom_settings.PositionB_y = p.b_y ; eeprom_settings.PositionB_z = p.b_z;
@@ -6744,6 +6754,9 @@ void CrealityDWINClass::Load_Settings(const char *buff) {
   memcpy(&CrealityDWIN.eeprom_settings, buff, min(sizeof(CrealityDWIN.eeprom_settings), eeprom_data_size));
   #if ENABLED(AUTO_BED_LEVELING_UBL)
     mesh_conf.tilt_grid = eeprom_settings.tilt_grid_size+1;
+  #endif
+  #if HAS_BED_PROBE
+    if (!eeprom_settings.icorners_saved)  eeprom_settings.inset_corners = 32.5;
   #endif
   brm = eeprom_settings.baudratemode;
   beeperenable = !eeprom_settings.beeper_status;
