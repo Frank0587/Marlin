@@ -2467,9 +2467,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               Draw_Menu_Item(row, ICON_Temperature, customicons, "Reset to Defaults");
             }
             else {
-              #if HAS_BED_PROBE
-                eeprom_settings.icorners_saved = false ;
-              #endif
+              eeprom_settings.icorners_saved = false ;
               settings.reset();
               AudioFeedback();
             }
@@ -3864,7 +3862,8 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
       #define ADVANCED_BACK 0
       #define ADVANCED_BEEPER (ADVANCED_BACK + 1)
       #define ADVANCED_BLTOUCH (ADVANCED_BEEPER + ENABLED(HAS_BED_PROBE))
-      #define ADVANCED_LA (ADVANCED_BLTOUCH + ENABLED(LIN_ADVANCE))
+      #define ADVANCED_INSET_CORNERS (ADVANCED_BLTOUCH + 1)
+      #define ADVANCED_LA (ADVANCED_INSET_CORNERS + ENABLED(LIN_ADVANCE))
       #define ADVANCED_LOAD (ADVANCED_LA + ENABLED(ADVANCED_PAUSE_FEATURE))
       #define ADVANCED_UNLOAD (ADVANCED_LOAD + ENABLED(ADVANCED_PAUSE_FEATURE))
       #define ADVANCED_COLD_EXTRUDE  (ADVANCED_UNLOAD + ENABLED(PREVENT_COLD_EXTRUSION))
@@ -3905,6 +3904,15 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             }
             break;
         #endif
+        case ADVANCED_INSET_CORNERS:
+          if (draw) {
+            Draw_Menu_Item(row, ICON_PrintSize, customicons, "Inset Corners");
+            Draw_Float(eeprom_settings.inset_corners, row, false, 10);
+          }
+          else {
+            Modify_Value(eeprom_settings.inset_corners, 0, 100, 10);
+          }
+          break;
         #if ENABLED(LIN_ADVANCE)
           case ADVANCED_LA:
             if (draw) {
@@ -4035,8 +4043,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #define BLTOUCH_XOFFSET (BLTOUCH_BACK + 1)
         #define BLTOUCH_YOFFSET (BLTOUCH_XOFFSET + 1)
         #define BLTOUCH_ZOFFSET (BLTOUCH_YOFFSET + 1)
-        #define BLTOUCH_INSET_CORNERS (BLTOUCH_ZOFFSET + 1)
-        #define BLTOUCH_ALARMR (BLTOUCH_INSET_CORNERS + ENABLED(BLTOUCH))
+        #define BLTOUCH_ALARMR (BLTOUCH_ZOFFSET + ENABLED(BLTOUCH))
         #define BLTOUCH_SELFTEST (BLTOUCH_ALARMR + ENABLED(BLTOUCH))
         #define BLTOUCH_MOVEP (BLTOUCH_SELFTEST + ENABLED(BLTOUCH))
         #define BLTOUCH_ACCURACY (BLTOUCH_MOVEP + 1)
@@ -4084,15 +4091,6 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               }
               else {
                 Modify_Value(probe.offset.z, -10, 10, 100);
-              }
-              break;
-            case BLTOUCH_INSET_CORNERS:
-              if (draw) {
-                Draw_Menu_Item(row, ICON_PrintSize, customicons, "Inset Corners");
-                Draw_Float(eeprom_settings.inset_corners, row, false, 10);
-              }
-              else {
-                Modify_Value(eeprom_settings.inset_corners, 0, 100, 10);
               }
               break;
             #if ENABLED(BLTOUCH)
@@ -6733,9 +6731,7 @@ void CrealityDWINClass::Save_Settings(char * buff) {
   #if ENABLED(AUTO_BED_LEVELING_UBL)
     eeprom_settings.tilt_grid_size = mesh_conf.tilt_grid-1;
   #endif
-  #if HAS_BED_PROBE
-    eeprom_settings.icorners_saved = true ;
-  #endif
+  eeprom_settings.icorners_saved = true ;
   eeprom_settings.beeper_status = !beeperenable;
   eeprom_settings.PositionA_x = p.a_x ; eeprom_settings.PositionA_y = p.a_y ; eeprom_settings.PositionA_z = p.a_z;
   eeprom_settings.PositionB_x = p.b_x ; eeprom_settings.PositionB_y = p.b_y ; eeprom_settings.PositionB_z = p.b_z;
@@ -6755,9 +6751,7 @@ void CrealityDWINClass::Load_Settings(const char *buff) {
   #if ENABLED(AUTO_BED_LEVELING_UBL)
     mesh_conf.tilt_grid = eeprom_settings.tilt_grid_size+1;
   #endif
-  #if HAS_BED_PROBE
-    if (!eeprom_settings.icorners_saved)  eeprom_settings.inset_corners = 32.5;
-  #endif
+  if (!eeprom_settings.icorners_saved)  eeprom_settings.inset_corners = 32.5;
   brm = eeprom_settings.baudratemode;
   beeperenable = !eeprom_settings.beeper_status;
   p.a_x = eeprom_settings.PositionA_x ; p.a_y = eeprom_settings.PositionA_y ; p.a_z = eeprom_settings.PositionA_z ;
