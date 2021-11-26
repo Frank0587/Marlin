@@ -1,0 +1,4 @@
+Pour le modèle de STL SmartTemperatureTower choisi,
+copiez le contenu xxxxx_tower_before_layer_change_macro.txt
+dans PrusaSlicer, onglet Réglages de l'imprimante, rubrique G-Code avant changement de couche.
+Slicez ensuite le modèle...
