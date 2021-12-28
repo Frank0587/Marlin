@@ -1309,15 +1309,16 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
 
       #define MLEVEL_BACK 0
       #define MLEVEL_PROBE (MLEVEL_BACK + ENABLED(HAS_BED_PROBE))
-      #define MLEVEL_BL (MLEVEL_PROBE + 1)
-      #define MLEVEL_TL (MLEVEL_BL + 1)
-      #define MLEVEL_TR (MLEVEL_TL + 1)
-      #define MLEVEL_BR (MLEVEL_TR + 1)
-      #define MLEVEL_C (MLEVEL_BR + 1)
-      #define MLEVEL_ZPOS (MLEVEL_C + 1)
-      #define MLEVEL_TOTAL MLEVEL_ZPOS
+      #define MLEVEL_ZPOS (MLEVEL_PROBE + 1)
+      #define MLEVEL_FL (MLEVEL_ZPOS + 1)
+      #define MLEVEL_RL (MLEVEL_FL + 1)
+      #define MLEVEL_MR (MLEVEL_RL + 1)
+      #define MLEVEL_C  (MLEVEL_MR + 1)
+      #define MLEVEL_RR (MLEVEL_C + 1)
+      #define MLEVEL_FR (MLEVEL_RR + 1)
+      #define MLEVEL_TOTAL MLEVEL_FR
 
-      static float mlev_z_pos = 0;
+      static float mlev_z_pos = 0.20;
       static bool use_probe = false;
 
       switch (item) {
@@ -1355,9 +1356,17 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             }
             break;
         #endif
-        case MLEVEL_BL:
+        case MLEVEL_ZPOS:
+          if (draw) {
+            Draw_Menu_Item(row, ICON_SetZOffset, F("Z Position"));
+            Draw_Float(mlev_z_pos, row, false, 100);
+          }
+          else
+            Modify_Value(mlev_z_pos, 0, MAX_Z_OFFSET, 100);
+          break;
+        case MLEVEL_FL: 	// = Bottom L
           if (draw)
-            Draw_Menu_Item(row, ICON_AxisBL, F("Bottom Left"));
+            Draw_Menu_Item(row, ICON_AxisBL, F("Front Left"));
           else {
             Popup_Handler(MoveWait);
             if (use_probe) {
@@ -1376,9 +1385,9 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             }
           }
           break;
-        case MLEVEL_TL:
+        case MLEVEL_RL: 	// = Top L
           if (draw)
-            Draw_Menu_Item(row, ICON_AxisTL, F("Top Left"));
+            Draw_Menu_Item(row, ICON_AxisTL, F("Rear Left"));
           else {
             Popup_Handler(MoveWait);
             if (use_probe) {
@@ -1397,42 +1406,21 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             }
           }
           break;
-        case MLEVEL_TR:
+        case MLEVEL_MR:
           if (draw)
-            Draw_Menu_Item(row, ICON_AxisTR, F("Top Right"));
+            Draw_Menu_Item(row, ICON_AxisTR, F("Mid Right"));
           else {
             Popup_Handler(MoveWait);
             if (use_probe) {
               #if HAS_BED_PROBE
-                sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MAX, 1, 3, str_1), dtostrf(PROBE_Y_MAX, 1, 3, str_2));
+                sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MAX, 1, 3, str_1), dtostrf(Y_MAX_POS/2.0f - probe.offset.y, 1, 3, str_2));
                 gcode.process_subcommands_now(cmd);
                 planner.synchronize();
                 Popup_Handler(ManualProbing);
               #endif
             }
             else {
-              sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s\nG0 F300 Z%s"), dtostrf((X_BED_SIZE + X_MIN_POS) - corner_pos, 1, 3, str_1), dtostrf((Y_BED_SIZE + Y_MIN_POS) - corner_pos, 1, 3, str_2), dtostrf(mlev_z_pos, 1, 3, str_3));
-              gcode.process_subcommands_now(cmd);
-              planner.synchronize();
-              Redraw_Menu();
-            }
-          }
-          break;
-        case MLEVEL_BR:
-          if (draw)
-            Draw_Menu_Item(row, ICON_AxisBR, F("Bottom Right"));
-          else {
-            Popup_Handler(MoveWait);
-            if (use_probe) {
-              #if HAS_BED_PROBE
-                sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MAX, 1, 3, str_1), dtostrf(PROBE_Y_MIN, 1, 3, str_2));
-                gcode.process_subcommands_now(cmd);
-                planner.synchronize();
-                Popup_Handler(ManualProbing);
-              #endif
-            }
-            else {
-              sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s\nG0 F300 Z%s"), dtostrf((X_BED_SIZE + X_MIN_POS) - corner_pos, 1, 3, str_1), dtostrf(corner_pos, 1, 3, str_2), dtostrf(mlev_z_pos, 1, 3, str_3));
+              sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s\nG0 F300 Z%s"), dtostrf((X_BED_SIZE + X_MIN_POS) - corner_pos, 1, 3, str_1), dtostrf((Y_BED_SIZE + Y_MIN_POS)/2.0f, 1, 3, str_2), dtostrf(mlev_z_pos, 1, 3, str_3));
               gcode.process_subcommands_now(cmd);
               planner.synchronize();
               Redraw_Menu();
@@ -1460,13 +1448,47 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             }
           }
           break;
-        case MLEVEL_ZPOS:
-          if (draw) {
-            Draw_Menu_Item(row, ICON_SetZOffset, F("Z Position"));
-            Draw_Float(mlev_z_pos, row, false, 100);
+        case MLEVEL_RR: 	// = Top R
+          if (draw)
+            Draw_Menu_Item(row, ICON_AxisTR, F("Rear Right"));
+          else {
+            Popup_Handler(MoveWait);
+            if (use_probe) {
+              #if HAS_BED_PROBE
+                sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MAX, 1, 3, str_1), dtostrf(PROBE_Y_MAX, 1, 3, str_2));
+                gcode.process_subcommands_now(cmd);
+                planner.synchronize();
+                Popup_Handler(ManualProbing);
+              #endif
+            }
+            else {
+              sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s\nG0 F300 Z%s"), dtostrf((X_BED_SIZE + X_MIN_POS) - corner_pos, 1, 3, str_1), dtostrf((Y_BED_SIZE + Y_MIN_POS) - corner_pos, 1, 3, str_2), dtostrf(mlev_z_pos, 1, 3, str_3));
+              gcode.process_subcommands_now(cmd);
+              planner.synchronize();
+              Redraw_Menu();
+            }
           }
-          else
-            Modify_Value(mlev_z_pos, 0, MAX_Z_OFFSET, 100);
+          break;
+        case MLEVEL_FR:		// = Bottom R
+          if (draw)
+            Draw_Menu_Item(row, ICON_AxisBR, F("Front Right"));
+          else {
+            Popup_Handler(MoveWait);
+            if (use_probe) {
+              #if HAS_BED_PROBE
+                sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MAX, 1, 3, str_1), dtostrf(PROBE_Y_MIN, 1, 3, str_2));
+                gcode.process_subcommands_now(cmd);
+                planner.synchronize();
+                Popup_Handler(ManualProbing);
+              #endif
+            }
+            else {
+              sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s\nG0 F300 Z%s"), dtostrf((X_BED_SIZE + X_MIN_POS) - corner_pos, 1, 3, str_1), dtostrf(corner_pos, 1, 3, str_2), dtostrf(mlev_z_pos, 1, 3, str_3));
+              gcode.process_subcommands_now(cmd);
+              planner.synchronize();
+              Redraw_Menu();
+            }
+          }
           break;
       }
       break;
