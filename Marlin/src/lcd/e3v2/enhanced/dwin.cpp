@@ -2415,6 +2415,12 @@ void SetSpeed() { SetPIntOnClick(MIN_PRINT_SPEED, MAX_PRINT_SPEED); }
 void ApplyFlow() { planner.refresh_e_factor(0); }
 void SetFlow() { SetPIntOnClick(MIN_PRINT_FLOW, MAX_PRINT_FLOW, ApplyFlow); }
 
+float LevBedZvalue = 0.20;
+
+void setLevBedZvalue() {
+  SetPFloatOnClick(0.0, 3.0, 2);   
+}
+
 // Bed Tramming
 void Tram(uint8_t point) {
   char cmd[100] = "";
@@ -2426,6 +2432,7 @@ void Tram(uint8_t point) {
     float margin = PROBING_MARGIN;
   #else
     int16_t xpos = 0, ypos = 0;
+    char str_1[6] = "";
     int16_t margin = 30;
   #endif
 
@@ -2450,6 +2457,14 @@ void Tram(uint8_t point) {
       LCD_MESSAGE(MSG_LEVBED_C);
       xpos = X_BED_SIZE / 2; ypos = Y_BED_SIZE / 2;
       break;
+    case 5:
+      LCD_MESSAGE(MSG_LEVBED_ML);
+      xpos = margin; ypos = Y_BED_SIZE / 2;
+      break;
+    case 6:
+      LCD_MESSAGE(MSG_LEVBED_MR);
+      xpos = X_BED_SIZE - margin; ypos = Y_BED_SIZE / 2;
+      break;
   }
 
   #if HAS_ONESTEP_LEVELING
@@ -2468,7 +2483,7 @@ void Tram(uint8_t point) {
     inLev = false;
   #else
     planner.synchronize();
-    sprintf_P(cmd, PSTR("M420S0\nG28O\nG90\nG0Z5F300\nG0X%iY%iF5000\nG0Z0F300"), xpos, ypos);
+    sprintf_P(cmd, PSTR("M420S0\nG28O\nG90\nG0Z5F300\nG0X%iY%iF5000\nG0Z%sF300"), xpos, ypos, dtostrf(LevBedZvalue, 1, 3, str_1));
     queue.inject(cmd);
   #endif
 }
@@ -2478,6 +2493,8 @@ void TramFR() { Tram(1); }
 void TramBR() { Tram(2); }
 void TramBL() { Tram(3); }
 void TramC () { Tram(4); }
+void TramML() { Tram(5); }
+void TramMR() { Tram(6); }
 
 #if ENABLED(MESH_BED_LEVELING)
 
@@ -3239,6 +3256,15 @@ void Draw_Tramming_Menu() {
   if (CurrentMenu != TrammingMenu) {
     CurrentMenu = TrammingMenu;
     SetMenuTitle({0}, GET_TEXT_F(MSG_BED_TRAMMING)); // TODO: Chinese, English "Bed Tramming" JPG
+#if (1) // MOD_SP#2_BedWith3PointMounting
+    DWINUI::MenuItemsPrepare(6);
+    MENU_ITEM(ICON_Back, GET_TEXT_F(MSG_BUTTON_BACK), onDrawBack, Draw_Prepare_Menu);
+    MENU_ITEM(ICON_Zoffset, GET_TEXT_F(MSG_LEVBED_ZVAL), onDrawPFloat2Menu, setLevBedZvalue, &LevBedZvalue);
+    MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_FL), onDrawMenuItem, TramFL);
+    MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_BL), onDrawMenuItem, TramBL);
+    MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_MR), onDrawMenuItem, TramMR);
+    MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_C ), onDrawMenuItem, TramC );
+#else
     DWINUI::MenuItemsPrepare(6);
     MENU_ITEM(ICON_Back, GET_TEXT_F(MSG_BUTTON_BACK), onDrawBack, Draw_Prepare_Menu);
     MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_FL), onDrawMenuItem, TramFL);
@@ -3246,6 +3272,7 @@ void Draw_Tramming_Menu() {
     MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_BR), onDrawMenuItem, TramBR);
     MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_BL), onDrawMenuItem, TramBL);
     MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_C ), onDrawMenuItem, TramC );
+#endif
   }
   CurrentMenu->draw();
 }
