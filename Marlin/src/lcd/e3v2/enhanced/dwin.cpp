@@ -1103,7 +1103,8 @@ void Draw_Info_Menu() {
   Draw_Back_First();
 
   DWINUI::Draw_CenteredString(122, F(MACHINE_SIZE));
-  DWINUI::Draw_CenteredString(195, F(SHORT_BUILD_VERSION));
+  DWINUI::Draw_CenteredString(190, F(SHORT_BUILD_VERSION " - " STRING_CONFIG_H_AUTHOR));
+  DWINUI::Draw_CenteredString(205, F(__DATE__ " " __TIME__));
 
   if (HMI_IsChinese()) {
     Title.FrameCopy(30, 17, 28, 13);                        // "Info"
@@ -1120,7 +1121,7 @@ void Draw_Info_Menu() {
     DWIN_Frame_AreaCopy(1,   1, 164,  96, 175,  89, 248);   // "Contact details"
   }
   DWINUI::Draw_CenteredString(268, F(CORP_WEBSITE));
-
+  
   LOOP_L_N(i, 3) {
     DWINUI::Draw_Icon(ICON_PrintSize + i, ICOX, 99 + i * 73);
     DWIN_Draw_HLine(HMI_data.SplitLine_Color, 16, MBASE(2) + i * 73, 240);
