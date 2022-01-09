@@ -485,7 +485,7 @@ void Popup_window_PauseOrStop() {
     Draw_Select_Highlight(true);
   DWIN_UpdateLCD();
   }
-  else 
+  else
     DWIN_Popup_ConfirmCancel(ICON_BLTouch, select_print.now == PRINT_PAUSE_RESUME ? GET_TEXT_F(MSG_PAUSE_PRINT) : GET_TEXT_F(MSG_STOP_PRINT));
 }
 
@@ -731,11 +731,11 @@ void _update_axis_value(const AxisEnum axis, const uint16_t x, const uint16_t y,
 
   if (force || changed || draw_qmark || draw_empty) {
     if (blink && draw_qmark)
-      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, F("--?--"));
+      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, F("--??--"));
     else if (blink && draw_empty)
-      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, F("     "));
+      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, F("      "));
     else
-      DWINUI::Draw_Signed_Float(HMI_data.Coordinate_Color, HMI_data.Background_Color, 3, 1, x, y, p);
+      DWINUI::Draw_Signed_Float(HMI_data.Coordinate_Color, HMI_data.Background_Color, 3, 2, x, y, p);
   }
 }
 
@@ -2020,7 +2020,7 @@ void HMI_LockScreen() {
 #endif
 
 //=============================================================================
-// NEW MENU SUBSYSTEM 
+// NEW MENU SUBSYSTEM
 //=============================================================================
 
 // On click functions
@@ -2416,9 +2416,9 @@ void SetSpeed() { SetPIntOnClick(MIN_PRINT_SPEED, MAX_PRINT_SPEED); }
 void ApplyFlow() { planner.refresh_e_factor(0); }
 void SetFlow() { SetPIntOnClick(MIN_PRINT_FLOW, MAX_PRINT_FLOW, ApplyFlow); }
 
-float LevBedZvalue = 0.20;
+float TramZval = 0.20;
 
-void setLevBedZvalue() {
+void setTramZval() {
   SetPFloatOnClick(0.0, 3.0, 2);   
 }
 
@@ -2484,7 +2484,7 @@ void Tram(uint8_t point) {
     inLev = false;
   #else
     planner.synchronize();
-    sprintf_P(cmd, PSTR("M420S0\nG28O\nG90\nG0Z5F300\nG0X%iY%iF5000\nG0Z%sF300"), xpos, ypos, dtostrf(LevBedZvalue, 1, 3, str_1));
+    sprintf_P(cmd, PSTR("M420S0\nG28O\nG90\nG0Z5F300\nG0X%iY%iF5000\nG0Z%sF300"), xpos, ypos, dtostrf(TramZval, 1, 3, str_1));
     queue.inject(cmd);
   #endif
 }
@@ -3257,23 +3257,15 @@ void Draw_Tramming_Menu() {
   if (CurrentMenu != TrammingMenu) {
     CurrentMenu = TrammingMenu;
     SetMenuTitle({0}, GET_TEXT_F(MSG_BED_TRAMMING)); // TODO: Chinese, English "Bed Tramming" JPG
-#if (1) // MOD_SP#2_BedWith3PointMounting
     DWINUI::MenuItemsPrepare(6);
     MENU_ITEM(ICON_Back, GET_TEXT_F(MSG_BUTTON_BACK), onDrawBack, Draw_Prepare_Menu);
-    MENU_ITEM(ICON_Zoffset, GET_TEXT_F(MSG_LEVBED_ZVAL), onDrawPFloat2Menu, setLevBedZvalue, &LevBedZvalue);
+    // SP_MOD: Z-Value for Tramming
+    EDIT_ITEM(ICON_Zoffset, GET_TEXT_F(MSG_LEVBED_ZVAL), onDrawPFloat2Menu, setTramZval, &TramZval);
+    // SP_MOD: Tramming adapted to 3 point mounted bed
     MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_FL), onDrawMenuItem, TramFL);
     MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_BL), onDrawMenuItem, TramBL);
     MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_MR), onDrawMenuItem, TramMR);
     MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_C ), onDrawMenuItem, TramC );
-#else
-    DWINUI::MenuItemsPrepare(6);
-    MENU_ITEM(ICON_Back, GET_TEXT_F(MSG_BUTTON_BACK), onDrawBack, Draw_Prepare_Menu);
-    MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_FL), onDrawMenuItem, TramFL);
-    MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_FR), onDrawMenuItem, TramFR);
-    MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_BR), onDrawMenuItem, TramBR);
-    MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_BL), onDrawMenuItem, TramBL);
-    MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_C ), onDrawMenuItem, TramC );
-#endif
   }
   CurrentMenu->draw();
 }
