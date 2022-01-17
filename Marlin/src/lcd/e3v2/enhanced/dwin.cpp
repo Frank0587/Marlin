@@ -1120,7 +1120,7 @@ void Draw_Info_Menu() {
     DWIN_Frame_AreaCopy(1, 146, 151, 254, 161,  82, 175);   // "Firmware Version"
     DWIN_Frame_AreaCopy(1,   1, 164,  96, 175,  89, 248);   // "Contact details"
   }
-  DWINUI::Draw_CenteredString(268, F(CORP_WEBSITE));
+  DWINUI::Draw_CenteredString(268, F(CORP_WEBSITE  " (ENHANCED-UI)"));
   
   LOOP_L_N(i, 3) {
     DWINUI::Draw_Icon(ICON_PrintSize + i, ICOX, 99 + i * 73);
