@@ -1389,7 +1389,7 @@
   #if CAN_SHOW_REMAINING_TIME
     #define SHOW_REMAINING_TIME           // Display estimated time to completion
     #if ENABLED(SHOW_REMAINING_TIME)
-      //#define USE_M73_REMAINING_TIME    // Use remaining time from M73 command instead of estimation
+      #define USE_M73_REMAINING_TIME    // Use remaining time from M73 command instead of estimation
       #define ROTATE_PROGRESS_DISPLAY     // Display (P)rogress, (E)lapsed, and (R)emaining time
     #endif
   #endif
@@ -2006,12 +2006,12 @@
  * Override if the automatically selected points are inadequate.
  */
 #if EITHER(AUTO_BED_LEVELING_3POINT, AUTO_BED_LEVELING_UBL)
-  //#define PROBE_PT_1_X 15
-  //#define PROBE_PT_1_Y 180
-  //#define PROBE_PT_2_X 15
-  //#define PROBE_PT_2_Y 20
-  //#define PROBE_PT_3_X 170
-  //#define PROBE_PT_3_Y 20
+  #define PROBE_PT_1_X 30
+  #define PROBE_PT_1_Y 30
+  #define PROBE_PT_2_X 30
+  #define PROBE_PT_2_Y 200
+  #define PROBE_PT_3_X 200
+  #define PROBE_PT_3_Y 115
 #endif
 
 /**
