@@ -670,7 +670,7 @@ void CrealityDWINClass::Draw_Print_Screen() {
   Update_Status_Bar(true);
   Draw_Print_ProgressBar();
   Draw_Print_ProgressElapsed();
-  TERN_(USE_M73_REMAINING_TIME, Draw_Print_ProgressRemain());
+  TERN_(SHOW_REMAINING_TIME, Draw_Print_ProgressRemain());
   Draw_Print_Filename(true);
 }
 
@@ -714,7 +714,7 @@ void CrealityDWINClass::Draw_Print_ProgressBar() {
   DWIN_Draw_String(false, DWIN_FONT_MENU, GetColor(eeprom_settings.progress_percent, Percent_Color), Color_Bg_Black, 133, 133, F("%"));
 }
 
-#if ENABLED(USE_M73_REMAINING_TIME)
+#if ENABLED(SHOW_REMAINING_TIME)
 
   void CrealityDWINClass::Draw_Print_ProgressRemain() {
     uint16_t remainingtime = ui.get_remaining_time();
@@ -1348,11 +1348,18 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 #define PROBE_Y_MIN _MAX(0 + corner_pos, Y_MIN_POS + probe.offset.y, Y_MIN_POS + PROBING_MARGIN) - probe.offset.y
                 #define PROBE_Y_MAX _MIN((Y_BED_SIZE + Y_MIN_POS) - corner_pos, Y_MAX_POS + probe.offset.y, Y_MAX_POS - PROBING_MARGIN) - probe.offset.y
                 #define PROBE_Y_MID (Y_BED_SIZE/2 - probe.offset.y)
-                corner_avg += probe.probe_at_point(PROBE_X_MIN, PROBE_Y_MIN, PROBE_PT_RAISE, 0, false);
-                corner_avg += probe.probe_at_point(PROBE_X_MIN, PROBE_Y_MAX, PROBE_PT_RAISE, 0, false);
-                corner_avg += probe.probe_at_point(PROBE_X_MAX, PROBE_Y_MID, PROBE_PT_RAISE, 0, false);
-                corner_avg /= 3;
-                Redraw_Menu();
+                
+                //lift to 15mm at least
+                do_blocking_move_to_z(_MAX(current_position.z, 15), z_probe_fast_mm_s);
+
+// calc the average by multiple point
+//                corner_avg += probe.probe_at_point(PROBE_X_MIN, PROBE_Y_MIN, PROBE_PT_RAISE, 0, false);
+//                corner_avg += probe.probe_at_point(PROBE_X_MIN, PROBE_Y_MAX, PROBE_PT_RAISE, 0, false);
+//                corner_avg += probe.probe_at_point(PROBE_X_MAX, PROBE_Y_MID, PROBE_PT_RAISE, 0, false);
+//                corner_avg /= 3;
+// or: only one point at the middle
+                corner_avg = probe.probe_at_point(PROBE_X_MID, PROBE_Y_MID, PROBE_PT_RAISE, 0, false);
+                  Redraw_Menu();
               }
             }
             break;
@@ -4758,7 +4765,7 @@ void CrealityDWINClass::Start_Print(bool sd) {
     else
       strcpy_P(filename, "Host Print");
     TERN_(LCD_SET_PROGRESS_MANUALLY, ui.set_progress(0));
-    TERN_(USE_M73_REMAINING_TIME, ui.set_remaining_time(0));
+    TERN_(SHOW_REMAINING_TIME, ui.set_remaining_time(0));
     Draw_Print_Screen();
   }
 }
@@ -4768,7 +4775,7 @@ void CrealityDWINClass::Stop_Print() {
   sdprint = false;
   thermalManager.cooldown();
   TERN_(LCD_SET_PROGRESS_MANUALLY, ui.set_progress(100 * (PROGRESS_SCALE)));
-  TERN_(USE_M73_REMAINING_TIME, ui.set_remaining_time(0));
+  TERN_(SHOW_REMAINING_TIME, ui.set_remaining_time(0));
   Draw_Print_confirm();
 }
 
@@ -4845,7 +4852,7 @@ void CrealityDWINClass::Screen_Update() {
     if (process == Print) {
       Draw_Print_ProgressBar();
       Draw_Print_ProgressElapsed();
-      TERN_(USE_M73_REMAINING_TIME, Draw_Print_ProgressRemain());
+      TERN_(SHOW_REMAINING_TIME, Draw_Print_ProgressRemain());
     }
   }
 
