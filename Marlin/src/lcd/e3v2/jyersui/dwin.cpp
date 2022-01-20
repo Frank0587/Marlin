@@ -678,16 +678,19 @@ void CrealityDWINClass::Draw_Print_Filename(const bool reset/*=false*/) {
   static uint8_t namescrl = 0;
   if (reset) namescrl = 0;
   if (process == Print) {
-    constexpr int8_t maxlen = 30;
+    constexpr int8_t maxlen = 29;
     char *outstr = filename;
     size_t slen = strlen(filename);
     int8_t outlen = slen;
     if (slen > maxlen) {
       char dispname[maxlen + 1];
       int8_t pos = slen - namescrl, len = maxlen;
-      if (pos >= 0) {
-        NOMORE(len, pos);
-        LOOP_L_N(i, len) dispname[i] = filename[i + namescrl];
+      if (pos >= len) {
+        LOOP_L_N(i, maxlen) dispname[i] = filename[i + namescrl];
+      }
+      else if (pos >= 0) {
+        LOOP_L_N(i, pos) dispname[i] = filename[i + namescrl];
+        LOOP_S_L_N(i, pos, maxlen) dispname[i] = ' ';
       }
       else {
         const int8_t mp = maxlen + pos;
@@ -695,7 +698,7 @@ void CrealityDWINClass::Draw_Print_Filename(const bool reset/*=false*/) {
         LOOP_S_L_N(i, mp, maxlen) dispname[i] = filename[i - mp];
         if (mp <= 0) namescrl = 0;
       }
-      dispname[len] = '\0';
+      dispname[maxlen] = '\0';
       outstr = dispname;
       outlen = maxlen;
       namescrl++;
@@ -4359,34 +4362,40 @@ void CrealityDWINClass::Option_Control() {
 
 void CrealityDWINClass::File_Control() {
   EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
-  static uint8_t filescrl = 0;
+  static uint8_t namescrl = 0;
+  constexpr int8_t maxlen = MENU_CHAR_LIMIT;
   if (encoder_diffState == ENCODER_DIFF_NO) {
     if (selection > 0) {
       card.getfilename_sorted(SD_ORDER(selection - 1, card.get_num_Files()));
       char * const filename = card.longest_filename();
-      size_t len = strlen(filename);
-      int8_t pos = len;
+      size_t slen = strlen(filename);
       if (!card.flag.filenameIsDir)
-        while (pos && filename[pos] != '.') pos--;
-      if (pos > MENU_CHAR_LIMIT) {
+        while (slen && filename[slen] != '.') slen--;
+      if (slen > MENU_CHAR_LIMIT) {
         static millis_t time = 0;
         if (PENDING(millis(), time)) return;
         time = millis() + 200;
-        pos -= filescrl;
-        len = _MIN(pos, MENU_CHAR_LIMIT);
-        char name[len + 1];
-        if (pos >= 0) {
-          LOOP_L_N(i, len) name[i] = filename[i + filescrl];
+        char dispname[maxlen + 1];
+        int8_t pos = slen - namescrl, len = maxlen;
+        if (pos >= len) {
+          pos = len;
+          LOOP_L_N(i, pos) dispname[i] = filename[i + namescrl];
+        }
+        else if (pos >= 0) {
+          LOOP_L_N(i, pos) dispname[i] = filename[i + namescrl];
+          dispname[pos] = ' ';
+          dispname[pos+1] = '\0';
         }
         else {
-          LOOP_L_N(i, MENU_CHAR_LIMIT + pos) name[i] = ' ';
-          LOOP_S_L_N(i, MENU_CHAR_LIMIT + pos, MENU_CHAR_LIMIT) name[i] = filename[i - (MENU_CHAR_LIMIT + pos)];
+          const int8_t mp = maxlen + pos;
+          LOOP_L_N(i, mp) dispname[i] = ' ';
+          LOOP_S_L_N(i, mp, maxlen) dispname[i] = filename[i - mp];
+          if (mp <= 0) namescrl = 0;
         }
-        name[len] = '\0';
+        dispname[len] = '\0';
+        namescrl++;
         DWIN_Draw_Rectangle(1, Color_Bg_Black, LBLX, MBASE(selection - scrollpos) - 14, 271, MBASE(selection - scrollpos) + 28);
-        Draw_Menu_Item(selection - scrollpos, card.flag.filenameIsDir ? ICON_More : ICON_File, name);
-        if (-pos >= MENU_CHAR_LIMIT) filescrl = 0;
-        filescrl++;
+        Draw_Menu_Item(selection - scrollpos, card.flag.filenameIsDir ? ICON_More : ICON_File, dispname);
         DWIN_UpdateLCD();
       }
     }
@@ -4398,7 +4407,7 @@ void CrealityDWINClass::File_Control() {
       DWIN_Draw_Rectangle(1, Color_Bg_Black, LBLX, MBASE(selection - scrollpos) - 14, 271, MBASE(selection - scrollpos) + 28);
       Draw_SD_Item(selection, selection - scrollpos);
     }
-    filescrl = 0;
+    namescrl = 0;
     selection++; // Select Down
     if (selection > scrollpos + MROWS) {
       scrollpos++;
@@ -4411,7 +4420,7 @@ void CrealityDWINClass::File_Control() {
     DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, MBASE(selection - scrollpos) - 18, 14, MBASE(selection - scrollpos) + 33);
     DWIN_Draw_Rectangle(1, Color_Bg_Black, LBLX, MBASE(selection - scrollpos) - 14, 271, MBASE(selection - scrollpos) + 28);
     Draw_SD_Item(selection, selection - scrollpos);
-    filescrl = 0;
+    namescrl = 0;
     selection--; // Select Up
     if (selection < scrollpos) {
       scrollpos--;
