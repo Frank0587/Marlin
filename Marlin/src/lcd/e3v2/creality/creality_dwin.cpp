@@ -3608,8 +3608,8 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             #endif
             
             Draw_Menu_Item(INFO_SIZE, ICON_PrintSize, MACHINE_SIZE, NULL, false, true);
-            Draw_Menu_Item(INFO_VERSION, ICON_Version, SHORT_BUILD_VERSION, "Build Number: v" BUILD_NUMBER, false, true);
-            Draw_Menu_Item(INFO_CONTACT, ICON_Contact, CORP_WEBSITE_E, NULL, false, true);
+            Draw_Menu_Item(INFO_VERSION, ICON_Version, SHORT_BUILD_VERSION " - " STRING_CONFIG_H_AUTHOR, __DATE__ " " __TIME__, false, true);
+            Draw_Menu_Item(INFO_CONTACT, ICON_Contact, CORP_WEBSITE_E, "Build Number: v" BUILD_NUMBER, false, true);
           }
           else {
             if (menu == Info)

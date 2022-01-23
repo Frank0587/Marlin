@@ -36,7 +36,7 @@
  * Advanced settings can be found in Configuration_adv.h
  */
 
-// based on: [Jyers.Deprecated-JyersUI]\Configuration Files\E3V2 Templates\Default-NoProbe\Configuration.h
+// based on: [Jyers.Deprecated-JyersUI]\Configuration Files\E3V2 Templates\UBL-BLTouch-10x10\Configuration.h
 
 #define CONFIGURATION_H_VERSION 02000901
 
@@ -1023,10 +1023,10 @@
  * The probe replaces the Z-MIN endstop and is used for Z homing.
  * (Automatically enables USE_PROBE_FOR_Z_HOMING.)
  */
-#define Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN
+//#define Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN
 
 // Force the use of the probe for Z-axis homing
-//#define USE_PROBE_FOR_Z_HOMING
+#define USE_PROBE_FOR_Z_HOMING
 
 /**
  * Z_MIN_PROBE_PIN
@@ -1080,7 +1080,7 @@
 /**
  * The BLTouch probe uses a Hall effect sensor and emulates a servo.
  */
-//#define BLTOUCH
+#define BLTOUCH
 
 /**
  * Touch-MI Probe by hotends.fr
@@ -1172,11 +1172,11 @@
  *     |    [-]    |
  *     O-- FRONT --+
  */
-#define NOZZLE_TO_PROBE_OFFSET { 0, 0, 0 }
+#define NOZZLE_TO_PROBE_OFFSET { -41, -5, 0 }
 
 // Most probes should stay away from the edges of the bed, but
 // with NOZZLE_AS_PROBE this can be negative for a wider probing area.
-#define PROBING_MARGIN 15
+#define PROBING_MARGIN 20
 
 // X and Y axis travel speed (mm/min) between probes
 #define XY_PROBE_FEEDRATE (133*60)
@@ -1223,7 +1223,7 @@
  * A total of 2 does fast/slow probes with a weighted average.
  * A total of 3 or more adds more slow probes, taking the average.
  */
-//#define MULTIPLE_PROBING 2
+#define MULTIPLE_PROBING 2
 //#define EXTRA_PROBING    1
 
 /**
@@ -1252,7 +1252,7 @@
 #define Z_PROBE_OFFSET_RANGE_MAX 10
 
 // Enable the M48 repeatability test to test probe accuracy
-//#define Z_MIN_PROBE_REPEATABILITY_TEST
+#define Z_MIN_PROBE_REPEATABILITY_TEST
 
 // Before deploy/stow pause for user confirmation
 //#define PAUSE_BEFORE_DEPLOY_STOW
@@ -1369,7 +1369,7 @@
 #define X_MIN_POS 0
 #define Y_MIN_POS 0
 #define Z_MIN_POS 0
-#define X_MAX_POS X_BED_SIZE
+#define X_MAX_POS X_BED_SIZE + 15 // Extended max to allow the probe to reach more of the bed.
 #define Y_MAX_POS Y_BED_SIZE
 #define Z_MAX_POS 250
 //#define I_MIN_POS 0
@@ -1530,7 +1530,7 @@
 //#define AUTO_BED_LEVELING_3POINT
 //#define AUTO_BED_LEVELING_LINEAR
 //#define AUTO_BED_LEVELING_BILINEAR
-//#define AUTO_BED_LEVELING_UBL
+#define AUTO_BED_LEVELING_UBL
 //#define MESH_BED_LEVELING
 
 /**
@@ -1538,7 +1538,7 @@
  * these options to restore the prior leveling state or to always enable
  * leveling immediately after G28.
  */
-//#define RESTORE_LEVELING_AFTER_G28
+#define RESTORE_LEVELING_AFTER_G28
 //#define ENABLE_LEVELING_AFTER_G28
 
 /**
@@ -1628,14 +1628,14 @@
 
   //#define MESH_EDIT_GFX_OVERLAY   // Display a graphics overlay while editing the mesh
 
-  #define MESH_INSET 1              // Set Mesh bounds as an inset region of the bed
-  #define GRID_MAX_POINTS_X 10      // Don't use more than 15 points per axis, implementation limited.
-  #define GRID_MAX_POINTS_Y GRID_MAX_POINTS_X
+  #define MESH_INSET 15             // Set Mesh bounds as an inset region of the bed
+  #define GRID_MAX_POINTS_X 7       // Don't use more than 15 points per axis, implementation limited.
+  #define GRID_MAX_POINTS_Y 6
 
   //#define UBL_HILBERT_CURVE       // Use Hilbert distribution for less travel when probing multiple points
 
   #define UBL_MESH_EDIT_MOVES_Z     // Sophisticated users prefer no movement of nozzle
-  #define UBL_SAVE_ACTIVE_ON_M500   // Save the currently active mesh in the current slot on M500
+  //#define UBL_SAVE_ACTIVE_ON_M500   // Save the currently active mesh in the current slot on M500
 
   //#define UBL_Z_RAISE_WHEN_OFF_MESH 2.5 // When the nozzle is off the mesh, this value is used
                                           // as the Z-Height correction value.
@@ -1730,11 +1730,11 @@
  * - Allows Z homing only when XY positions are known and trusted.
  * - If stepper drivers sleep, XY homing may be required again before Z homing.
  */
-//#define Z_SAFE_HOMING
+#define Z_SAFE_HOMING
 
 #if ENABLED(Z_SAFE_HOMING)
-  #define Z_SAFE_HOMING_X_POINT ((X_BED_SIZE - 10) / 2)    // X point for Z homing
-  #define Z_SAFE_HOMING_Y_POINT ((Y_BED_SIZE - 10) / 2)    // Y point for Z homing
+  #define Z_SAFE_HOMING_X_POINT ((X_BED_SIZE) / 2)  // X point for Z homing
+  #define Z_SAFE_HOMING_Y_POINT ((Y_BED_SIZE) / 2)  // Y point for Z homing
 #endif
 
 // Homing speeds (mm/min)
@@ -1856,12 +1856,12 @@
 #define PREHEAT_2_TEMP_BED     55
 #define PREHEAT_2_FAN_SPEED   255 // Value from 0 to 255
 
-#define PREHEAT_3_LABEL       "ABS"
-#define PREHEAT_3_TEMP_HOTEND 240
-#define PREHEAT_3_TEMP_BED     70
+#define PREHEAT_3_LABEL       "PETG"
+#define PREHEAT_3_TEMP_HOTEND 230
+#define PREHEAT_3_TEMP_BED     65
 #define PREHEAT_3_FAN_SPEED   255 // Value from 0 to 255
 
-#define PREHEAT_4_LABEL       "PETG"
+#define PREHEAT_4_LABEL       "ABS"
 #define PREHEAT_4_TEMP_HOTEND 240
 #define PREHEAT_4_TEMP_BED     70
 #define PREHEAT_4_FAN_SPEED   255 // Value from 0 to 255
@@ -1881,7 +1881,7 @@
 
 #if ENABLED(NOZZLE_PARK_FEATURE)
   // Specify a park position as { X, Y, Z_raise }
-  #define NOZZLE_PARK_POINT { (X_MIN_POS + 10), (Y_MAX_POS - 10), 20 }
+  #define NOZZLE_PARK_POINT { (X_MIN_POS + 30), (Y_MIN_POS + 10), 20 }
   //#define NOZZLE_PARK_X_ONLY          // X move only is required to park
   //#define NOZZLE_PARK_Y_ONLY          // Y move only is required to park
   #define NOZZLE_PARK_Z_RAISE_MIN   5   // (mm) Always raise Z by at least this distance
