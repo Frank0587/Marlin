@@ -89,7 +89,7 @@
 
 #define CORP_WEBSITE_E "L.Christophe"
 
-#define BUILD_NUMBER "2.0.4.a"
+#define BUILD_NUMBER "2.0.4.b"
 
 #define DWIN_FONT_MENU font8x16
 #define DWIN_FONT_STAT font10x20
@@ -4410,7 +4410,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 #if ENABLED(AUTO_BED_LEVELING_UBL)
                   #if HAS_BED_PROBE
                     Popup_Handler(Level);
-                    gcode.process_subcommands_now_P(PSTR("G29 P0\nG29 P1"));
+                    gcode.process_subcommands_now_P(PSTR("G29 P1"));
                     gcode.process_subcommands_now_P(PSTR("G29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nM420 S1"));
                     Update_Status("Probed all reachable points");
                     planner.synchronize();
@@ -6573,7 +6573,7 @@ void CrealityDWINClass::Screen_Update() {
   #endif
   #if HAS_ZOFFSET_ITEM
     static float lastzoffset = zoffsetvalue;
-    if (zoffsetvalue != lastzoffset) {
+    if (zoffsetvalue != lastzoffset && !printing) {
       lastzoffset = zoffsetvalue;
       #if HAS_BED_PROBE
         probe.offset.z = zoffsetvalue;
