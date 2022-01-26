@@ -96,7 +96,7 @@
 #define DWIN_FONT_HEAD font10x20
 
 #define MENU_CHAR_LIMIT  24
-#define STATUS_Y 348
+#define STATUS_Y 352
 
 #define MAX_PRINT_SPEED   500
 #define MIN_PRINT_SPEED   10
@@ -142,7 +142,7 @@ constexpr uint16_t TROWS = 6, MROWS = TROWS - 1,
 #define KEY_HEIGHT 30
 #define KEY_INSET 5
 #define KEY_PADDING 3
-#define KEY_Y_START DWIN_HEIGHT-(KEY_HEIGHT*4+2*(KEY_INSET+1))
+#define KEY_Y_START DWIN_HEIGHT-(KEY_HEIGHT*4+2*(KEY_INSET+1))   // = 348
 
 constexpr float default_max_feedrate[]        = DEFAULT_MAX_FEEDRATE;
 constexpr float default_max_acceleration[]    = DEFAULT_MAX_ACCELERATION;
@@ -676,11 +676,11 @@ void CrealityDWINClass::Print_Screen_Icons() {
     if (selection == 1) {
       DWIN_ICON_Show(ICON, ICON_Continue_1, 96, 252);
       DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 96, 252, 175, 351);
-      DWIN_Draw_String(false, false, DWIN_FONT_MENU, Color_White, Color_Bg_Blue, 114, 322, F("Print"));
+      DWIN_Draw_String(false, false, DWIN_FONT_MENU, Color_White, Color_Bg_Blue, 114, 322, F("Resume"));
     }
     else {
       DWIN_ICON_Show(ICON, ICON_Continue_0, 96, 252);
-      DWIN_Draw_String(false, false, DWIN_FONT_MENU, Color_White, Color_Bg_Blue, 114, 322, F("Print"));
+      DWIN_Draw_String(false, false, DWIN_FONT_MENU, Color_White, Color_Bg_Blue, 114, 322, F("Resume"));
     }
   }
   else {
@@ -700,7 +700,7 @@ void CrealityDWINClass::Draw_Print_Screen() {
   process = Print;
   selection = 0;
   Clear_Screen();
-  DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, 352, DWIN_WIDTH-8, 376);
+  DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, STATUS_Y, DWIN_WIDTH-8, 376);
   Draw_Title("Printing...");
   Print_Screen_Icons();
   DWIN_ICON_Show(ICON, ICON_PrintTime, 14, 171);
@@ -982,8 +982,9 @@ void CrealityDWINClass::Draw_Popup(const char *line1, const char *line2,const ch
   if ((process == Menu || process == Wait) && mode == Popup) last_selection = selection;
   process = mode;
   Clear_Screen();
-  DWIN_Draw_Rectangle(0, Color_White, 13, 59, 259, 351);
-  DWIN_Draw_Rectangle(1, Color_Bg_Window, 14, 60, 258, 350);
+  // must not overwrite status area due to recover
+  DWIN_Draw_Rectangle(0, Color_White, 13, 59, 259, STATUS_Y-1);
+  DWIN_Draw_Rectangle(1, Color_Bg_Window, 14, 60, 258, STATUS_Y-2); 
   uint8_t ypos;
   if (mode == Popup || mode == Confirm)
     ypos = 150;
@@ -1048,7 +1049,7 @@ void CrealityDWINClass::Update_Status_Bar(bool refresh/*=false*/) {
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.status_bar_text, Color_White), Color_Bg_Black, npos, 219, dispmsg);
     }
     else {
-      DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, 352, DWIN_WIDTH-8, 376);
+      DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, STATUS_Y, DWIN_WIDTH-8, 376);
       const int8_t npos = (DWIN_WIDTH - 30 * MENU_CHR_W) / 2;
       DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.status_bar_text, Color_White), Color_Bg_Black, npos, 357, dispmsg);
     }
@@ -1065,7 +1066,7 @@ void CrealityDWINClass::Update_Status_Bar(bool refresh/*=false*/) {
         DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.status_bar_text, Color_White), Color_Bg_Black, npos, 219, statusmsg);
       }
       else {
-        DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, 352, DWIN_WIDTH-8, 376);
+        DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, STATUS_Y, DWIN_WIDTH-8, 376);
         const int8_t npos = (DWIN_WIDTH - strlen(statusmsg) * MENU_CHR_W) / 2;
         DWIN_Draw_String(false, false, DWIN_FONT_MENU, GetColor(eeprom_settings.status_bar_text, Color_White), Color_Bg_Black, npos, 357, statusmsg);
       }
@@ -5566,6 +5567,7 @@ void CrealityDWINClass::Keyboard_Control() {
           if (string[0] == '\0') strcpy(string, "-");
           strcpy(stringpointer, string);
           process = Menu;
+          if (KEY_Y_START < STATUS_Y) DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, KEY_Y_START, DWIN_WIDTH, STATUS_Y); // Keyboard is higher than StatusArea
           Draw_Status_Area(true);
           Update_Status_Bar(true);
           break;
