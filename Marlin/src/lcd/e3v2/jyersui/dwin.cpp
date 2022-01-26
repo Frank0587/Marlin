@@ -82,6 +82,7 @@
 
 #define MACHINE_SIZE STRINGIFY(X_BED_SIZE) "x" STRINGIFY(Y_BED_SIZE) "x" STRINGIFY(Z_MAX_POS)
 
+
 #ifndef CORP_WEBSITE
    #define CORP_WEBSITE WEBSITE_URL
  #endif
@@ -690,11 +691,11 @@ void CrealityDWINClass::Print_Screen_Icons() {
     if (selection == 1) {
       DWIN_ICON_Show(ICON, ICON_Continue_1, 96, 252);
       DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 96, 252, 175, 351);
-      DWIN_Draw_String(false, DWIN_FONT_MENU, Color_White, Color_Bg_Blue, 114, 322, F("Print"));
+      DWIN_Draw_String(false, DWIN_FONT_MENU, Color_White, Color_Bg_Blue, 114, 322, F("Resume"));
     }
     else {
       DWIN_ICON_Show(ICON, ICON_Continue_0, 96, 252);
-      DWIN_Draw_String(false, DWIN_FONT_MENU, Color_White, Color_Bg_Blue, 114, 322, F("Print"));
+      DWIN_Draw_String(false, DWIN_FONT_MENU, Color_White, Color_Bg_Blue, 114, 322, F("Resume"));
     }
   }
   else {
@@ -714,7 +715,7 @@ void CrealityDWINClass::Draw_Print_Screen() {
   process = Print;
   selection = 0;
   Clear_Screen();
-  DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, 352, DWIN_WIDTH - 8, 376);
+  DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, STATUS_Y, DWIN_WIDTH-8, 376);
   Draw_Title("Printing...");
   Print_Screen_Icons();
   DWIN_ICON_Show(ICON, ICON_PrintTime, 14, 171);
@@ -978,8 +979,9 @@ void CrealityDWINClass::Draw_Popup(FSTR_P const line1, FSTR_P const line2, FSTR_
   if ((process == Menu || process == Wait) && mode == Popup) last_selection = selection;
   process = mode;
   Clear_Screen();
-  DWIN_Draw_Rectangle(0, Color_White, 13, 59, 259, 351);
-  DWIN_Draw_Rectangle(1, Color_Bg_Window, 14, 60, 258, 350);
+  // must not overwrite status area due to recover
+  DWIN_Draw_Rectangle(0, Color_White, 13, 59, 259, STATUS_Y-1);
+  DWIN_Draw_Rectangle(1, Color_Bg_Window, 14, 60, 258, STATUS_Y-2); 
   const uint8_t ypos = (mode == Popup || mode == Confirm) ? 150 : 230;
   if (icon > 0) DWIN_ICON_Show(ICON, icon, 101, 105);
   DWIN_Draw_String(true, DWIN_FONT_MENU, Popup_Text_Color, Color_Bg_Window, (272 - 8 * strlen_P(FTOP(line1))) / 2, ypos, line1);
@@ -1041,7 +1043,7 @@ void CrealityDWINClass::Update_Status_Bar(bool refresh/*=false*/) {
       DWIN_Draw_String(false, DWIN_FONT_MENU, GetColor(eeprom_settings.status_bar_text, Color_White), Color_Bg_Black, npos, 219, dispmsg);
     }
     else {
-      DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, 352, DWIN_WIDTH - 8, 376);
+      DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, STATUS_Y, DWIN_WIDTH-8, 376);
       const int8_t npos = (DWIN_WIDTH - STATUS_CHAR_LIMIT * MENU_CHR_W) / 2;
       DWIN_Draw_String(false, DWIN_FONT_MENU, GetColor(eeprom_settings.status_bar_text, Color_White), Color_Bg_Black, npos, 357, dispmsg);
     }
@@ -1057,7 +1059,7 @@ void CrealityDWINClass::Update_Status_Bar(bool refresh/*=false*/) {
         DWIN_Draw_String(false, DWIN_FONT_MENU, GetColor(eeprom_settings.status_bar_text, Color_White), Color_Bg_Black, npos, 219, statusmsg);
       }
       else {
-        DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, 352, DWIN_WIDTH - 8, 376);
+        DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, STATUS_Y, DWIN_WIDTH-8, 376);
         const int8_t npos = (DWIN_WIDTH - strlen(statusmsg) * MENU_CHR_W) / 2;
         DWIN_Draw_String(false, DWIN_FONT_MENU, GetColor(eeprom_settings.status_bar_text, Color_White), Color_Bg_Black, npos, 357, statusmsg);
       }
@@ -1485,15 +1487,16 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
 
       #define MLEVEL_BACK 0
       #define MLEVEL_PROBE (MLEVEL_BACK + ENABLED(HAS_BED_PROBE))
-      #define MLEVEL_BL (MLEVEL_PROBE + 1)
-      #define MLEVEL_TL (MLEVEL_BL + 1)
-      #define MLEVEL_TR (MLEVEL_TL + 1)
-      #define MLEVEL_BR (MLEVEL_TR + 1)
-      #define MLEVEL_C (MLEVEL_BR + 1)
-      #define MLEVEL_ZPOS (MLEVEL_C + 1)
-      #define MLEVEL_TOTAL MLEVEL_ZPOS
+      #define MLEVEL_ZPOS (MLEVEL_PROBE + 1)
+      #define MLEVEL_FL (MLEVEL_ZPOS + 1)
+      #define MLEVEL_RL (MLEVEL_FL + 1)
+      #define MLEVEL_MR (MLEVEL_RL + 1)
+      #define MLEVEL_C  (MLEVEL_MR + 1)
+      #define MLEVEL_RR (MLEVEL_C + 1)
+      #define MLEVEL_FR (MLEVEL_RR + 1)
+      #define MLEVEL_TOTAL MLEVEL_FR
 
-      static float mlev_z_pos = 0;
+      static float mlev_z_pos = 0.20;
       static bool use_probe = false;
 
       switch (item) {
@@ -1519,21 +1522,37 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 corner_avg = 0;
                 #define PROBE_X_MIN _MAX(0 + corner_pos, X_MIN_POS + probe.offset.x, X_MIN_POS + PROBING_MARGIN) - probe.offset.x
                 #define PROBE_X_MAX _MIN((X_BED_SIZE + X_MIN_POS) - corner_pos, X_MAX_POS + probe.offset.x, X_MAX_POS - PROBING_MARGIN) - probe.offset.x
+                #define PROBE_X_MID (X_BED_SIZE/2 - probe.offset.x)
                 #define PROBE_Y_MIN _MAX(0 + corner_pos, Y_MIN_POS + probe.offset.y, Y_MIN_POS + PROBING_MARGIN) - probe.offset.y
                 #define PROBE_Y_MAX _MIN((Y_BED_SIZE + Y_MIN_POS) - corner_pos, Y_MAX_POS + probe.offset.y, Y_MAX_POS - PROBING_MARGIN) - probe.offset.y
-                corner_avg += probe.probe_at_point(PROBE_X_MIN, PROBE_Y_MIN, PROBE_PT_RAISE, 0, false);
-                corner_avg += probe.probe_at_point(PROBE_X_MIN, PROBE_Y_MAX, PROBE_PT_RAISE, 0, false);
-                corner_avg += probe.probe_at_point(PROBE_X_MAX, PROBE_Y_MAX, PROBE_PT_RAISE, 0, false);
-                corner_avg += probe.probe_at_point(PROBE_X_MAX, PROBE_Y_MIN, PROBE_PT_STOW, 0, false);
-                corner_avg /= 4;
+                #define PROBE_Y_MID (Y_BED_SIZE/2 - probe.offset.y)
+                
+                //lift to 15mm at least
+                do_blocking_move_to_z(_MAX(current_position.z, 15), z_probe_fast_mm_s);
+
+// calc the average by multiple point
+//                corner_avg += probe.probe_at_point(PROBE_X_MIN, PROBE_Y_MIN, PROBE_PT_RAISE, 0, false);
+//                corner_avg += probe.probe_at_point(PROBE_X_MIN, PROBE_Y_MAX, PROBE_PT_RAISE, 0, false);
+//                corner_avg += probe.probe_at_point(PROBE_X_MAX, PROBE_Y_MID, PROBE_PT_RAISE, 0, false);
+//                corner_avg /= 3;
+// or: only one point at the middle
+                corner_avg = probe.probe_at_point(PROBE_X_MID, PROBE_Y_MID, PROBE_PT_RAISE, 0, false);
                 Redraw_Menu();
               }
             }
             break;
         #endif
-        case MLEVEL_BL:
+        case MLEVEL_ZPOS:
+          if (draw) {
+            Draw_Menu_Item(row, ICON_SetZOffset, F("Z Position"));
+            Draw_Float(mlev_z_pos, row, false, 100);
+          }
+          else
+            Modify_Value(mlev_z_pos, 0, MAX_Z_OFFSET, 100);
+          break;
+        case MLEVEL_FL:   // = BL
           if (draw)
-            Draw_Menu_Item(row, ICON_AxisBL, F("Bottom Left"));
+            Draw_Menu_Item(row, ICON_AxisBL, F("Front Left"));
           else {
             Popup_Handler(MoveWait);
             if (use_probe) {
@@ -1552,9 +1571,9 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             }
           }
           break;
-        case MLEVEL_TL:
+        case MLEVEL_RL:   // = TL
           if (draw)
-            Draw_Menu_Item(row, ICON_AxisTL, F("Top Left"));
+            Draw_Menu_Item(row, ICON_AxisTL, F("Rear Left"));
           else {
             Popup_Handler(MoveWait);
             if (use_probe) {
@@ -1573,9 +1592,51 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             }
           }
           break;
-        case MLEVEL_TR:
+        case MLEVEL_MR:
           if (draw)
-            Draw_Menu_Item(row, ICON_AxisTR, F("Top Right"));
+            Draw_Menu_Item(row, ICON_AxisC, F("Mid Right"));
+          else {
+            Popup_Handler(MoveWait);
+            if (use_probe) {
+              #if HAS_BED_PROBE
+                sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MAX, 1, 3, str_1), dtostrf(PROBE_Y_MID, 1, 3, str_2));
+                gcode.process_subcommands_now(cmd);
+                planner.synchronize();
+                Popup_Handler(ManualProbing);
+              #endif
+            }
+            else {
+              sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s\nG0 F300 Z%s"), dtostrf((X_BED_SIZE + X_MIN_POS) - corner_pos, 1, 3, str_1), dtostrf((Y_BED_SIZE + Y_MIN_POS) / 2.0f, 1, 3, str_2), dtostrf(mlev_z_pos, 1, 3, str_3));
+              gcode.process_subcommands_now(cmd);
+              planner.synchronize();
+              Redraw_Menu();
+            }
+          }
+          break;
+        case MLEVEL_C:
+          if (draw)
+            Draw_Menu_Item(row, ICON_AxisC, F("Center"));
+          else {
+            Popup_Handler(MoveWait);
+            if (use_probe) {
+              #if HAS_BED_PROBE
+                sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MID, 1, 3, str_1), dtostrf(PROBE_Y_MID, 1, 3, str_2));
+                gcode.process_subcommands_now(cmd);
+                planner.synchronize();
+                Popup_Handler(ManualProbing);
+              #endif
+            }
+            else {
+              sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s\nG0 F300 Z%s"), dtostrf((X_BED_SIZE + X_MIN_POS) / 2.0f, 1, 3, str_1), dtostrf((Y_BED_SIZE + Y_MIN_POS) / 2.0f, 1, 3, str_2), dtostrf(mlev_z_pos, 1, 3, str_3));
+              gcode.process_subcommands_now(cmd);
+              planner.synchronize();
+              Redraw_Menu();
+            }
+          }
+          break;
+        case MLEVEL_RR:   // = TR
+          if (draw)
+            Draw_Menu_Item(row, ICON_AxisTR, F("Rear Right"));
           else {
             Popup_Handler(MoveWait);
             if (use_probe) {
@@ -1594,9 +1655,9 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             }
           }
           break;
-        case MLEVEL_BR:
+        case MLEVEL_FR:   // = BR
           if (draw)
-            Draw_Menu_Item(row, ICON_AxisBR, F("Bottom Right"));
+            Draw_Menu_Item(row, ICON_AxisBR, F("Front Right"));
           else {
             Popup_Handler(MoveWait);
             if (use_probe) {
@@ -1614,35 +1675,6 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               Redraw_Menu();
             }
           }
-          break;
-        case MLEVEL_C:
-          if (draw)
-            Draw_Menu_Item(row, ICON_AxisC, F("Center"));
-          else {
-            Popup_Handler(MoveWait);
-            if (use_probe) {
-              #if HAS_BED_PROBE
-                sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf((X_BED_SIZE + X_MIN_POS) / 2.0f - probe.offset.x, 1, 3, str_1), dtostrf((Y_BED_SIZE + Y_MIN_POS) / 2.0f - probe.offset.y, 1, 3, str_2));
-                gcode.process_subcommands_now(cmd);
-                planner.synchronize();
-                Popup_Handler(ManualProbing);
-              #endif
-            }
-            else {
-              sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s\nG0 F300 Z%s"), dtostrf((X_BED_SIZE + X_MIN_POS) / 2.0f, 1, 3, str_1), dtostrf((Y_BED_SIZE + Y_MIN_POS) / 2.0f, 1, 3, str_2), dtostrf(mlev_z_pos, 1, 3, str_3));
-              gcode.process_subcommands_now(cmd);
-              planner.synchronize();
-              Redraw_Menu();
-            }
-          }
-          break;
-        case MLEVEL_ZPOS:
-          if (draw) {
-            Draw_Menu_Item(row, ICON_SetZOffset, F("Z Position"));
-            Draw_Float(mlev_z_pos, row, false, 100);
-          }
-          else
-            Modify_Value(mlev_z_pos, 0, MAX_Z_OFFSET, 100);
           break;
       }
       break;
@@ -3357,8 +3389,8 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             #endif
 
             Draw_Menu_Item(INFO_SIZE, ICON_PrintSize, F(MACHINE_SIZE), nullptr, false, true);
-            Draw_Menu_Item(INFO_VERSION, ICON_Version, F(SHORT_BUILD_VERSION), nullptr, false, true);
-            Draw_Menu_Item(INFO_CONTACT, ICON_Contact, F(CORP_WEBSITE), nullptr, false, true);
+            Draw_Menu_Item(INFO_VERSION, ICON_Version, F(SHORT_BUILD_VERSION " - " STRING_CONFIG_H_AUTHOR), F(__DATE__ " " __TIME__), false, true);
+            Draw_Menu_Item(INFO_CONTACT, ICON_Contact, F(CORP_WEBSITE), F("Branch: " GIT_BRANCH), false, true);
           }
           else {
             if (menu == Info)
@@ -3455,6 +3487,11 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 #endif
                 #if HAS_BED_PROBE
                   Popup_Handler(Level);
+
+                  // move to center before start the mesh
+                  sprintf_P(cmd, PSTR("G0 F4000 X%s Y%s"), dtostrf(PROBE_X_MID, 1, 3, str_1), dtostrf(PROBE_Y_MID, 1, 3, str_2));
+                  gcode.process_subcommands_now(cmd);
+
                   gcode.process_subcommands_now(F("G29 P0\nG29 P1"));
                   gcode.process_subcommands_now(F("G29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nM420 S1"));
                   planner.synchronize();
