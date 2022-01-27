@@ -29,7 +29,7 @@
 
 #if ENABLED(ADVANCED_PAUSE_FEATURE)
 
-//#define DEBUG_PAUSE_RESUME
+#define DEBUG_PAUSE_RESUME
 
 #include "../MarlinCore.h"
 #include "../gcode/gcode.h"

@@ -40,7 +40,7 @@
 #include "../../../libs/buzzer.h"
 #include "../../../inc/Conditionals_post.h"
 
-//#define DEBUG_OUT 1
+#define DEBUG_OUT 1
 #include "../../../core/debug_out.h"
 
 #if ENABLED(ADVANCED_PAUSE_FEATURE)
@@ -974,6 +974,10 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
 }
 
 void CrealityDWINClass::Draw_Popup(FSTR_P const line1, FSTR_P const line2, FSTR_P const line3, uint8_t mode, uint8_t icon/*=0*/) {
+
+  DEBUG_SECTION(est, "CrealityDWINClass", true);
+  DEBUG_ECHOLNPGM("Draw_Popup: ", line1);
+  
   if (process != Confirm && process != Popup && process != Wait) last_process = process;
   if ((process == Menu || process == Wait) && mode == Popup) last_selection = selection;
   process = mode;
@@ -5492,6 +5496,10 @@ void MarlinUI::init() {
 
 #if ENABLED(ADVANCED_PAUSE_FEATURE)
   void MarlinUI::pause_show_message(const PauseMessage message, const PauseMode mode/*=PAUSE_MODE_SAME*/, const uint8_t extruder/*=active_extruder*/) {
+
+  DEBUG_SECTION(est, "MarlinUI", true);
+  DEBUG_ECHOLNPGM("pause_show_message: ", message);
+  
     switch (message) {
       case PAUSE_MESSAGE_INSERT:  CrealityDWIN.Confirm_Handler(FilInsert);  break;
       case PAUSE_MESSAGE_PURGE:
