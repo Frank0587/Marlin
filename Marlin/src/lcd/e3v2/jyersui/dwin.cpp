@@ -4887,8 +4887,8 @@ void CrealityDWINClass::Popup_Control() {
       #if HAS_HOTEND
         case ETemp:
           if (selection == 0) {
-            thermalManager.setTargetHotend(EXTRUDE_MINTEMP, 0);
-            thermalManager.set_fan_speed(0, MAX_FAN_SPEED);
+//            thermalManager.setTargetHotend(EXTRUDE_MINTEMP, 0);
+//            thermalManager.set_fan_speed(0, MAX_FAN_SPEED);
             Draw_Menu(PreheatHotend);
           }
           else
