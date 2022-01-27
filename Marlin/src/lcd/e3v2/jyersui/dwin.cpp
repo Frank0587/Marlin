@@ -5455,7 +5455,7 @@ void CrealityDWINClass::Load_Settings(const char *buff) {
 void CrealityDWINClass::Reset_Settings() {
   eeprom_settings.time_format_textual = false;
   TERN_(AUTO_BED_LEVELING_UBL, eeprom_settings.tilt_grid_size = 0);
-  eeprom_settings.corner_pos = 325;
+  eeprom_settings.corner_pos = 300;
   eeprom_settings.cursor_color = 0;
   eeprom_settings.menu_split_line = 0;
   eeprom_settings.menu_top_bg = 0;
