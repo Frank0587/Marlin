@@ -62,7 +62,7 @@ void GcodeSuite::M125() {
 
   // Move XY axes to filament change position or given position
   if (parser.seenval('X')) park_point.x = RAW_X_POSITION(parser.linearval('X'));
-  if (parser.seenval('Y')) park_point.y = RAW_X_POSITION(parser.linearval('Y'));
+  if (parser.seenval('Y')) park_point.y = RAW_Y_POSITION(parser.linearval('Y'));
 
   // Lift Z axis
   if (parser.seenval('Z')) park_point.z = parser.linearval('Z');
