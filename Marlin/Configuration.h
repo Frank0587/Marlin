@@ -72,6 +72,7 @@
 #define STRING_CONFIG_H_AUTHOR "SP#J2" // Who made the changes.
 
 // Info shown at Info-Screen
+#define HW_FEATURE   "E3v2 +3DTouch +3point"
 #define CORP_WEBSITE "github.com/Frank0587"
 #define GIT_BRANCH   "SP#J2-bugfix-JyersUI"
 
