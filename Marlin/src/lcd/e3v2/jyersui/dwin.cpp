@@ -40,7 +40,7 @@
 #include "../../../libs/buzzer.h"
 #include "../../../inc/Conditionals_post.h"
 
-#define DEBUG_OUT 1
+#define DEBUG_OUT ENABLED(DEBUG_LCD_UI)
 #include "../../../core/debug_out.h"
 
 #if ENABLED(ADVANCED_PAUSE_FEATURE)

@@ -78,6 +78,9 @@
 
 //#define CUSTOM_VERSION_FILE Version.h // Path from the root directory (no quotes)
 
+#define DEBUG_PAUSE_RESUME    // Pause, M25, M125, M600, ...
+#define DEBUG_LCD_UI          // LCD dwinui, dwin_lcd, marlinui...
+
 /**
  * *** VENDORS PLEASE READ ***
  *

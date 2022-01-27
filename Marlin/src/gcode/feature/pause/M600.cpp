@@ -46,6 +46,9 @@
   #include "../../../feature/runout.h"
 #endif
 
+#define DEBUG_OUT ENABLED(DEBUG_PAUSE_RESUME)
+#include "../../../core/debug_out.h"
+
 /**
  * M600: Pause for filament change
  *

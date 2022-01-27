@@ -31,6 +31,9 @@
 
 #include "dwin_lcd.h"
 
+#define DEBUG_OUT ENABLED(DEBUG_LCD_UI)
+#include "../../../core/debug_out.h"
+
 /*-------------------------------------- System variable function --------------------------------------*/
 
 void DWIN_Startup() {}
