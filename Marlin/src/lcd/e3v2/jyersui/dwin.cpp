@@ -5098,6 +5098,7 @@ void CrealityDWINClass::Keyboard_Control() {
           if (string[0] == '\0') strcpy(string, "-");
           strcpy(stringpointer, string);
           process = Menu;
+          if (KEY_Y_START < STATUS_Y) DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, KEY_Y_START, DWIN_WIDTH, STATUS_Y); // Keyboard is higher than StatusArea
           Draw_Status_Area(true);
           Update_Status_Bar(true);
           break;
@@ -5289,7 +5290,7 @@ void CrealityDWINClass::Screen_Update() {
   }
 
   static millis_t statustime = 0;
-  if (ELAPSED(ms, statustime)) {
+  if (ELAPSED(ms, statustime) && process != Keyboard) {
     statustime = ms + 500;
     Draw_Status_Area();
   }
