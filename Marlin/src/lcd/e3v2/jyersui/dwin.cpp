@@ -975,9 +975,6 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
 
 void CrealityDWINClass::Draw_Popup(FSTR_P const line1, FSTR_P const line2, FSTR_P const line3, uint8_t mode, uint8_t icon/*=0*/) {
 
-  DEBUG_SECTION(est, "CrealityDWINClass", true);
-  DEBUG_ECHOLNPGM("Draw_Popup: ", line1);
-  
   if (process != Confirm && process != Popup && process != Wait) last_process = process;
   if ((process == Menu || process == Wait) && mode == Popup) last_selection = selection;
   process = mode;
@@ -4488,6 +4485,10 @@ uint8_t CrealityDWINClass::Get_Menu_Size(uint8_t menu) {
 
 void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
   popup = last_popup = popupid;
+
+  //DEBUG_SECTION(dwin, "CrealityDWINClass", true);
+  DEBUG_ECHOLNPGM("CrealityDWINClass::Popup_Handler (popupid=", popupid, ", option=", option, ")");
+
   switch (popupid) {
     case Pause:         Draw_Popup(F("Pause Print"), F(""), F(""), Popup); break;
     case Stop:          Draw_Popup(F("Stop Print"), F(""), F(""), Popup); break;
@@ -4513,6 +4514,10 @@ void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
 }
 
 void CrealityDWINClass::Confirm_Handler(PopupID popupid) {
+
+//  DEBUG_SECTION(dwin, "CrealityDWINClass", true);
+  DEBUG_ECHOLNPGM("CrealityDWINClass::Confirm_Handler (popupid=", popupid, ")");
+
   popup = popupid;
   switch (popupid) {
     case FilInsert:   Draw_Popup(F("Insert Filament"), F("Press to Continue"), F(""), Confirm); break;
@@ -5179,6 +5184,9 @@ void CrealityDWINClass::Modify_String(char * string, uint8_t maxlength, bool res
 /* Main Functions */
 
 void CrealityDWINClass::Update_Status(const char * const text) {
+  
+  DEBUG_ECHOLNPGM("CrealityDWINClass::Update_Status (", text, ")");
+  
   char header[4];
   LOOP_L_N(i, 3) header[i] = text[i];
   header[3] = '\0';
@@ -5226,6 +5234,15 @@ void CrealityDWINClass::Stop_Print() {
 }
 
 void CrealityDWINClass::Update() {
+
+//  DEBUG_SECTION(dwin, "CrealityDWINClass", true);
+  static uint8_t pro = 99;
+  static bool pri, pau, wfu;
+  if (pro !=process || pri != printing || pau != paused || wfu != wait_for_user) {
+    DEBUG_ECHOLNPGM("CrealityDWINClass::Update (process=", process, ", printing=", printing, ", paused=", paused, ", wait_for_user=", wait_for_user, ")");
+    pro=process; pri=printing; pau=paused; wfu=wait_for_user;
+  }
+
   State_Update();
   Screen_Update();
   switch (process) {
@@ -5497,8 +5514,8 @@ void MarlinUI::init() {
 #if ENABLED(ADVANCED_PAUSE_FEATURE)
   void MarlinUI::pause_show_message(const PauseMessage message, const PauseMode mode/*=PAUSE_MODE_SAME*/, const uint8_t extruder/*=active_extruder*/) {
 
-  DEBUG_SECTION(est, "MarlinUI", true);
-  DEBUG_ECHOLNPGM("pause_show_message: ", message);
+//  DEBUG_SECTION(est, "MarlinUI", true);
+  DEBUG_ECHOLNPGM("MarlinUI::pause_show_message (message=", message, ", mode=", mode, ")");
   
     switch (message) {
       case PAUSE_MESSAGE_INSERT:  CrealityDWIN.Confirm_Handler(FilInsert);  break;
