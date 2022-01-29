@@ -69,12 +69,12 @@
 // @section info
 
 // Author info of this build printed to the host during boot and M115
-#define STRING_CONFIG_H_AUTHOR "SP#J2" // Who made the changes.
+#define STRING_CONFIG_H_AUTHOR "SP#Jx" // Who made the changes.
 
 // Info shown at Info-Screen
 #define HW_FEATURE   "E3v2 +3DTouch +3point"
 #define CORP_WEBSITE "github.com/Frank0587"
-#define GIT_BRANCH   "SP#J2-bugfix-JyersUI"
+#define GIT_BRANCH   "SP#Jx_develop"
 
 //#define CUSTOM_VERSION_FILE Version.h // Path from the root directory (no quotes)
 
