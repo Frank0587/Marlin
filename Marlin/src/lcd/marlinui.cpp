@@ -27,8 +27,6 @@
 #define DEBUG_OUT ENABLED(DEBUG_LCD_UI)
 #include "../core/debug_out.h"
 
-
-
 #ifdef LED_BACKLIGHT_TIMEOUT
   #include "../feature/leds/leds.h"
 #endif
