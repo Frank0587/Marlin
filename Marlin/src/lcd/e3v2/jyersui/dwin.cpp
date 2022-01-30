@@ -4484,6 +4484,9 @@ uint8_t CrealityDWINClass::Get_Menu_Size(uint8_t menu) {
 
 void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
   popup = last_popup = popupid;
+
+  DEBUG_ECHOLNPGM("CrealityDWINClass::Popup_Handler (popupid=", popupid, ", option=", option, ")");
+
   switch (popupid) {
     case Pause:         Draw_Popup(F("Pause Print"), F(""), F(""), Popup); break;
     case Stop:          Draw_Popup(F("Stop Print"), F(""), F(""), Popup); break;
@@ -4509,6 +4512,9 @@ void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
 }
 
 void CrealityDWINClass::Confirm_Handler(PopupID popupid) {
+
+  DEBUG_ECHOLNPGM("CrealityDWINClass::Confirm_Handler (popupid=", popupid, ")");
+
   popup = popupid;
   switch (popupid) {
     case FilInsert:   Draw_Popup(F("Insert Filament"), F("Press to Continue"), F(""), Confirm); break;
@@ -5175,6 +5181,9 @@ void CrealityDWINClass::Modify_String(char * string, uint8_t maxlength, bool res
 /* Main Functions */
 
 void CrealityDWINClass::Update_Status(const char * const text) {
+  
+  DEBUG_ECHOLNPGM("CrealityDWINClass::Update_Status (", text, ")");
+  
   char header[4];
   LOOP_L_N(i, 3) header[i] = text[i];
   header[3] = '\0';
@@ -5222,6 +5231,15 @@ void CrealityDWINClass::Stop_Print() {
 }
 
 void CrealityDWINClass::Update() {
+
+//  DEBUG_SECTION(dwin, "CrealityDWINClass", true);
+  static uint8_t pro = 99;
+  static bool pri, pau, wfu;
+  if (pro !=process || pri != printing || pau != paused || wfu != wait_for_user) {
+    DEBUG_ECHOLNPGM("CrealityDWINClass::Update (process=", process, ", printing=", printing, ", paused=", paused, ", wait_for_user=", wait_for_user, ")");
+    pro=process; pri=printing; pau=paused; wfu=wait_for_user;
+  }
+
   State_Update();
   Screen_Update();
   switch (process) {
@@ -5492,6 +5510,9 @@ void MarlinUI::init_lcd() {
 
 #if ENABLED(ADVANCED_PAUSE_FEATURE)
   void MarlinUI::pause_show_message(const PauseMessage message, const PauseMode mode/*=PAUSE_MODE_SAME*/, const uint8_t extruder/*=active_extruder*/) {
+
+  DEBUG_ECHOLNPGM("MarlinUI::pause_show_message (message=", message, ", mode=", mode, ")");
+  
     switch (message) {
       case PAUSE_MESSAGE_INSERT:  CrealityDWIN.Confirm_Handler(FilInsert);  break;
       case PAUSE_MESSAGE_PURGE:
