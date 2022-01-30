@@ -82,7 +82,6 @@
 
 #define MACHINE_SIZE STRINGIFY(X_BED_SIZE) "x" STRINGIFY(Y_BED_SIZE) "x" STRINGIFY(Z_MAX_POS)
 
-
 #ifndef CORP_WEBSITE
    #define CORP_WEBSITE WEBSITE_URL
  #endif
@@ -733,18 +732,16 @@ void CrealityDWINClass::Draw_Print_Filename(const bool reset/*=false*/) {
   static uint8_t namescrl = 0;
   if (reset) namescrl = 0;
   if (process == Print) {
+    char dispname[STATUS_CHAR_LIMIT + 1];
+
     char *outstr = filename;
     size_t slen = strlen(filename);
-    char dispname[STATUS_CHAR_LIMIT + 1];
-    while (slen && filename[slen] != '.') slen--;
+    int8_t outlen = slen;
     if (slen > STATUS_CHAR_LIMIT) {
-      int8_t pos = slen - namescrl;
-      if (pos >= STATUS_CHAR_LIMIT) {
-        LOOP_L_N(i, STATUS_CHAR_LIMIT) dispname[i] = filename[i + namescrl];
-      }
-      else if (pos >= 0) {
-        LOOP_L_N(i, pos) dispname[i] = filename[i + namescrl];
-        LOOP_S_L_N(i, pos, STATUS_CHAR_LIMIT) dispname[i] = ' ';
+      int8_t pos = slen - namescrl, len = STATUS_CHAR_LIMIT;
+      if (pos >= 0) {
+        NOMORE(len, pos);
+        LOOP_L_N(i, len) dispname[i] = filename[i + namescrl];
       }
       else {
         const int8_t mp = STATUS_CHAR_LIMIT + pos;
@@ -752,12 +749,14 @@ void CrealityDWINClass::Draw_Print_Filename(const bool reset/*=false*/) {
         LOOP_S_L_N(i, mp, STATUS_CHAR_LIMIT) dispname[i] = filename[i - mp];
         if (mp <= 0) namescrl = 0;
       }
-      dispname[STATUS_CHAR_LIMIT] = '\0';
+      dispname[len] = '\0';
+      outstr = dispname;
+      outlen = STATUS_CHAR_LIMIT;
       namescrl++;
     }
     DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, 50, DWIN_WIDTH - 8, 80);
-    const int8_t npos = (DWIN_WIDTH - STATUS_CHAR_LIMIT * MENU_CHR_W) / 2;
-    DWIN_Draw_String(false, DWIN_FONT_MENU, Color_White, Color_Bg_Black, npos, 60, dispname);
+    const int8_t npos = (DWIN_WIDTH - outlen * MENU_CHR_W) / 2;
+    DWIN_Draw_String(false, DWIN_FONT_MENU, Color_White, Color_Bg_Black, npos, 60, outstr);
   }
 }
 
@@ -1530,12 +1529,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 //lift to 15mm at least
                 do_blocking_move_to_z(_MAX(current_position.z, 15), z_probe_fast_mm_s);
 
-// calc the average by multiple point
-//                corner_avg += probe.probe_at_point(PROBE_X_MIN, PROBE_Y_MIN, PROBE_PT_RAISE, 0, false);
-//                corner_avg += probe.probe_at_point(PROBE_X_MIN, PROBE_Y_MAX, PROBE_PT_RAISE, 0, false);
-//                corner_avg += probe.probe_at_point(PROBE_X_MAX, PROBE_Y_MID, PROBE_PT_RAISE, 0, false);
-//                corner_avg /= 3;
-// or: only one point at the middle
+                // one point at the middle as reference
                 corner_avg = probe.probe_at_point(PROBE_X_MID, PROBE_Y_MID, PROBE_PT_RAISE, 0, false);
                 Redraw_Menu();
               }
@@ -4683,40 +4677,34 @@ void CrealityDWINClass::Option_Control() {
 
 void CrealityDWINClass::File_Control() {
   EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
-  static uint8_t namescrl = 0;
-  constexpr int8_t maxlen = MENU_CHAR_LIMIT;
+  static uint8_t filescrl = 0;
   if (encoder_diffState == ENCODER_DIFF_NO) {
     if (selection > 0) {
       card.getfilename_sorted(SD_ORDER(selection - 1, card.get_num_Files()));
       char * const filename = card.longest_filename();
-      size_t slen = strlen(filename);
+      size_t len = strlen(filename);
+      int8_t pos = len;
       if (!card.flag.filenameIsDir)
-        while (slen && filename[slen] != '.') slen--;
-      if (slen > MENU_CHAR_LIMIT) {
+        while (pos && filename[pos] != '.') pos--;
+      if (pos > MENU_CHAR_LIMIT) {
         static millis_t time = 0;
         if (PENDING(millis(), time)) return;
         time = millis() + 200;
-        char dispname[maxlen + 1];
-        int8_t pos = slen - namescrl, len = maxlen;
-        if (pos >= len) {
-          pos = len;
-          LOOP_L_N(i, pos) dispname[i] = filename[i + namescrl];
-        }
-        else if (pos >= 0) {
-          LOOP_L_N(i, pos) dispname[i] = filename[i + namescrl];
-          dispname[pos] = ' ';
-          dispname[pos+1] = '\0';
+        pos -= filescrl;
+        len = _MIN((size_t)pos, (size_t)MENU_CHAR_LIMIT);
+        char name[len + 1];
+        if (pos >= 0) {
+          LOOP_L_N(i, len) name[i] = filename[i + filescrl];
         }
         else {
-          const int8_t mp = maxlen + pos;
-          LOOP_L_N(i, mp) dispname[i] = ' ';
-          LOOP_S_L_N(i, mp, maxlen) dispname[i] = filename[i - mp];
-          if (mp <= 0) namescrl = 0;
+          LOOP_L_N(i, MENU_CHAR_LIMIT + pos) name[i] = ' ';
+          LOOP_S_L_N(i, MENU_CHAR_LIMIT + pos, MENU_CHAR_LIMIT) name[i] = filename[i - (MENU_CHAR_LIMIT + pos)];
         }
-        dispname[len] = '\0';
-        namescrl++;
+        name[len] = '\0';
         DWIN_Draw_Rectangle(1, Color_Bg_Black, LBLX, MBASE(selection - scrollpos) - 14, 271, MBASE(selection - scrollpos) + 28);
-        Draw_Menu_Item(selection - scrollpos, card.flag.filenameIsDir ? ICON_More : ICON_File, dispname);
+        Draw_Menu_Item(selection - scrollpos, card.flag.filenameIsDir ? ICON_More : ICON_File, name);
+        if (-pos >= MENU_CHAR_LIMIT) filescrl = 0;
+        filescrl++;
         DWIN_UpdateLCD();
       }
     }
@@ -4728,7 +4716,7 @@ void CrealityDWINClass::File_Control() {
       DWIN_Draw_Rectangle(1, Color_Bg_Black, LBLX, MBASE(selection - scrollpos) - 14, 271, MBASE(selection - scrollpos) + 28);
       Draw_SD_Item(selection, selection - scrollpos);
     }
-    namescrl = 0;
+    filescrl = 0;
     selection++; // Select Down
     if (selection > scrollpos + MROWS) {
       scrollpos++;
@@ -4741,7 +4729,7 @@ void CrealityDWINClass::File_Control() {
     DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, MBASE(selection - scrollpos) - 18, 14, MBASE(selection - scrollpos) + 33);
     DWIN_Draw_Rectangle(1, Color_Bg_Black, LBLX, MBASE(selection - scrollpos) - 14, 271, MBASE(selection - scrollpos) + 28);
     Draw_SD_Item(selection, selection - scrollpos);
-    namescrl = 0;
+    filescrl = 0;
     selection--; // Select Up
     if (selection < scrollpos) {
       scrollpos--;

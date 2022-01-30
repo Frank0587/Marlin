@@ -25,6 +25,9 @@
 
 #include "../../../module/motion.h"
 
+#define DEBUG_OUT ENABLED(DEBUG_LEVELING_FEATURE)
+#include "../../../core/debug_out.h"
+
 #define UBL_VERSION "1.01"
 #define UBL_OK false
 #define UBL_ERR true
@@ -200,12 +203,48 @@ public:
    * z_correction_for_x_on_horizontal_mesh_line is an optimization for
    * the case where the printer is making a vertical line that only crosses horizontal mesh lines.
    */
-  static float z_correction_for_x_on_horizontal_mesh_line(const_float_t rx0, const int x1_i, const int yi);
+  static inline float z_correction_for_x_on_horizontal_mesh_line(const_float_t rx0, const int x1_i, const int yi) {
+    if (!WITHIN(x1_i, 0, (GRID_MAX_POINTS_X) - 1) || !WITHIN(yi, 0, (GRID_MAX_POINTS_Y) - 1)) {
+
+      if (DEBUGGING(LEVELING)) {
+        if (WITHIN(x1_i, 0, (GRID_MAX_POINTS_X) - 1)) DEBUG_ECHOPGM("yi"); else DEBUG_ECHOPGM("x1_i");
+        DEBUG_ECHOLNPGM(" out of bounds in z_correction_for_x_on_horizontal_mesh_line(rx0=", rx0, ",x1_i=", x1_i, ",yi=", yi, ")");
+      }
+
+      // The requested location is off the mesh. Return UBL_Z_RAISE_WHEN_OFF_MESH or NAN.
+      return _UBL_OUTER_Z_RAISE;
+    }
+
+    const float xratio = (rx0 - mesh_index_to_xpos(x1_i)) * RECIPROCAL(MESH_X_DIST),
+                z1 = z_values[x1_i][yi];
+
+    return z1 + xratio * (z_values[_MIN(x1_i, (GRID_MAX_POINTS_X) - 2) + 1][yi] - z1);  // Don't allow x1_i+1 to be past the end of the array
+                                                                                        // If it is, it is clamped to the last element of the
+                                                                                        // z_values[][] array and no correction is applied.
+  }
 
   //
   // See comments above for z_correction_for_x_on_horizontal_mesh_line
   //
-  static float z_correction_for_y_on_vertical_mesh_line(const_float_t ry0, const int xi, const int y1_i);
+  static inline float z_correction_for_y_on_vertical_mesh_line(const_float_t ry0, const int xi, const int y1_i) {
+    if (!WITHIN(xi, 0, (GRID_MAX_POINTS_X) - 1) || !WITHIN(y1_i, 0, (GRID_MAX_POINTS_Y) - 1)) {
+
+      if (DEBUGGING(LEVELING)) {
+        if (WITHIN(xi, 0, (GRID_MAX_POINTS_X) - 1)) DEBUG_ECHOPGM("y1_i"); else DEBUG_ECHOPGM("xi");
+        DEBUG_ECHOLNPGM(" out of bounds in z_correction_for_y_on_vertical_mesh_line(ry0=", ry0, ", xi=", xi, ", y1_i=", y1_i, ")");
+      }
+
+      // The requested location is off the mesh. Return UBL_Z_RAISE_WHEN_OFF_MESH or NAN.
+      return _UBL_OUTER_Z_RAISE;
+    }
+
+    const float yratio = (ry0 - mesh_index_to_ypos(y1_i)) * RECIPROCAL(MESH_Y_DIST),
+                z1 = z_values[xi][y1_i];
+
+    return z1 + yratio * (z_values[xi][_MIN(y1_i, (GRID_MAX_POINTS_Y) - 2) + 1] - z1);  // Don't allow y1_i+1 to be past the end of the array
+                                                                                        // If it is, it is clamped to the last element of the
+                                                                                        // z_values[][] array and no correction is applied.
+  }
 
   /**
    * This is the generic Z-Correction. It works anywhere within a Mesh Cell. It first
@@ -213,8 +252,39 @@ public:
    * Z-Height at both ends. Then it does a linear interpolation of these heights based
    * on the Y position within the cell.
    */
-  static float get_z_correction(const_float_t rx0, const_float_t ry0);
-    
+  static float get_z_correction(const_float_t rx0, const_float_t ry0) {
+    const int8_t cx = cell_index_x(rx0), cy = cell_index_y(ry0); // return values are clamped
+
+    /**
+     * Check if the requested location is off the mesh.  If so, and
+     * UBL_Z_RAISE_WHEN_OFF_MESH is specified, that value is returned.
+     */
+    #ifdef UBL_Z_RAISE_WHEN_OFF_MESH
+      if (!WITHIN(rx0, MESH_MIN_X, MESH_MAX_X) || !WITHIN(ry0, MESH_MIN_Y, MESH_MAX_Y))
+        return UBL_Z_RAISE_WHEN_OFF_MESH;
+    #endif
+
+    const uint8_t mx = _MIN(cx, (GRID_MAX_POINTS_X) - 2) + 1, my = _MIN(cy, (GRID_MAX_POINTS_Y) - 2) + 1;
+    const float z1 = calc_z0(rx0, mesh_index_to_xpos(cx), z_values[cx][cy], mesh_index_to_xpos(cx + 1), z_values[mx][cy]);
+    const float z2 = calc_z0(rx0, mesh_index_to_xpos(cx), z_values[cx][my], mesh_index_to_xpos(cx + 1), z_values[mx][my]);
+    float z0 = calc_z0(ry0, mesh_index_to_ypos(cy), z1, mesh_index_to_ypos(cy + 1), z2);
+
+    if (isnan(z0)) { // if part of the Mesh is undefined, it will show up as NAN
+      z0 = 0.0;      // in ubl.z_values[][] and propagate through the
+                     // calculations. If our correction is NAN, we throw it out
+                     // because part of the Mesh is undefined and we don't have the
+                     // information we need to complete the height correction.
+
+      if (DEBUGGING(MESH_ADJUST)) DEBUG_ECHOLNPGM("??? Yikes! NAN in ");
+    }
+
+    if (DEBUGGING(MESH_ADJUST)) {
+      DEBUG_ECHOPGM("get_z_correction(", rx0, ", ", ry0);
+      DEBUG_ECHOLNPAIR_F(") => ", z0, 6);
+    }
+
+    return z0;
+  }
   static inline float get_z_correction(const xy_pos_t &pos) { return get_z_correction(pos.x, pos.y); }
 
   static inline float mesh_index_to_xpos(const uint8_t i) {
@@ -243,3 +313,5 @@ extern unified_bed_leveling ubl;
 #define _GET_MESH_Y(J) ubl.mesh_index_to_ypos(J)
 #define Z_VALUES_ARR ubl.z_values
 
+// Prevent debugging propagating to other files
+#include "../../../core/debug_out.h"
