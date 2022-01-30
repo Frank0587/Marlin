@@ -5008,13 +5008,15 @@ void CrealityDWINClass::Keyboard_Control() {
   }
   EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
-  if (encoder_diffState == ENCODER_DIFF_CW && key_selection < keyboard_size) {
+  if (encoder_diffState == ENCODER_DIFF_CW) {
     Draw_Keys(key_selection, false, uppercase, locked);
     key_selection++;
+    if (key_selection > keyboard_size) key_selection = 0;
     Draw_Keys(key_selection, true, uppercase, locked);
   }
-  else if (encoder_diffState == ENCODER_DIFF_CCW && key_selection > 0) {
+  else if (encoder_diffState == ENCODER_DIFF_CCW) {
     Draw_Keys(key_selection, false, uppercase, locked);
+    if (key_selection == 0) key_selection = keyboard_size+1;
     key_selection--;
     Draw_Keys(key_selection, true, uppercase, locked);
   }
