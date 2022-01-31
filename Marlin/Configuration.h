@@ -736,7 +736,8 @@
  * *** IT IS HIGHLY RECOMMENDED TO LEAVE THIS OPTION ENABLED! ***
  */
 #define PREVENT_COLD_EXTRUSION
-#define EXTRUDE_MINTEMP 180
+#define EXTRUDE_MINTEMP_INIT 180
+#define EXTRUDE_MINTEMP ( DEBUGGING(DRYRUN) ? 25 : thermalManager.extrude_min_temp )
 
 /**
  * Prevent a single extrusion longer than EXTRUDE_MAXLENGTH.

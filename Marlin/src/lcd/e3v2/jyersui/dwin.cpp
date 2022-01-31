@@ -980,7 +980,7 @@ void CrealityDWINClass::Draw_Popup(FSTR_P const line1, FSTR_P const line2, FSTR_
   Clear_Screen();
   // must not overwrite status area due to recover
   DWIN_Draw_Rectangle(0, Color_White, 13, 59, 259, STATUS_Y-1);
-  DWIN_Draw_Rectangle(1, Color_Bg_Window, 14, 60, 258, STATUS_Y-2); 
+  DWIN_Draw_Rectangle(1, Color_Bg_Window, 14, 60, 258, STATUS_Y-2);
   const uint8_t ypos = (mode == Popup || mode == Confirm) ? 150 : 230;
   if (icon > 0) DWIN_ICON_Show(ICON, icon, 101, 105);
   DWIN_Draw_String(true, DWIN_FONT_MENU, Popup_Text_Color, Color_Bg_Window, (272 - 8 * strlen_P(FTOP(line1))) / 2, ypos, line1);
@@ -1525,7 +1525,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 #define PROBE_Y_MIN _MAX(0 + corner_pos, Y_MIN_POS + probe.offset.y, Y_MIN_POS + PROBING_MARGIN) - probe.offset.y
                 #define PROBE_Y_MAX _MIN((Y_BED_SIZE + Y_MIN_POS) - corner_pos, Y_MAX_POS + probe.offset.y, Y_MAX_POS - PROBING_MARGIN) - probe.offset.y
                 #define PROBE_Y_MID (Y_BED_SIZE/2 - probe.offset.y)
-                
+
                 //lift to 15mm at least
                 do_blocking_move_to_z(_MAX(current_position.z, 15), z_probe_fast_mm_s);
 
@@ -4306,7 +4306,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               Draw_Float(thermalManager.temp_hotend[0].target, row, false, 1);
             }
             else
-              Modify_Value(thermalManager.temp_hotend[0].target, EXTRUDE_MINTEMP, MAX_E_TEMP, 1);
+              Modify_Value(thermalManager.temp_hotend[0].target, MIN_E_TEMP, MAX_E_TEMP, 1);
             break;
         }
         break;
@@ -5183,9 +5183,9 @@ void CrealityDWINClass::Modify_String(char * string, uint8_t maxlength, bool res
 /* Main Functions */
 
 void CrealityDWINClass::Update_Status(const char * const text) {
-  
+
   DEBUG_ECHOLNPGM("CrealityDWINClass::Update_Status (", text, ")");
-  
+
   char header[4];
   LOOP_L_N(i, 3) header[i] = text[i];
   header[3] = '\0';
@@ -5514,7 +5514,7 @@ void MarlinUI::init_lcd() {
   void MarlinUI::pause_show_message(const PauseMessage message, const PauseMode mode/*=PAUSE_MODE_SAME*/, const uint8_t extruder/*=active_extruder*/) {
 
   DEBUG_ECHOLNPGM("MarlinUI::pause_show_message (message=", message, ", mode=", mode, ")");
-  
+
     switch (message) {
       case PAUSE_MESSAGE_INSERT:  CrealityDWIN.Confirm_Handler(FilInsert);  break;
       case PAUSE_MESSAGE_PURGE:

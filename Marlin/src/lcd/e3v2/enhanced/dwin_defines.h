@@ -94,7 +94,7 @@ typedef struct {
     int16_t PidCycles = 10;
   #endif
   #if ENABLED(PREVENT_COLD_EXTRUSION)
-    int16_t ExtMinT = EXTRUDE_MINTEMP;
+    int16_t ExtMinT = EXTRUDE_MINTEMP_INIT;
   #endif
   // Led
   #if BOTH(LED_CONTROL_MENU, HAS_COLOR_LEDS)
