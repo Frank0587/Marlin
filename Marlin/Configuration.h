@@ -71,12 +71,12 @@
 // @section info
 
 // Author info of this build printed to the host during boot and M115
-#define STRING_CONFIG_H_AUTHOR "SP#4" // Who made the changes.
+#define STRING_CONFIG_H_AUTHOR "SP#5" // Who made the changes.
 
 // Info shown at Info-Screen
-#define HW_FEATURE   "Ender3 V2.SP#4"
+#define HW_FEATURE   "Ender3 V2.SP#5"
 #define CORP_WEBSITE "github.com/Frank0587"
-#define GIT_BRANCH   "SP#4-bugfix+Jy"
+#define GIT_BRANCH   "SP#5-all-in"
 
 //#define CUSTOM_VERSION_FILE Version.h // Path from the root directory (no quotes)
 
