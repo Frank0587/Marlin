@@ -21,8 +21,6 @@
  */
 #pragma once
 
-#define CONFIG_EXAMPLES_DIR "Creality/Ender-3 V2/CrealityV422/CrealityUI"
-
 /**
  * Configuration.h
  *
@@ -71,7 +69,7 @@
 // @section info
 
 // Author info of this build printed to the host during boot and M115
-#define STRING_CONFIG_H_AUTHOR "SP#3" // Who made the changes.
+#define STRING_CONFIG_H_AUTHOR "Jacob Myers" // Who made the changes.
 //#define CUSTOM_VERSION_FILE Version.h // Path from the root directory (no quotes)
 
 /**
@@ -95,11 +93,6 @@
 //#define CUSTOM_STATUS_SCREEN_IMAGE
 
 // @section machine
-
-// Choose the name from boards.h that matches your setup
-#ifndef MOTHERBOARD
-  #define MOTHERBOARD BOARD_CREALITY_V4
-#endif
 
 /**
  * Select the serial port on the board to use for communication with the host.
@@ -143,6 +136,11 @@
 
 // Enable the Bluetooth serial interface on AT90USB devices
 //#define BLUETOOTH
+
+// Choose the name from boards.h that matches your setup
+#ifndef MOTHERBOARD
+  #define MOTHERBOARD BOARD_CREALITY_V4
+#endif
 
 // Name displayed in the LCD "Ready" message and Info menu
 #define CUSTOM_MACHINE_NAME "Ender-3 V2"
@@ -262,6 +260,7 @@
 
   #define PARKING_EXTRUDER_PARKING_X { -78, 184 }     // X positions for parking the extruders
   #define PARKING_EXTRUDER_GRAB_DISTANCE 1            // (mm) Distance to move beyond the parking point to grab the extruder
+  //#define MANUAL_SOLENOID_CONTROL                   // Manual control of docking solenoids with M380 S / M381
 
   #if ENABLED(PARKING_EXTRUDER)
 
@@ -373,12 +372,8 @@
   //#define PS_OFF_SOUND            // Beep 1s when power off
   #define PSU_ACTIVE_STATE LOW      // Set 'LOW' for ATX, 'HIGH' for X-Box
 
-  //#define PSU_DEFAULT_OFF               // Keep power off until enabled directly with M80
-  //#define PSU_POWERUP_DELAY      250    // (ms) Delay for the PSU to warm up to full power
-  //#define LED_POWEROFF_TIMEOUT 10000    // (ms) Turn off LEDs after power-off, with this amount of delay
-
-  //#define POWER_OFF_TIMER               // Enable M81 D<seconds> to power off after a delay
-  //#define POWER_OFF_WAIT_FOR_COOLDOWN   // Enable M81 S to power off only after cooldown
+  //#define PSU_DEFAULT_OFF         // Keep power off until enabled directly with M80
+  //#define PSU_POWERUP_DELAY 250   // (ms) Delay for the PSU to warm up to full power
 
   //#define PSU_POWERUP_GCODE  "M355 S1"  // G-code to run after power-on (e.g., case light on)
   //#define PSU_POWEROFF_GCODE "M355 S0"  // G-code to run before power-off (e.g., case light off)
@@ -390,13 +385,11 @@
     #define AUTO_POWER_CONTROLLERFAN
     #define AUTO_POWER_CHAMBER_FAN
     #define AUTO_POWER_COOLER_FAN
+    //#define AUTO_POWER_E_TEMP        50 // (°C) Turn on PSU if any extruder is over this temperature
+    //#define AUTO_POWER_CHAMBER_TEMP  30 // (°C) Turn on PSU if the chamber is over this temperature
+    //#define AUTO_POWER_COOLER_TEMP   26 // (°C) Turn on PSU if the cooler is over this temperature
     #define POWER_TIMEOUT              30 // (s) Turn off power if the machine is idle for this duration
     //#define POWER_OFF_DELAY          60 // (s) Delay of poweroff after M81 command. Useful to let fans run for extra time.
-  #endif
-  #if EITHER(AUTO_POWER_CONTROL, POWER_OFF_WAIT_FOR_COOLDOWN)
-    //#define AUTO_POWER_E_TEMP        50 // (°C) PSU on if any extruder is over this temperature
-    //#define AUTO_POWER_CHAMBER_TEMP  30 // (°C) PSU on if the chamber is over this temperature
-    //#define AUTO_POWER_COOLER_TEMP   26 // (°C) PSU on if the cooler is over this temperature
   #endif
 #endif
 
@@ -764,7 +757,6 @@
 //#define COREZX
 //#define COREZY
 //#define MARKFORGED_XY  // MarkForged. See https://reprap.org/forum/read.php?152,504042
-//#define MARKFORGED_YX
 
 // Enable for a belt style printer with endless "Z" motion
 //#define BELTPRINTER
@@ -1038,7 +1030,7 @@
  * The probe replaces the Z-MIN endstop and is used for Z homing.
  * (Automatically enables USE_PROBE_FOR_Z_HOMING.)
  */
-// #define Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN
+//#define Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN
 
 // Force the use of the probe for Z-axis homing
 #define USE_PROBE_FOR_Z_HOMING
@@ -1096,17 +1088,6 @@
  * The BLTouch probe uses a Hall effect sensor and emulates a servo.
  */
 #define BLTOUCH
-
-/**
- * MagLev V4 probe by MDD
- *
- * This probe is deployed and activated by powering a built-in electromagnet.
- */
-//#define MAGLEV4
-#if ENABLED(MAGLEV4)
-  //#define MAGLEV_TRIGGER_PIN 11     // Set to the connected digital output
-  #define MAGLEV_TRIGGER_DELAY 15     // Changing this risks overheating the coil
-#endif
 
 /**
  * Touch-MI Probe by hotends.fr
@@ -1198,14 +1179,14 @@
  *     |    [-]    |
  *     O-- FRONT --+
  */
-#define NOZZLE_TO_PROBE_OFFSET { -41, -5, 0 }
+#define NOZZLE_TO_PROBE_OFFSET { -44, -7, 0 }
 
 // Most probes should stay away from the edges of the bed, but
 // with NOZZLE_AS_PROBE this can be negative for a wider probing area.
-#define PROBING_MARGIN 8
+#define PROBING_MARGIN 20
 
 // X and Y axis travel speed (mm/min) between probes
-#define XY_PROBE_FEEDRATE (150*60)
+#define XY_PROBE_FEEDRATE (133*60)
 
 // Feedrate (mm/min) for the first approach when double-probing (MULTIPLE_PROBING == 2)
 #define Z_PROBE_FEEDRATE_FAST (4*60)
@@ -1238,15 +1219,6 @@
   #if ENABLED(PROBE_ACTIVATION_SWITCH)
     //#define PROBE_TARE_ONLY_WHILE_INACTIVE  // Fail to tare/probe if PROBE_ACTIVATION_SWITCH is active
   #endif
-#endif
-
-/**
- * Probe Enable / Disable
- * The probe only provides a triggered signal when enabled.
- */
-//#define PROBE_ENABLE_DISABLE
-#if ENABLED(PROBE_ENABLE_DISABLE)
-  //#define PROBE_ENABLE_PIN -1   // Override the default pin here
 #endif
 
 /**
@@ -1462,9 +1434,9 @@
  * RAMPS-based boards use SERVO3_PIN for the first runout sensor.
  * For other boards you may need to define FIL_RUNOUT_PIN, FIL_RUNOUT2_PIN, etc.
  */
-//#define FILAMENT_RUNOUT_SENSOR
+#define FILAMENT_RUNOUT_SENSOR
 #if ENABLED(FILAMENT_RUNOUT_SENSOR)
-  #define FIL_RUNOUT_ENABLED_DEFAULT true // Enable the sensor on startup. Override with M412 followed by M500.
+  #define FIL_RUNOUT_ENABLED_DEFAULT false // Enable the sensor on startup. Override with M412 followed by M500.
   #define NUM_RUNOUT_SENSORS   1          // Number of sensors, up to one per extruder. Define a FIL_RUNOUT#_PIN for each.
 
   #define FIL_RUNOUT_STATE     LOW        // Pin state indicating that filament is NOT present.
@@ -1514,7 +1486,7 @@
   // After a runout is detected, continue printing this length of filament
   // before executing the runout script. Useful for a sensor at the end of
   // a feed tube. Requires 4 bytes SRAM per sensor, plus 4 bytes overhead.
-  //#define FILAMENT_RUNOUT_DISTANCE_MM 25
+  #define FILAMENT_RUNOUT_DISTANCE_MM 0
 
   #ifdef FILAMENT_RUNOUT_DISTANCE_MM
     // Enable this option to use an encoder disc that toggles the runout pin
@@ -1663,9 +1635,9 @@
 
   //#define MESH_EDIT_GFX_OVERLAY   // Display a graphics overlay while editing the mesh
 
-  #define MESH_INSET 15             // Set Mesh bounds as an inset region of the bed
-  #define GRID_MAX_POINTS_X 7       // Don't use more than 15 points per axis, implementation limited.
-  #define GRID_MAX_POINTS_Y 6
+  #define MESH_INSET 10              // Set Mesh bounds as an inset region of the bed
+  #define GRID_MAX_POINTS_X 10      // Don't use more than 15 points per axis, implementation limited.
+  #define GRID_MAX_POINTS_Y GRID_MAX_POINTS_X
 
   //#define UBL_HILBERT_CURVE       // Use Hilbert distribution for less travel when probing multiple points
 
@@ -1735,7 +1707,7 @@
    *  |  1       2  |   | 1         4 |    | 1         2 |   | 2           |
    *  LF --------- RF   LF --------- RF    LF --------- RF   LF --------- RF
    */
-  #define LEVEL_CORNERS_LEVELING_ORDER { LF, LB }
+  #define LEVEL_CORNERS_LEVELING_ORDER { LF, RF, RB, LB }
 #endif
 
 /**
@@ -1768,8 +1740,8 @@
 #define Z_SAFE_HOMING
 
 #if ENABLED(Z_SAFE_HOMING)
-  #define Z_SAFE_HOMING_X_POINT ((X_BED_SIZE) / 2)  // X point for Z homing
-  #define Z_SAFE_HOMING_Y_POINT ((Y_BED_SIZE) / 2)  // Y point for Z homing
+  #define Z_SAFE_HOMING_X_POINT ((X_BED_SIZE - 10) / 2)    // X point for Z homing
+  #define Z_SAFE_HOMING_Y_POINT ((Y_BED_SIZE - 10) / 2)    // Y point for Z homing
 #endif
 
 // Homing speeds (mm/min)
@@ -1856,7 +1828,6 @@
 #define EEPROM_BOOT_SILENT    // Keep M503 quiet and only give errors during first load
 #if ENABLED(EEPROM_SETTINGS)
   #define EEPROM_AUTO_INIT    // Init EEPROM automatically on any errors.
-  //#define EEPROM_INIT_NOW   // Init EEPROM on first boot after a new build.
 #endif
 
 //
@@ -1887,26 +1858,27 @@
 #define PREHEAT_1_LABEL       "Warmup"
 #define PREHEAT_1_TEMP_HOTEND 150
 #define PREHEAT_1_TEMP_BED     45
-#define PREHEAT_1_TEMP_CHAMBER 35
 #define PREHEAT_1_FAN_SPEED   255 // Value from 0 to 255
 
 #define PREHEAT_2_LABEL       "PLA"
 #define PREHEAT_2_TEMP_HOTEND 190
 #define PREHEAT_2_TEMP_BED     55
-#define PREHEAT_2_TEMP_CHAMBER 35
 #define PREHEAT_2_FAN_SPEED   255 // Value from 0 to 255
 
-#define PREHEAT_3_LABEL       "PETG"
-#define PREHEAT_3_TEMP_HOTEND 230
-#define PREHEAT_3_TEMP_BED     65
-#define PREHEAT_3_TEMP_CHAMBER 35
+#define PREHEAT_3_LABEL       "ABS"
+#define PREHEAT_3_TEMP_HOTEND 240
+#define PREHEAT_3_TEMP_BED     70
 #define PREHEAT_3_FAN_SPEED   255 // Value from 0 to 255
 
-#define PREHEAT_4_LABEL       "ABS"
+#define PREHEAT_4_LABEL       "PETG"
 #define PREHEAT_4_TEMP_HOTEND 240
 #define PREHEAT_4_TEMP_BED     70
-#define PREHEAT_3_TEMP_CHAMBER 35
 #define PREHEAT_4_FAN_SPEED   255 // Value from 0 to 255
+
+//#define PREHEAT_5_LABEL       "TPU"
+//#define PREHEAT_5_TEMP_HOTEND 230
+//#define PREHEAT_5_TEMP_BED     60
+//#define PREHEAT_5_FAN_SPEED   255 // Value from 0 to 255
 
 /**
  * Nozzle Park
@@ -1923,7 +1895,7 @@
 
 #if ENABLED(NOZZLE_PARK_FEATURE)
   // Specify a park position as { X, Y, Z_raise }
-  #define NOZZLE_PARK_POINT { (X_MIN_POS + 30), (Y_MIN_POS + 10), 20 }
+  #define NOZZLE_PARK_POINT { (X_MIN_POS + 10), (Y_MAX_POS - 10), 20 }
   //#define NOZZLE_PARK_X_ONLY          // X move only is required to park
   //#define NOZZLE_PARK_Y_ONLY          // Y move only is required to park
   #define NOZZLE_PARK_Z_RAISE_MIN   5   // (mm) Always raise Z by at least this distance
@@ -2492,11 +2464,6 @@
 //#define FYSETC_GENERIC_12864_1_1 // Larger display with basic ON/OFF backlight.
 
 //
-// BigTreeTech Mini 12864 V1.0 is an alias for FYSETC_MINI_12864_2_1. Type A/B. NeoPixel RGB Backlight.
-//
-//#define BTT_MINI_12864_V1
-
-//
 // Factory display for Creality CR-10
 // https://www.aliexpress.com/item/32833148327.html
 //
@@ -2828,11 +2795,23 @@
 //
 // Ender-3 v2 OEM display. A DWIN display with Rotary Encoder.
 //
-//#define DWIN_CREALITY_LCD           // Creality UI
-//#define DWIN_CREALITY_LCD_ENHANCED  // Enhanced UI
-#define DWIN_CREALITY_LCD_JYERSUI     // Jyers UI by Jacob Myers
-//#define DWIN_MARLINUI_PORTRAIT      // MarlinUI (portrait orientation)
-//#define DWIN_MARLINUI_LANDSCAPE     // MarlinUI (landscape orientation)
+//#define DWIN_CREALITY_LCD
+
+//
+// Ender-3 v2 OEM display, enhanced.
+//
+//#define DWIN_CREALITY_LCD_ENHANCED
+
+//
+// Ender-3 v2 OEM display with enhancements by Jacob Myers
+//
+#define DWIN_CREALITY_LCD_JYERSUI
+
+//
+// MarlinUI for Creality's DWIN display (and others)
+//
+//#define DWIN_MARLINUI_PORTRAIT
+//#define DWIN_MARLINUI_LANDSCAPE
 
 //
 // Touch Screen Settings
@@ -2868,11 +2847,6 @@
 //#define REPRAPWORLD_KEYPAD
 //#define REPRAPWORLD_KEYPAD_MOVE_STEP 10.0 // (mm) Distance to move per key-press
 
-//
-// EasyThreeD ET-4000+ with button input and status LED
-//
-//#define EASYTHREED_UI
-
 //=============================================================================
 //=============================== Extra Features ==============================
 //=============================================================================
@@ -2883,10 +2857,13 @@
 // :[1,2,3,4,5,6,7,8]
 //#define NUM_M106_FANS 1
 
+// Increase the FAN PWM frequency. Removes the PWM noise but increases heating in the FET/Arduino
+//#define FAST_PWM_FAN
+
 // Use software PWM to drive the fan, as for the heaters. This uses a very low frequency
 // which is not as annoying as with the hardware PWM. On the other hand, if this frequency
 // is too low, you should also increment SOFT_PWM_SCALE.
-#define FAN_SOFT_PWM
+//#define FAN_SOFT_PWM
 
 // Incrementing this by 1 will double the software PWM frequency,
 // affecting heaters, and the fan if FAN_SOFT_PWM is enabled.
