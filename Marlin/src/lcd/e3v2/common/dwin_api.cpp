@@ -28,6 +28,9 @@
 
 #include "../../../inc/MarlinConfig.h"
 
+#define DEBUG_OUT ENABLED(DEBUG_LCD_UI)
+#include "../../../core/debug_out.h"
+
 #include <string.h> // for memset
 
 uint8_t DWIN_SendBuf[11 + DWIN_WIDTH / 6 * 2] = { 0xAA };

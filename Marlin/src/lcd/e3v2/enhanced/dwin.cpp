@@ -1898,7 +1898,7 @@ void DWIN_SetDataDefaults() {
   TERN_(HAS_HOTEND,             HMI_data.HotendPidT = PREHEAT_1_TEMP_HOTEND);
   TERN_(HAS_HEATED_BED,         HMI_data.BedPidT    = PREHEAT_1_TEMP_BED);
   TERN_(HAS_HOTEND,             HMI_data.PidCycles  = 5);
-  TERN_(PREVENT_COLD_EXTRUSION, HMI_data.ExtMinT    = EXTRUDE_MINTEMP);
+  TERN_(PREVENT_COLD_EXTRUSION, HMI_data.ExtMinT    = EXTRUDE_MINTEMP_INIT);
 }
 
 void DWIN_StoreSettings(char *buff) {
