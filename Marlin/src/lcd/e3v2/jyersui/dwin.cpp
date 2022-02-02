@@ -670,7 +670,7 @@ void CrealityDWINClass::Draw_Print_Screen() {
   Update_Status_Bar(true);
   Draw_Print_ProgressBar();
   Draw_Print_ProgressElapsed();
-  TERN_(USE_M73_REMAINING_TIME, Draw_Print_ProgressRemain());
+  TERN_(SHOW_REMAINING_TIME, Draw_Print_ProgressRemain());
   Draw_Print_Filename(true);
 }
 
@@ -678,16 +678,19 @@ void CrealityDWINClass::Draw_Print_Filename(const bool reset/*=false*/) {
   static uint8_t namescrl = 0;
   if (reset) namescrl = 0;
   if (process == Print) {
-    constexpr int8_t maxlen = 30;
+    constexpr int8_t maxlen = 29;
     char *outstr = filename;
     size_t slen = strlen(filename);
     int8_t outlen = slen;
     if (slen > maxlen) {
       char dispname[maxlen + 1];
       int8_t pos = slen - namescrl, len = maxlen;
-      if (pos >= 0) {
-        NOMORE(len, pos);
-        LOOP_L_N(i, len) dispname[i] = filename[i + namescrl];
+      if (pos >= len) {
+        LOOP_L_N(i, maxlen) dispname[i] = filename[i + namescrl];
+      }
+      else if (pos >= 0) {
+        LOOP_L_N(i, pos) dispname[i] = filename[i + namescrl];
+        LOOP_S_L_N(i, pos, maxlen) dispname[i] = ' ';
       }
       else {
         const int8_t mp = maxlen + pos;
@@ -695,7 +698,7 @@ void CrealityDWINClass::Draw_Print_Filename(const bool reset/*=false*/) {
         LOOP_S_L_N(i, mp, maxlen) dispname[i] = filename[i - mp];
         if (mp <= 0) namescrl = 0;
       }
-      dispname[len] = '\0';
+      dispname[maxlen] = '\0';
       outstr = dispname;
       outlen = maxlen;
       namescrl++;
@@ -714,7 +717,7 @@ void CrealityDWINClass::Draw_Print_ProgressBar() {
   DWIN_Draw_String(false, DWIN_FONT_MENU, GetColor(eeprom_settings.progress_percent, Percent_Color), Color_Bg_Black, 133, 133, F("%"));
 }
 
-#if ENABLED(USE_M73_REMAINING_TIME)
+#if ENABLED(SHOW_REMAINING_TIME)
 
   void CrealityDWINClass::Draw_Print_ProgressRemain() {
     uint16_t remainingtime = ui.get_remaining_time();
@@ -1309,15 +1312,16 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
 
       #define MLEVEL_BACK 0
       #define MLEVEL_PROBE (MLEVEL_BACK + ENABLED(HAS_BED_PROBE))
-      #define MLEVEL_BL (MLEVEL_PROBE + 1)
-      #define MLEVEL_TL (MLEVEL_BL + 1)
-      #define MLEVEL_TR (MLEVEL_TL + 1)
-      #define MLEVEL_BR (MLEVEL_TR + 1)
-      #define MLEVEL_C (MLEVEL_BR + 1)
-      #define MLEVEL_ZPOS (MLEVEL_C + 1)
-      #define MLEVEL_TOTAL MLEVEL_ZPOS
+      #define MLEVEL_ZPOS (MLEVEL_PROBE + 1)
+      #define MLEVEL_FL (MLEVEL_ZPOS + 1)
+      #define MLEVEL_RL (MLEVEL_FL + 1)
+      #define MLEVEL_MR (MLEVEL_RL + 1)
+      #define MLEVEL_C  (MLEVEL_MR + 1)
+      #define MLEVEL_RR (MLEVEL_C + 1)
+      #define MLEVEL_FR (MLEVEL_RR + 1)
+      #define MLEVEL_TOTAL MLEVEL_FR
 
-      static float mlev_z_pos = 0;
+      static float mlev_z_pos = 0.20;
       static bool use_probe = false;
 
       switch (item) {
@@ -1343,21 +1347,37 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 corner_avg = 0;
                 #define PROBE_X_MIN _MAX(0 + corner_pos, X_MIN_POS + probe.offset.x, X_MIN_POS + PROBING_MARGIN) - probe.offset.x
                 #define PROBE_X_MAX _MIN((X_BED_SIZE + X_MIN_POS) - corner_pos, X_MAX_POS + probe.offset.x, X_MAX_POS - PROBING_MARGIN) - probe.offset.x
+                #define PROBE_X_MID (X_BED_SIZE/2 - probe.offset.x)
                 #define PROBE_Y_MIN _MAX(0 + corner_pos, Y_MIN_POS + probe.offset.y, Y_MIN_POS + PROBING_MARGIN) - probe.offset.y
                 #define PROBE_Y_MAX _MIN((Y_BED_SIZE + Y_MIN_POS) - corner_pos, Y_MAX_POS + probe.offset.y, Y_MAX_POS - PROBING_MARGIN) - probe.offset.y
-                corner_avg += probe.probe_at_point(PROBE_X_MIN, PROBE_Y_MIN, PROBE_PT_RAISE, 0, false);
-                corner_avg += probe.probe_at_point(PROBE_X_MIN, PROBE_Y_MAX, PROBE_PT_RAISE, 0, false);
-                corner_avg += probe.probe_at_point(PROBE_X_MAX, PROBE_Y_MAX, PROBE_PT_RAISE, 0, false);
-                corner_avg += probe.probe_at_point(PROBE_X_MAX, PROBE_Y_MIN, PROBE_PT_STOW, 0, false);
-                corner_avg /= 4;
-                Redraw_Menu();
+                #define PROBE_Y_MID (Y_BED_SIZE/2 - probe.offset.y)
+                
+                //lift to 15mm at least
+                do_blocking_move_to_z(_MAX(current_position.z, 15), z_probe_fast_mm_s);
+
+// calc the average by multiple point
+//                corner_avg += probe.probe_at_point(PROBE_X_MIN, PROBE_Y_MIN, PROBE_PT_RAISE, 0, false);
+//                corner_avg += probe.probe_at_point(PROBE_X_MIN, PROBE_Y_MAX, PROBE_PT_RAISE, 0, false);
+//                corner_avg += probe.probe_at_point(PROBE_X_MAX, PROBE_Y_MID, PROBE_PT_RAISE, 0, false);
+//                corner_avg /= 3;
+// or: only one point at the middle
+                corner_avg = probe.probe_at_point(PROBE_X_MID, PROBE_Y_MID, PROBE_PT_RAISE, 0, false);
+                  Redraw_Menu();
               }
             }
             break;
         #endif
-        case MLEVEL_BL:
+        case MLEVEL_ZPOS:
+          if (draw) {
+            Draw_Menu_Item(row, ICON_SetZOffset, F("Z Position"));
+            Draw_Float(mlev_z_pos, row, false, 100);
+          }
+          else
+            Modify_Value(mlev_z_pos, 0, MAX_Z_OFFSET, 100);
+          break;
+        case MLEVEL_FL: 	// = Bottom L
           if (draw)
-            Draw_Menu_Item(row, ICON_AxisBL, F("Bottom Left"));
+            Draw_Menu_Item(row, ICON_AxisBL, F("Front Left"));
           else {
             Popup_Handler(MoveWait);
             if (use_probe) {
@@ -1376,9 +1396,9 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             }
           }
           break;
-        case MLEVEL_TL:
+        case MLEVEL_RL: 	// = Top L
           if (draw)
-            Draw_Menu_Item(row, ICON_AxisTL, F("Top Left"));
+            Draw_Menu_Item(row, ICON_AxisTL, F("Rear Left"));
           else {
             Popup_Handler(MoveWait);
             if (use_probe) {
@@ -1397,9 +1417,51 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             }
           }
           break;
-        case MLEVEL_TR:
+        case MLEVEL_MR:
           if (draw)
-            Draw_Menu_Item(row, ICON_AxisTR, F("Top Right"));
+            Draw_Menu_Item(row, ICON_AxisTR, F("Mid Right"));
+          else {
+            Popup_Handler(MoveWait);
+            if (use_probe) {
+              #if HAS_BED_PROBE
+                sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MAX, 1, 3, str_1), dtostrf(PROBE_Y_MID, 1, 3, str_2));
+                gcode.process_subcommands_now(cmd);
+                planner.synchronize();
+                Popup_Handler(ManualProbing);
+              #endif
+            }
+            else {
+              sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s\nG0 F300 Z%s"), dtostrf((X_BED_SIZE + X_MIN_POS) - corner_pos, 1, 3, str_1), dtostrf((Y_BED_SIZE + Y_MIN_POS)/2.0f, 1, 3, str_2), dtostrf(mlev_z_pos, 1, 3, str_3));
+              gcode.process_subcommands_now(cmd);
+              planner.synchronize();
+              Redraw_Menu();
+            }
+          }
+          break;
+        case MLEVEL_C:
+          if (draw)
+            Draw_Menu_Item(row, ICON_AxisC, F("Center"));
+          else {
+            Popup_Handler(MoveWait);
+            if (use_probe) {
+              #if HAS_BED_PROBE
+                sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MID, 1, 3, str_1), dtostrf(PROBE_Y_MID, 1, 3, str_2));
+                gcode.process_subcommands_now(cmd);
+                planner.synchronize();
+                Popup_Handler(ManualProbing);
+              #endif
+            }
+            else {
+              sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s\nG0 F300 Z%s"), dtostrf((X_BED_SIZE + X_MIN_POS) / 2.0f, 1, 3, str_1), dtostrf((Y_BED_SIZE + Y_MIN_POS) / 2.0f, 1, 3, str_2), dtostrf(mlev_z_pos, 1, 3, str_3));
+              gcode.process_subcommands_now(cmd);
+              planner.synchronize();
+              Redraw_Menu();
+            }
+          }
+          break;
+        case MLEVEL_RR: 	// = Top R
+          if (draw)
+            Draw_Menu_Item(row, ICON_AxisTR, F("Rear Right"));
           else {
             Popup_Handler(MoveWait);
             if (use_probe) {
@@ -1418,9 +1480,9 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             }
           }
           break;
-        case MLEVEL_BR:
+        case MLEVEL_FR:		// = Bottom R
           if (draw)
-            Draw_Menu_Item(row, ICON_AxisBR, F("Bottom Right"));
+            Draw_Menu_Item(row, ICON_AxisBR, F("Front Right"));
           else {
             Popup_Handler(MoveWait);
             if (use_probe) {
@@ -1438,35 +1500,6 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               Redraw_Menu();
             }
           }
-          break;
-        case MLEVEL_C:
-          if (draw)
-            Draw_Menu_Item(row, ICON_AxisC, F("Center"));
-          else {
-            Popup_Handler(MoveWait);
-            if (use_probe) {
-              #if HAS_BED_PROBE
-                sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(X_MAX_POS / 2.0f - probe.offset.x, 1, 3, str_1), dtostrf(Y_MAX_POS / 2.0f - probe.offset.y, 1, 3, str_2));
-                gcode.process_subcommands_now(cmd);
-                planner.synchronize();
-                Popup_Handler(ManualProbing);
-              #endif
-            }
-            else {
-              sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s\nG0 F300 Z%s"), dtostrf((X_BED_SIZE + X_MIN_POS) / 2.0f, 1, 3, str_1), dtostrf((Y_BED_SIZE + Y_MIN_POS) / 2.0f, 1, 3, str_2), dtostrf(mlev_z_pos, 1, 3, str_3));
-              gcode.process_subcommands_now(cmd);
-              planner.synchronize();
-              Redraw_Menu();
-            }
-          }
-          break;
-        case MLEVEL_ZPOS:
-          if (draw) {
-            Draw_Menu_Item(row, ICON_SetZOffset, F("Z Position"));
-            Draw_Float(mlev_z_pos, row, false, 100);
-          }
-          else
-            Modify_Value(mlev_z_pos, 0, MAX_Z_OFFSET, 100);
           break;
       }
       break;
@@ -3050,8 +3083,8 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             #endif
 
             Draw_Menu_Item(INFO_SIZE, ICON_PrintSize, F(MACHINE_SIZE), nullptr, false, true);
-            Draw_Menu_Item(INFO_VERSION, ICON_Version, F(SHORT_BUILD_VERSION), nullptr, false, true);
-            Draw_Menu_Item(INFO_CONTACT, ICON_Contact, F(CORP_WEBSITE), nullptr, false, true);
+            Draw_Menu_Item(INFO_VERSION, ICON_Version, F(SHORT_BUILD_VERSION " - " STRING_CONFIG_H_AUTHOR), F(__DATE__ " " __TIME__), false, true);
+            Draw_Menu_Item(INFO_CONTACT, ICON_Contact, F(CORP_WEBSITE), F("DWIN_CREALITY_LCD_JYERSUI"), false, true);
           }
           else {
             if (menu == Info)
@@ -3148,6 +3181,10 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 #endif
                 #if HAS_BED_PROBE
                   Popup_Handler(Level);
+                  // move to center before start the mesh
+                  sprintf_P(cmd, PSTR("G0 F4000 X%s Y%s"), dtostrf(PROBE_X_MID, 1, 3, str_1), dtostrf(PROBE_Y_MID, 1, 3, str_2));
+                  gcode.process_subcommands_now(cmd);
+
                   gcode.process_subcommands_now(F("G29 P0\nG29 P1"));
                   gcode.process_subcommands_now(F("G29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nG29 P3\nM420 S1"));
                   planner.synchronize();
@@ -4325,34 +4362,40 @@ void CrealityDWINClass::Option_Control() {
 
 void CrealityDWINClass::File_Control() {
   EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
-  static uint8_t filescrl = 0;
+  static uint8_t namescrl = 0;
+  constexpr int8_t maxlen = MENU_CHAR_LIMIT;
   if (encoder_diffState == ENCODER_DIFF_NO) {
     if (selection > 0) {
       card.getfilename_sorted(SD_ORDER(selection - 1, card.get_num_Files()));
       char * const filename = card.longest_filename();
-      size_t len = strlen(filename);
-      int8_t pos = len;
+      size_t slen = strlen(filename);
       if (!card.flag.filenameIsDir)
-        while (pos && filename[pos] != '.') pos--;
-      if (pos > MENU_CHAR_LIMIT) {
+        while (slen && filename[slen] != '.') slen--;
+      if (slen > MENU_CHAR_LIMIT) {
         static millis_t time = 0;
         if (PENDING(millis(), time)) return;
         time = millis() + 200;
-        pos -= filescrl;
-        len = _MIN(pos, MENU_CHAR_LIMIT);
-        char name[len + 1];
-        if (pos >= 0) {
-          LOOP_L_N(i, len) name[i] = filename[i + filescrl];
+        char dispname[maxlen + 1];
+        int8_t pos = slen - namescrl, len = maxlen;
+        if (pos >= len) {
+          pos = len;
+          LOOP_L_N(i, pos) dispname[i] = filename[i + namescrl];
+        }
+        else if (pos >= 0) {
+          LOOP_L_N(i, pos) dispname[i] = filename[i + namescrl];
+          dispname[pos] = ' ';
+          dispname[pos+1] = '\0';
         }
         else {
-          LOOP_L_N(i, MENU_CHAR_LIMIT + pos) name[i] = ' ';
-          LOOP_S_L_N(i, MENU_CHAR_LIMIT + pos, MENU_CHAR_LIMIT) name[i] = filename[i - (MENU_CHAR_LIMIT + pos)];
+          const int8_t mp = maxlen + pos;
+          LOOP_L_N(i, mp) dispname[i] = ' ';
+          LOOP_S_L_N(i, mp, maxlen) dispname[i] = filename[i - mp];
+          if (mp <= 0) namescrl = 0;
         }
-        name[len] = '\0';
+        dispname[len] = '\0';
+        namescrl++;
         DWIN_Draw_Rectangle(1, Color_Bg_Black, LBLX, MBASE(selection - scrollpos) - 14, 271, MBASE(selection - scrollpos) + 28);
-        Draw_Menu_Item(selection - scrollpos, card.flag.filenameIsDir ? ICON_More : ICON_File, name);
-        if (-pos >= MENU_CHAR_LIMIT) filescrl = 0;
-        filescrl++;
+        Draw_Menu_Item(selection - scrollpos, card.flag.filenameIsDir ? ICON_More : ICON_File, dispname);
         DWIN_UpdateLCD();
       }
     }
@@ -4364,7 +4407,7 @@ void CrealityDWINClass::File_Control() {
       DWIN_Draw_Rectangle(1, Color_Bg_Black, LBLX, MBASE(selection - scrollpos) - 14, 271, MBASE(selection - scrollpos) + 28);
       Draw_SD_Item(selection, selection - scrollpos);
     }
-    filescrl = 0;
+    namescrl = 0;
     selection++; // Select Down
     if (selection > scrollpos + MROWS) {
       scrollpos++;
@@ -4377,7 +4420,7 @@ void CrealityDWINClass::File_Control() {
     DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, MBASE(selection - scrollpos) - 18, 14, MBASE(selection - scrollpos) + 33);
     DWIN_Draw_Rectangle(1, Color_Bg_Black, LBLX, MBASE(selection - scrollpos) - 14, 271, MBASE(selection - scrollpos) + 28);
     Draw_SD_Item(selection, selection - scrollpos);
-    filescrl = 0;
+    namescrl = 0;
     selection--; // Select Up
     if (selection < scrollpos) {
       scrollpos--;
@@ -4731,7 +4774,7 @@ void CrealityDWINClass::Start_Print(bool sd) {
     else
       strcpy_P(filename, "Host Print");
     TERN_(LCD_SET_PROGRESS_MANUALLY, ui.set_progress(0));
-    TERN_(USE_M73_REMAINING_TIME, ui.set_remaining_time(0));
+    TERN_(SHOW_REMAINING_TIME, ui.set_remaining_time(0));
     Draw_Print_Screen();
   }
 }
@@ -4741,7 +4784,7 @@ void CrealityDWINClass::Stop_Print() {
   sdprint = false;
   thermalManager.cooldown();
   TERN_(LCD_SET_PROGRESS_MANUALLY, ui.set_progress(100 * (PROGRESS_SCALE)));
-  TERN_(USE_M73_REMAINING_TIME, ui.set_remaining_time(0));
+  TERN_(SHOW_REMAINING_TIME, ui.set_remaining_time(0));
   Draw_Print_confirm();
 }
 
@@ -4818,7 +4861,7 @@ void CrealityDWINClass::Screen_Update() {
     if (process == Print) {
       Draw_Print_ProgressBar();
       Draw_Print_ProgressElapsed();
-      TERN_(USE_M73_REMAINING_TIME, Draw_Print_ProgressRemain());
+      TERN_(SHOW_REMAINING_TIME, Draw_Print_ProgressRemain());
     }
   }
 
@@ -4947,7 +4990,7 @@ void CrealityDWINClass::Save_Settings(char *buff) {
 void CrealityDWINClass::Load_Settings(const char *buff) {
   memcpy(&eeprom_settings, buff, _MIN(sizeof(eeprom_settings), eeprom_data_size));
   TERN_(AUTO_BED_LEVELING_UBL, mesh_conf.tilt_grid = eeprom_settings.tilt_grid_size + 1);
-  if (eeprom_settings.corner_pos == 0) eeprom_settings.corner_pos = 325;
+  if (eeprom_settings.corner_pos == 0) eeprom_settings.corner_pos = 300;
   corner_pos = eeprom_settings.corner_pos / 10.0f;
   Redraw_Screen();
   #if ENABLED(POWER_LOSS_RECOVERY)
@@ -4962,7 +5005,7 @@ void CrealityDWINClass::Load_Settings(const char *buff) {
 void CrealityDWINClass::Reset_Settings() {
   eeprom_settings.time_format_textual = false;
   TERN_(AUTO_BED_LEVELING_UBL, eeprom_settings.tilt_grid_size = 0);
-  eeprom_settings.corner_pos = 325;
+  eeprom_settings.corner_pos = 300;
   eeprom_settings.cursor_color = 0;
   eeprom_settings.menu_split_line = 0;
   eeprom_settings.menu_top_bg = 0;
