@@ -1301,7 +1301,6 @@
 
 #if ANY(HAS_MARLINUI_MENU, HAS_LCD_MENU, HAS_DWIN_E3V2)
 
-  // Add Probe Z Offset calibration to the Z Probe Offsets menu
   #if BOTH(HAS_BED_PROBE, AUTO_BED_LEVELING_BILINEAR)
     // Add calibration in the Probe Offsets menu to compensate for X-axis twist.
     //#define X_AXIS_TWIST_COMPENSATION
@@ -1804,12 +1803,12 @@
 // Specify additional languages for the UI. Default specified by LCD_LANGUAGE.
 //
 #if ANY(DOGLCD, TFT_COLOR_UI, TOUCH_UI_FTDI_EVE, IS_DWIN_MARLINUI)
-  #define LCD_LANGUAGE_2 de
-  //#define LCD_LANGUAGE_3 fr
+  //#define LCD_LANGUAGE_2 fr
+  //#define LCD_LANGUAGE_3 de
   //#define LCD_LANGUAGE_4 es
   //#define LCD_LANGUAGE_5 it
   #ifdef LCD_LANGUAGE_2
-    #define LCD_LANGUAGE_AUTO_SAVE // Automatically save language to EEPROM on change
+    //#define LCD_LANGUAGE_AUTO_SAVE // Automatically save language to EEPROM on change
   #endif
 #endif
 
