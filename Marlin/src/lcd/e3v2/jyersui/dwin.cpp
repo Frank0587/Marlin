@@ -980,7 +980,7 @@ void CrealityDWINClass::Draw_Popup(FSTR_P const line1, FSTR_P const line2, FSTR_
   Clear_Screen();
   // must not overwrite status area due to recover
   DWIN_Draw_Rectangle(0, Color_White, 13, 59, 259, STATUS_Y-1);
-  DWIN_Draw_Rectangle(1, Color_Bg_Window, 14, 60, 258, STATUS_Y-2); 
+  DWIN_Draw_Rectangle(1, Color_Bg_Window, 14, 60, 258, STATUS_Y-2);
   const uint8_t ypos = (mode == Popup || mode == Confirm) ? 150 : 230;
   if (icon > 0) DWIN_ICON_Show(ICON, icon, 101, 105);
   DWIN_Draw_String(true, DWIN_FONT_MENU, Popup_Text_Color, Color_Bg_Window, (272 - 8 * strlen_P(FTOP(line1))) / 2, ypos, line1);
@@ -1525,7 +1525,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 #define PROBE_Y_MIN _MAX(0 + corner_pos, Y_MIN_POS + probe.offset.y, Y_MIN_POS + PROBING_MARGIN) - probe.offset.y
                 #define PROBE_Y_MAX _MIN((Y_BED_SIZE + Y_MIN_POS) - corner_pos, Y_MAX_POS + probe.offset.y, Y_MAX_POS - PROBING_MARGIN) - probe.offset.y
                 #define PROBE_Y_MID (Y_BED_SIZE/2 - probe.offset.y)
-                
+
                 //lift to 15mm at least
                 do_blocking_move_to_z(_MAX(current_position.z, 15), z_probe_fast_mm_s);
 
@@ -4306,7 +4306,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               Draw_Float(thermalManager.temp_hotend[0].target, row, false, 1);
             }
             else
-              Modify_Value(thermalManager.temp_hotend[0].target, EXTRUDE_MINTEMP, MAX_E_TEMP, 1);
+              Modify_Value(thermalManager.temp_hotend[0].target, MIN_E_TEMP, MAX_E_TEMP, 1);
             break;
         }
         break;
@@ -4484,6 +4484,9 @@ uint8_t CrealityDWINClass::Get_Menu_Size(uint8_t menu) {
 
 void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
   popup = last_popup = popupid;
+
+  DEBUG_ECHOLNPGM("CrealityDWINClass::Popup_Handler (popupid=", popupid, ", option=", option, ")");
+
   switch (popupid) {
     case Pause:         Draw_Popup(F("Pause Print"), F(""), F(""), Popup); break;
     case Stop:          Draw_Popup(F("Stop Print"), F(""), F(""), Popup); break;
@@ -4509,6 +4512,9 @@ void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
 }
 
 void CrealityDWINClass::Confirm_Handler(PopupID popupid) {
+
+  DEBUG_ECHOLNPGM("CrealityDWINClass::Confirm_Handler (popupid=", popupid, ")");
+
   popup = popupid;
   switch (popupid) {
     case FilInsert:   Draw_Popup(F("Insert Filament"), F("Press to Continue"), F(""), Confirm); break;
@@ -5002,13 +5008,15 @@ void CrealityDWINClass::Keyboard_Control() {
   }
   EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
-  if (encoder_diffState == ENCODER_DIFF_CW && key_selection < keyboard_size) {
+  if (encoder_diffState == ENCODER_DIFF_CW) {
     Draw_Keys(key_selection, false, uppercase, locked);
     key_selection++;
+    if (key_selection > keyboard_size) key_selection = 0;
     Draw_Keys(key_selection, true, uppercase, locked);
   }
-  else if (encoder_diffState == ENCODER_DIFF_CCW && key_selection > 0) {
+  else if (encoder_diffState == ENCODER_DIFF_CCW) {
     Draw_Keys(key_selection, false, uppercase, locked);
+    if (key_selection == 0) key_selection = keyboard_size+1;
     key_selection--;
     Draw_Keys(key_selection, true, uppercase, locked);
   }
@@ -5175,6 +5183,9 @@ void CrealityDWINClass::Modify_String(char * string, uint8_t maxlength, bool res
 /* Main Functions */
 
 void CrealityDWINClass::Update_Status(const char * const text) {
+
+  DEBUG_ECHOLNPGM("CrealityDWINClass::Update_Status (", text, ")");
+
   char header[4];
   LOOP_L_N(i, 3) header[i] = text[i];
   header[3] = '\0';
@@ -5222,6 +5233,15 @@ void CrealityDWINClass::Stop_Print() {
 }
 
 void CrealityDWINClass::Update() {
+
+//  DEBUG_SECTION(dwin, "CrealityDWINClass", true);
+  static uint8_t pro = 99;
+  static bool pri, pau, wfu;
+  if (pro !=process || pri != printing || pau != paused || wfu != wait_for_user) {
+    DEBUG_ECHOLNPGM("CrealityDWINClass::Update (process=", process, ", printing=", printing, ", paused=", paused, ", wait_for_user=", wait_for_user, ")");
+    pro=process; pri=printing; pau=paused; wfu=wait_for_user;
+  }
+
   State_Update();
   Screen_Update();
   switch (process) {
@@ -5492,6 +5512,9 @@ void MarlinUI::init_lcd() {
 
 #if ENABLED(ADVANCED_PAUSE_FEATURE)
   void MarlinUI::pause_show_message(const PauseMessage message, const PauseMode mode/*=PAUSE_MODE_SAME*/, const uint8_t extruder/*=active_extruder*/) {
+
+  DEBUG_ECHOLNPGM("MarlinUI::pause_show_message (message=", message, ", mode=", mode, ")");
+
     switch (message) {
       case PAUSE_MESSAGE_INSERT:  CrealityDWIN.Confirm_Handler(FilInsert);  break;
       case PAUSE_MESSAGE_PURGE:

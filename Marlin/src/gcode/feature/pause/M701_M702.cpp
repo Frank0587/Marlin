@@ -43,6 +43,9 @@
   #include "../../../feature/mixing.h"
 #endif
 
+#define DEBUG_OUT ENABLED(DEBUG_PAUSE_RESUME)
+#include "../../../core/debug_out.h"
+
 /**
  * M701: Load filament
  *
