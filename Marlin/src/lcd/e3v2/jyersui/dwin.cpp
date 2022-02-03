@@ -849,92 +849,125 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
 
   if (icons) DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, STATUS_Y, DWIN_WIDTH, DWIN_HEIGHT - 1);
 
+  #define STATUS_X1 10
+  #define STATUS_X2 112
+  #define STATUS_X3 187
+  #define STATUS_Y1 383
+  #define STATUS_Y2 417
+  
+  int16_t htX = STATUS_X1, htY = STATUS_Y1;		// Hotend temp
+  int16_t btX = STATUS_X1, btY = STATUS_Y2;   // Bed temp
+  int16_t frX = STATUS_X2, frY = STATUS_Y1;		// feed rate
+  int16_t flX = STATUS_X2, flY = STATUS_Y2;		// flow speed
+  int16_t faX = STATUS_X3, faY = STATUS_Y1;		// Fan	
+  int16_t zoX = STATUS_X3, zoY = STATUS_Y2;		// Z-Offset
+  
+  #ifdef DEBUG_LCD_UI 
+    htX = STATUS_X2, htY = STATUS_Y2;		// Hotend temp
+    frX = flX = faX = 0;
+    char infoline[50];
+    DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, STATUS_Y, DWIN_WIDTH, STATUS_Y2);
+    sprintf_P(infoline, PSTR("pc:%i; pr:%i; pa=%i; wu:%i"), process, printing, paused, wait_for_user);
+    DWIN_Draw_String(false, DWIN_FONT_STAT, Color_White, Color_Bg_Black, STATUS_X1, STATUS_Y1+1, infoline); 
+  #endif
+
   #if HAS_HOTEND
     static float hotend = -1;
     static int16_t hotendtarget = -1, flow = -1;
+    if (htX) {
     if (icons) {
       hotend = -1;
       hotendtarget = -1;
-      DWIN_ICON_Show(ICON, ICON_HotendTemp, 10, 383);
-      DWIN_Draw_String(false, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 25 + 3 * STAT_CHR_W + 5, 384, F("/"));
+        DWIN_ICON_Show(ICON, ICON_HotendTemp, htX, htY);
+        DWIN_Draw_String(false, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, htX+15 + 3 * STAT_CHR_W + 5, htY+1, F("/"));
     }
     if (thermalManager.temp_hotend[0].celsius != hotend) {
       hotend = thermalManager.temp_hotend[0].celsius;
-      DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, 28, 384, thermalManager.temp_hotend[0].celsius);
-      DWIN_Draw_DegreeSymbol(GetColor(eeprom_settings.status_area_text, Color_White), 25 + 3 * STAT_CHR_W + 5, 386);
+        DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, htX+13, htY+1, thermalManager.temp_hotend[0].celsius);
+        DWIN_Draw_DegreeSymbol(GetColor(eeprom_settings.status_area_text, Color_White), htX+15 + 3 * STAT_CHR_W + 5, htY+3);
     }
     if (thermalManager.temp_hotend[0].target != hotendtarget) {
       hotendtarget = thermalManager.temp_hotend[0].target;
-      DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, 25 + 4 * STAT_CHR_W + 6, 384, thermalManager.temp_hotend[0].target);
-      DWIN_Draw_DegreeSymbol(GetColor(eeprom_settings.status_area_text, Color_White), 25 + 4 * STAT_CHR_W + 39, 386);
+        DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, htX+15 + 4 * STAT_CHR_W + 6, htY+1, thermalManager.temp_hotend[0].target);
+        DWIN_Draw_DegreeSymbol(GetColor(eeprom_settings.status_area_text, Color_White), htX+15 + 4 * STAT_CHR_W + 39, htY+3);
+      }
     }
+    if(flX){
     if (icons) {
       flow = -1;
-      DWIN_ICON_Show(ICON, ICON_StepE, 112, 417);
-      DWIN_Draw_String(false, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 116 + 5 * STAT_CHR_W + 2, 417, F("%"));
+        DWIN_ICON_Show(ICON, ICON_StepE, flX, flY);
+        DWIN_Draw_String(false, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, flX+4 + 5 * STAT_CHR_W + 2, flY, F("%"));
     }
     if (planner.flow_percentage[0] != flow) {
       flow = planner.flow_percentage[0];
-      DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, 116 + 2 * STAT_CHR_W, 417, planner.flow_percentage[0]);
+        DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, flX+4 + 2 * STAT_CHR_W, flY, planner.flow_percentage[0]);
+      }
     }
   #endif
 
   #if HAS_HEATED_BED
     static float bed = -1;
     static int16_t bedtarget = -1;
+    if (btX) {
     if (icons) {
       bed = -1;
       bedtarget = -1;
-      DWIN_ICON_Show(ICON, ICON_BedTemp, 10, 416);
-      DWIN_Draw_String(false, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 25 + 3 * STAT_CHR_W + 5, 417, F("/"));
+        DWIN_ICON_Show(ICON, ICON_BedTemp, btX, btY-1);
+        DWIN_Draw_String(false, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, btX+15 + 3 * STAT_CHR_W + 5, btY, F("/"));
     }
     if (thermalManager.temp_bed.celsius != bed) {
       bed = thermalManager.temp_bed.celsius;
-      DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, 28, 417, thermalManager.temp_bed.celsius);
-      DWIN_Draw_DegreeSymbol(GetColor(eeprom_settings.status_area_text, Color_White), 25 + 3 * STAT_CHR_W + 5, 419);
+        DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, btX+18, btY, thermalManager.temp_bed.celsius);
+        DWIN_Draw_DegreeSymbol(GetColor(eeprom_settings.status_area_text, Color_White), btX+15 + 3 * STAT_CHR_W + 5, btY+2);
     }
     if (thermalManager.temp_bed.target != bedtarget) {
       bedtarget = thermalManager.temp_bed.target;
-      DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, 25 + 4 * STAT_CHR_W + 6, 417, thermalManager.temp_bed.target);
-      DWIN_Draw_DegreeSymbol(GetColor(eeprom_settings.status_area_text, Color_White), 25 + 4 * STAT_CHR_W + 39, 419);
+        DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, btX+15 + 4 * STAT_CHR_W + 6, btY, thermalManager.temp_bed.target);
+        DWIN_Draw_DegreeSymbol(GetColor(eeprom_settings.status_area_text, Color_White), btX+15 + 4 * STAT_CHR_W + 39, btY+2);
+      }
     }
   #endif
 
   #if HAS_FAN
     static uint8_t fan = -1;
+    if (faX) {
     if (icons) {
       fan = -1;
-      DWIN_ICON_Show(ICON, ICON_FanSpeed, 187, 383);
+        DWIN_ICON_Show(ICON, ICON_FanSpeed, faX, faY);
     }
     if (thermalManager.fan_speed[0] != fan) {
       fan = thermalManager.fan_speed[0];
-      DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, 195 + 2 * STAT_CHR_W, 384, thermalManager.fan_speed[0]);
+        DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, faX+8 + 2 * STAT_CHR_W, faY+1, thermalManager.fan_speed[0]);
+      }
     }
   #endif
 
   #if HAS_ZOFFSET_ITEM
     static float offset = -1;
-
+    if (zoX) {
     if (icons) {
       offset = -1;
-      DWIN_ICON_Show(ICON, ICON_Zoffset, 187, 416);
+        DWIN_ICON_Show(ICON, ICON_Zoffset, zoX, zoY-1);
     }
     if (zoffsetvalue != offset) {
       offset = zoffsetvalue;
-      DWIN_Draw_FloatValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 2, 2, 207, 417, (zoffsetvalue < 0 ? -zoffsetvalue : zoffsetvalue));
-      DWIN_Draw_String(true, DWIN_FONT_MENU, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 205, 419, zoffsetvalue < 0 ? F("-") : F(" "));
+        DWIN_Draw_FloatValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 2, 2, zoX+20, zoY, (zoffsetvalue < 0 ? -zoffsetvalue : zoffsetvalue));
+        DWIN_Draw_String(true, DWIN_FONT_MENU, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, zoX+18, zoY+2, zoffsetvalue < 0 ? F("-") : F(" "));
+      }
     }
   #endif
 
   static int16_t feedrate = -1;
   if (icons) {
+    if (frX) {
     feedrate = -1;
-    DWIN_ICON_Show(ICON, ICON_Speed, 113, 383);
-    DWIN_Draw_String(false, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 116 + 5 * STAT_CHR_W + 2, 384, F("%"));
+      DWIN_ICON_Show(ICON, ICON_Speed, frX+1, frY);
+      DWIN_Draw_String(false, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, frX+4 + 5 * STAT_CHR_W + 2, frY+1, F("%"));
   }
   if (feedrate_percentage != feedrate) {
     feedrate = feedrate_percentage;
-    DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, 116 + 2 * STAT_CHR_W, 384, feedrate_percentage);
+      DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, frX+4 + 2 * STAT_CHR_W, frY+1, feedrate_percentage);
+    }
   }
 
   static float x = -1, y = -1, z = -1;
