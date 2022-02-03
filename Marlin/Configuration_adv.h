@@ -1631,7 +1631,7 @@
   //#define SDCARD_CONNECTION LCD
 
   // Enable if SD detect is rendered useless (e.g., by using an SD extender)
-  //#define NO_SD_DETECT
+  #define NO_SD_DETECT
 
   // Multiple volume support - EXPERIMENTAL.
   //#define MULTI_VOLUME
