@@ -396,9 +396,9 @@ void CrealityDWINClass::Popup_Control() {
         break;
       case Resume:
         if (selection == 0)
-          queue.inject(F("M1000"));
+            queue.inject( TERN(POWER_LOSS_RECOVERY, F("M1000"), F("M25")) );
         else {
-          queue.inject(F("M1000 C"));
+            queue.inject( TERN(POWER_LOSS_RECOVERY, F("M1000 C"), F("M25")) );
           Draw_Main_Menu();
         }
         break;

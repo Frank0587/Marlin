@@ -88,7 +88,7 @@ void GcodeSuite::M125() {
   ui.pause_show_message(PAUSE_MESSAGE_PARKING, PAUSE_MODE_PAUSE_PRINT);
 
   // If possible, show an LCD prompt with the 'P' flag
-  #if EITHER(HAS_LCD_MENU, HAS_DWIN_E3V2)
+  #if EITHER(HAS_MARLINUI_MENU, HAS_DWIN_E3V2)
     const bool show_lcd = parser.boolval('P');
   #else
     const bool show_lcd = 0;
