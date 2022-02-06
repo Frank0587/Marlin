@@ -867,9 +867,13 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
     frX = flX = faX = 0;
     char infoline[50];
     DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, STATUS_Y, DWIN_WIDTH, STATUS_Y2);
+
+    sprintf_P(infoline, PSTR("1234567890123456789012345678901234567890"));
+    DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1, infoline);
+
     sprintf_P(infoline, PSTR("prc:%i/%i; sel: %i/%i; prt:%i; pau=%i; wfu:%i"), 
             process, last_process, selection, last_selection, printing, paused, wait_for_user);
-    DWIN_Draw_String(false, DWIN_FONT_STAT, Color_White, Color_Bg_Black, STATUS_X1, STATUS_Y1+1, infoline);
+    DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1+13, infoline);
   #endif
 
   #if HAS_HOTEND
