@@ -1280,7 +1280,7 @@
   #define FEEDRATE_CHANGE_BEEP_FREQUENCY 440
 #endif
 
-#if HAS_BED_PROBE && ANY(HAS_MARLINUI_MENU, HAS_TFT_LVGL_UI, HAS_LCD_MENU, HAS_DWIN_E3V2)
+#if HAS_BED_PROBE && ANY(HAS_MARLINUI_MENU, HAS_TFT_LVGL_UI, HAS_DWIN_E3V2)
 
   //#define PROBE_OFFSET_WIZARD       // Add a Probe Z Offset calibration option to the LCD menu
   #if ENABLED(PROBE_OFFSET_WIZARD)
@@ -1296,7 +1296,7 @@
   #endif
 #endif
 
-#if ANY(HAS_MARLINUI_MENU, HAS_LCD_MENU, HAS_DWIN_E3V2)
+#if ANY(HAS_MARLINUI_MENU, HAS_DWIN_E3V2)
 
   #if BOTH(HAS_BED_PROBE, AUTO_BED_LEVELING_BILINEAR)
     // Add calibration in the Probe Offsets menu to compensate for X-axis twist.
