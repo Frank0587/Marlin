@@ -1134,15 +1134,13 @@ void Draw_Info_Menu() {
     DWINUI::Draw_CenteredString(102, F("Size"));
     DWINUI::Draw_CenteredString(175, F("Firmware version"));
     DWINUI::Draw_CenteredString(248, F("Build Datetime"));
-    DWINUI::Draw_CenteredString(268, F(STRING_DISTRIBUTION_DATE));
+    DWINUI::Draw_CenteredString(268, F(__DATE__ " " __TIME__));
   }
   DWINUI::Draw_CenteredString(122, F(MACHINE_SIZE));
   DWINUI::Draw_CenteredString(190, F(SHORT_BUILD_VERSION " - " STRING_CONFIG_H_AUTHOR));
-  DWINUI::Draw_CenteredString(205, F(__DATE__ " " __TIME__));
+  DWINUI::Draw_CenteredString(205, F("UI: E3v2 ProUI"));
 
   LOOP_L_N(i, 3) {
-  DWINUI::Draw_CenteredString(268, F(CORP_WEBSITE));
-
     DWINUI::Draw_Icon(ICON_PrintSize + i, ICOX, 99 + i * 73);
     DWIN_Draw_HLine(HMI_data.SplitLine_Color, 16, MBASE(2) + i * 73, 240);
   }
