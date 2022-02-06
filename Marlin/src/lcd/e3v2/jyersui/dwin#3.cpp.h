@@ -962,6 +962,9 @@ void CrealityDWINClass::Save_Settings(char *buff) {
     eeprom_settings.host_action_label_2 = Encode_String(action2);
     eeprom_settings.host_action_label_3 = Encode_String(action3);
   #endif
+  
+  TERN_(PREVENT_COLD_EXTRUSION, eeprom_settings.extrude_min_temp = _MIN(thermalManager.extrude_min_temp, 255));
+
   memcpy(buff, &eeprom_settings, _MIN(sizeof(eeprom_settings), eeprom_data_size));
 }
 
@@ -975,6 +978,9 @@ void CrealityDWINClass::Load_Settings(const char *buff) {
     Decode_String(eeprom_settings.host_action_label_2, action2);
     Decode_String(eeprom_settings.host_action_label_3, action3);
   #endif
+  
+  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.extrude_min_temp = eeprom_settings.extrude_min_temp);
+
   Redraw_Screen();
   #if ENABLED(POWER_LOSS_RECOVERY)
     static bool init = true;
@@ -1006,6 +1012,7 @@ void CrealityDWINClass::Reset_Settings() {
     eeprom_settings.host_action_label_3 = 0;
     action1[0] = action2[0] = action3[0] = '-';
   #endif
+  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.extrude_min_temp = eeprom_settings.extrude_min_temp = EXTRUDE_MINTEMP);
   TERN_(AUTO_BED_LEVELING_UBL, mesh_conf.tilt_grid = eeprom_settings.tilt_grid_size + 1);
   corner_pos = eeprom_settings.corner_pos / 10.0f;
   TERN_(SOUND_MENU_ITEM, ui.buzzer_enabled = true);
