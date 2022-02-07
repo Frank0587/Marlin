@@ -753,13 +753,14 @@ void CrealityDWINClass::Stop_Print() {
 
 void CrealityDWINClass::Update() {
 
-//  DEBUG_SECTION(dwin, "CrealityDWINClass", true);
+#ifdef DEBUG_LCD_UI
   static uint8_t prc = 99;
   static bool pri, pau, wfu;
   if (prc !=process || pri != printing || pau != paused || wfu != wait_for_user) {
     DEBUG_ECHOLNPGM("CrealityDWINClass::Update (process=", process, "/", last_process, ", printing=", printing, ", paused=", paused, ", wait_for_user=", wait_for_user, ")");
     prc=process; pri=printing; pau=paused; wfu=wait_for_user;
-}
+  }
+#endif
 
   State_Update();
   Screen_Update();
