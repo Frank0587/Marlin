@@ -710,7 +710,7 @@ void CrealityDWINClass::Draw_Print_Screen() {
   process = Print;
   selection = 0;
   Clear_Screen();
-  DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, STATUS_Y, DWIN_WIDTH-8, 376);
+  // DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, STATUS_Y, DWIN_WIDTH-8, 376);
   Draw_Title("Printing...");
   Print_Screen_Icons();
   DWIN_ICON_Show(ICON, ICON_PrintTime, 14, 171);
@@ -862,10 +862,11 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
     htX = STATUS_X2, htY = STATUS_Y2;		// Hotend temp
     frX = flX = faX = 0;
     char infoline[50];
-    DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, STATUS_Y, DWIN_WIDTH, STATUS_Y2);
+    DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, STATUS_Y1, DWIN_WIDTH, STATUS_Y2);
 
-    sprintf_P(infoline, PSTR("1234567890123456789012345678901234567890"));
-    DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1, infoline);
+    //sprintf_P(infoline, PSTR("1234567890123456789012345678901234567890"));
+    statusmsg[55] = '\0';
+    DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1, statusmsg);
 
     sprintf_P(infoline, PSTR("prc:%i/%i; sel: %i/%i; prt:%i; pau=%i; wfu:%i"), 
             process, last_process, selection, last_selection, printing, paused, wait_for_user);
@@ -1070,7 +1071,7 @@ void CrealityDWINClass::Update_Status_Bar(bool refresh/*=false*/) {
       LOOP_S_L_N(i, STATUS_CHAR_LIMIT + pos, STATUS_CHAR_LIMIT) dispmsg[i] = statusmsg[i - (STATUS_CHAR_LIMIT + pos)];
     }
     dispmsg[len] = '\0';
-    if (process == Print) {
+    if (false) { // (process == Print) {
       DWIN_Draw_Rectangle(1, Color_Grey, 8, 214, DWIN_WIDTH - 8, 238);
       const int8_t npos = (DWIN_WIDTH - STATUS_CHAR_LIMIT * MENU_CHR_W) / 2;
       DWIN_Draw_String(false, DWIN_FONT_MENU, GetColor(eeprom_settings.status_bar_text, Color_White), Color_Bg_Black, npos, 219, dispmsg);
@@ -1086,7 +1087,7 @@ void CrealityDWINClass::Update_Status_Bar(bool refresh/*=false*/) {
   else {
     if (new_msg) {
       new_msg = false;
-      if (process == Print) {
+      if (false) { // (process == Print) {
         DWIN_Draw_Rectangle(1, Color_Grey, 8, 214, DWIN_WIDTH - 8, 238);
         const int8_t npos = (DWIN_WIDTH - strlen(statusmsg) * MENU_CHR_W) / 2;
         DWIN_Draw_String(false, DWIN_FONT_MENU, GetColor(eeprom_settings.status_bar_text, Color_White), Color_Bg_Black, npos, 219, statusmsg);
