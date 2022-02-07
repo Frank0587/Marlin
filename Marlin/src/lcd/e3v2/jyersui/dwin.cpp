@@ -198,6 +198,48 @@ float corner_pos;
 
 bool probe_deployed = false;
 
+#ifdef DEBUG_LCD_UI
+  #define DEBUG_INFOLINE(a)  dbg_UpdateInfoLine(a)
+  
+  char dbg_InfoLine1[64], dbg_InfoLine2[64];
+
+  bool dbg_UpdateInfoLine (uint8_t idx) {
+    bool rtn = false;
+    static uint8_t fresh = 0;
+    static uint64_t lastHash = 0; 
+    uint8_t timer = print_job_timer.isPaused() + 2* print_job_timer.isRunning();
+    uint64_t hash =    
+            (printing                    ? 1 : 0) 
+          + (paused                      ? 2 : 0)
+          + (wait_for_user               ? 4 : 0)
+          + 0x000000000010 * timer
+          + 0x000000000100 * process
+          + 0x000000010000 * last_process
+          + 0x000001000000 * selection
+          + 0x000100000000 * last_selection
+          + 0x010000000000 * pause_menu_response;
+
+    if (lastHash != hash) {
+      lastHash = hash;
+      fresh = 0xFF;
+      rtn = true;
+
+      sprintf_P(dbg_InfoLine1, PSTR("prc:%i/%i|prt:%i|pau=%i|tim:%i|wfu:%i|sel:%i/%i"), 
+              process, last_process, printing, paused, timer, wait_for_user, selection, last_selection );
+      sprintf_P(dbg_InfoLine2, PSTR(" - was geht up (line 2) - ")); 
+    }
+    if (idx > 7) idx = 0;
+    if (fresh & (1<<idx)) {
+      fresh &= ~(1<<idx);
+      rtn = true;
+    }
+    return rtn;
+  }  
+#else
+  #define DEBUG_INFOLINE(a) false 
+#endif
+
+
 CrealityDWINClass CrealityDWIN;
 
 #if HAS_MESH

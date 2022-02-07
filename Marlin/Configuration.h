@@ -87,8 +87,9 @@
  * Turn on with the command 'M111 S32'.
  * NOTE: Requires a lot of PROGMEM!
  */
-#define DEBUG_LEVELING_FEATURE
+//#define DEBUG_LEVELING_FEATURE
 
+//#define DEBUG_POWER_LOSS_RECOVERY   // M1000
 #define DEBUG_PAUSE_RESUME    // Pause, M25, M125, M600, ...
 #define DEBUG_LCD_UI          // LCD dwinui, dwin_lcd, marlinui...
 
