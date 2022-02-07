@@ -753,15 +753,6 @@ void CrealityDWINClass::Stop_Print() {
 
 void CrealityDWINClass::Update() {
 
-#ifdef DEBUG_LCD_UI
-  static uint8_t prc = 99;
-  static bool pri, pau, wfu;
-  if (prc !=process || pri != printing || pau != paused || wfu != wait_for_user) {
-    DEBUG_ECHOLNPGM("CrealityDWINClass::Update (process=", process, "/", last_process, ", printing=", printing, ", paused=", paused, ", wait_for_user=", wait_for_user, ")");
-    prc=process; pri=printing; pau=paused; wfu=wait_for_user;
-  }
-#endif
-
   State_Update();
   Screen_Update();
   switch (process) {
@@ -783,7 +774,13 @@ void MarlinUI::update() { CrealityDWIN.Update(); }
   void MarlinUI::_set_brightness() { DWIN_LCD_Brightness(backlight ? brightness : 0); }
 #endif
 
+
 void CrealityDWINClass::State_Update() {
+  
+  if (DEBUG_INFOLINE(2)) {
+    DEBUG_ECHOLNPGM("CrealityDWINClass::State_Update (", dbg_InfoLine1, ")" );
+  }
+  
   if ((print_job_timer.isRunning() || print_job_timer.isPaused()) != printing) {
     if (!printing) Start_Print(card.isFileOpen() || TERN0(POWER_LOSS_RECOVERY, recovery.valid()));
     else Stop_Print();

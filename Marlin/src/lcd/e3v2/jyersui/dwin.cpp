@@ -198,6 +198,48 @@ float corner_pos;
 
 bool probe_deployed = false;
 
+#ifdef DEBUG_LCD_UI
+  #define DEBUG_INFOLINE(a)  dbg_UpdateInfoLine(a)
+  
+  char dbg_InfoLine1[64], dbg_InfoLine2[64];
+
+  bool dbg_UpdateInfoLine (uint8_t idx) {
+    bool rtn = false;
+    static uint8_t fresh = 0;
+    static uint64_t lastHash = 0; 
+    uint8_t timer = print_job_timer.isPaused() + 2* print_job_timer.isRunning();
+    uint64_t hash =    
+            (printing                    ? 1 : 0) 
+          + (paused                      ? 2 : 0)
+          + (wait_for_user               ? 4 : 0)
+          + 0x000000000010 * timer
+          + 0x000000000100 * process
+          + 0x000000010000 * last_process
+          + 0x000001000000 * selection
+          + 0x000100000000 * last_selection
+          + 0x010000000000 * pause_menu_response;
+
+    if (lastHash != hash) {
+      lastHash = hash;
+      fresh = 0xFF;
+      rtn = true;
+
+      sprintf_P(dbg_InfoLine1, PSTR("prc:%i/%i|prt:%i|pau=%i|tim:%i|wfu:%i|sel:%i/%i"), 
+              process, last_process, printing, paused, timer, wait_for_user, selection, last_selection );
+      sprintf_P(dbg_InfoLine2, PSTR(" - was geht up (line 2) - ")); 
+    }
+    if (idx > 7) idx = 0;
+    if (fresh & (1<<idx)) {
+      fresh &= ~(1<<idx);
+      rtn = true;
+    }
+    return rtn;
+  }  
+#else
+  #define DEBUG_INFOLINE(a) false 
+#endif
+
+
 CrealityDWINClass CrealityDWIN;
 
 #if HAS_MESH
@@ -861,16 +903,15 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
   #ifdef DEBUG_LCD_UI
     htX = STATUS_X2, htY = STATUS_Y2;		// Hotend temp
     frX = flX = faX = 0;
-    char infoline[50];
-    DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, STATUS_Y1, DWIN_WIDTH, STATUS_Y2);
-
-    //sprintf_P(infoline, PSTR("1234567890123456789012345678901234567890"));
-    statusmsg[55] = '\0';
-    DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1, statusmsg);
-
-    sprintf_P(infoline, PSTR("prc:%i/%i; sel: %i/%i; prt:%i; pau=%i; wfu:%i"), 
-            process, last_process, selection, last_selection, printing, paused, wait_for_user);
-    DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1+13, infoline);
+    
+    if ( DEBUG_INFOLINE(1)){
+      DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, STATUS_Y1, DWIN_WIDTH, STATUS_Y2);
+    
+      DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1, dbg_InfoLine1);
+      DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1+13, dbg_InfoLine2);
+    }
+  
+  
   #endif
 
   #if HAS_HOTEND
