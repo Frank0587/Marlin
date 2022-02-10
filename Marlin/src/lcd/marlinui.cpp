@@ -1366,7 +1366,7 @@ void MarlinUI::init() {
   void MarlinUI::set_status(const char * const cstr, const bool persist) {
     if (alert_level) return;
 
-    TERN_(HOST_PROMPT_SUPPORT, hostui.notify(cstr));
+    TERN_(HOST_STATUS_NOTIFICATIONS, hostui.notify(cstr));
 
     // Here we have a problem. The message is encoded in UTF8, so
     // arbitrarily cutting it will be a problem. We MUST be sure
@@ -1438,7 +1438,7 @@ void MarlinUI::init() {
     if (level < alert_level) return;
     alert_level = level;
 
-    TERN_(HOST_PROMPT_SUPPORT, hostui.notify(fstr));
+    TERN_(HOST_STATUS_NOTIFICATIONS, hostui.notify(fstr));
 
     // Since the message is encoded in UTF8 it must
     // only be cut on a character boundary.
@@ -1476,6 +1476,9 @@ void MarlinUI::init() {
     va_start(args, FTOP(fmt));
     vsnprintf_P(status_message, MAX_MESSAGE_LENGTH, FTOP(fmt), args);
     va_end(args);
+
+    TERN_(HOST_STATUS_NOTIFICATIONS, hostui.notify(status_message));
+
     finish_status(level > 0);
   }
 
