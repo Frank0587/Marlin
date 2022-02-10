@@ -787,7 +787,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               Draw_Menu_Item(row, ICON_File, action1);
             }
             else {
-              if (!strcmp(action1, "-") == 0) hostui.action(F(action1));
+              if (!strcmp(action1, "-") == 0) hostui.action(FPSTR(action1));
             }
             break;
           case HOSTACTIONS_2:
@@ -795,7 +795,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               Draw_Menu_Item(row, ICON_File, action2);
             }
             else {
-              if (!strcmp(action2, "-") == 0) hostui.action(F(action2));
+              if (!strcmp(action2, "-") == 0) hostui.action(FPSTR(action2));
             }
             break;
           case HOSTACTIONS_3:
@@ -803,7 +803,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               Draw_Menu_Item(row, ICON_File, action3);
             }
             else {
-              if (!strcmp(action3, "-") == 0) hostui.action(F(action3));
+              if (!strcmp(action3, "-") == 0) hostui.action(FPSTR(action3));
             }
             break;
         }
@@ -3300,4 +3300,3 @@ uint8_t CrealityDWINClass::Get_Menu_Size(uint8_t menu) {
   }
   return 0;
 }
-
