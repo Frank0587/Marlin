@@ -34,10 +34,6 @@
 
 #include "../../../inc/MarlinConfigPre.h"
 
-//#define DWIN_CREALITY_LCD_CUSTOM_ICONS
-#define DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW
-
-
 enum processID : uint8_t {
   Main, Print, Menu, Value, Option, File, Popup, Confirm, Keyboard, Wait
 };
