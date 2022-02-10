@@ -1748,7 +1748,8 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
       #define VISUAL_BRIGHTNESS (VISUAL_BACKLIGHT + 1)
       #define VISUAL_TIME_FORMAT (VISUAL_BRIGHTNESS + 1)
       #define VISUAL_COLOR_THEMES (VISUAL_TIME_FORMAT + 1)
-      #define VISUAL_TOTAL VISUAL_COLOR_THEMES
+      #define VISUAL_FILE_TUMBNAILS (VISUAL_COLOR_THEMES + ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW))
+      #define VISUAL_TOTAL VISUAL_FILE_TUMBNAILS
 
       switch (item) {
         case VISUAL_BACK:
@@ -1787,6 +1788,18 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
           else
             Draw_Menu(ColorSettings);
         break;
+        #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+          case VISUAL_FILE_TUMBNAILS:
+            if (draw) {
+              Draw_Menu_Item(row, ICON_File, F("Show file thumbnails"));
+              Draw_Checkbox(row, eeprom_settings.show_gcode_thumbnails);
+            }
+            else {
+              eeprom_settings.show_gcode_thumbnails = !eeprom_settings.show_gcode_thumbnails;
+              Draw_Checkbox(row, eeprom_settings.show_gcode_thumbnails);
+            }
+            break;
+        #endif
       }
       break;
 
@@ -2122,7 +2135,9 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
         #define PROBE_BACK 0
         #define PROBE_XOFFSET (PROBE_BACK + 1)
         #define PROBE_YOFFSET (PROBE_XOFFSET + 1)
-        #define PROBE_TEST (PROBE_YOFFSET + 1)
+        #define PROBE_HSMODE (PROBE_YOFFSET + ENABLED(BLTOUCH))
+        #define PROBE_ALARMR (PROBE_HSMODE + ENABLED(BLTOUCH))
+        #define PROBE_TEST (PROBE_ALARMR + 1)
         #define PROBE_TEST_COUNT (PROBE_TEST + 1)
         #define PROBE_TOTAL PROBE_TEST_COUNT
 
@@ -2152,9 +2167,30 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               else
                 Modify_Value(probe.offset.y, -MAX_XY_OFFSET, MAX_XY_OFFSET, 10);
               break;
+            #if ENABLED(BLTOUCH)
+              case PROBE_HSMODE:
+                if (draw) {
+                  Draw_Menu_Item(row, ICON_StockConfiguration, F("BLTouch HS Mode"));
+                   Draw_Checkbox(row, bltouch.high_speed_mode);
+                }
+                else {
+                  bltouch.high_speed_mode = !bltouch.high_speed_mode;
+                  Draw_Checkbox(row, bltouch.high_speed_mode);
+                }
+                break;
+              case PROBE_ALARMR:
+                if (draw) {
+                 Draw_Menu_Item(row, ICON_StockConfiguration, F("Probe Alarm Release"));
+                }
+                else {
+                  gcode.process_subcommands_now(F("M280 P0 S160"));
+                  AudioFeedback();
+                }
+                break;
+            #endif
             case PROBE_TEST:
               if (draw)
-                Draw_Menu_Item(row, ICON_StepY, F("M48 Probe Test"));
+                Draw_Menu_Item(row, ICON_StockConfiguration, F("M48 Probe Test"));
               else {
                 sprintf_P(cmd, PSTR("G28O\nM48 X%s Y%s P%i"), dtostrf((X_BED_SIZE + X_MIN_POS) / 2.0f, 1, 3, str_1), dtostrf((Y_BED_SIZE + Y_MIN_POS) / 2.0f, 1, 3, str_2), testcount);
                 gcode.process_subcommands_now(cmd);
@@ -2162,7 +2198,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               break;
             case PROBE_TEST_COUNT:
               if (draw) {
-                Draw_Menu_Item(row, ICON_StepY, F("Probe Test Count"));
+                Draw_Menu_Item(row, ICON_StockConfiguration, F("Probe Test Count"));
                 Draw_Float(testcount, row, false, 1);
               }
               else
@@ -2181,7 +2217,13 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
       #define INFO_SIZE (INFO_PRINTTIME + 1)
       #define INFO_VERSION (INFO_SIZE + 1)
       #define INFO_CONTACT (INFO_VERSION + 1)
-      #define INFO_TOTAL INFO_BACK
+
+      #if ENABLED(PRINTCOUNTER)
+        #define INFO_RESET_PRINTCOUNTER (INFO_CONTACT + 1)
+        #define INFO_TOTAL INFO_RESET_PRINTCOUNTER
+      #else
+        #define INFO_TOTAL INFO_BACK
+      #endif
 
       switch (item) {
         case INFO_BACK:
@@ -2214,6 +2256,18 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
               Draw_Main_Menu(3);
           }
           break;
+        #if ENABLED(PRINTCOUNTER)
+          case INFO_RESET_PRINTCOUNTER:
+             if (draw) {
+               Draw_Menu_Item(row, ICON_HotendTemp, F("Reset Print Counter"));
+             }
+             else {
+               print_job_timer.initStats();
+               ui.reset_status();
+               AudioFeedback();
+             }
+             break;
+        #endif
       }
       break;
 
