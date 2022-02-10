@@ -226,7 +226,7 @@ void menu_advanced_settings();
       DEBUG_ECHOLNPGM(" (Default " TERN(BLTOUCH_SET_5V_MODE, "5V", "OD") ")");
       char mess[21];
       strcpy_P(mess, PSTR("BLTouch Mode: "));
-      strcpy_P(&mess[15], bltouch.od_5v_mode ? mode1 : mode0);
+      strcpy_P(&mess[15], bltouch.od_5v_mode ? PSTR("5V") : PSTR("OD"));
       ui.set_status(mess);
       ui.return_to_status();
     }

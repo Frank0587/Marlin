@@ -1397,13 +1397,13 @@ constexpr uint8_t epps = ENCODER_PULSES_PER_STEP;
 
   void MarlinUI::reset_status(const bool no_welcome) {
     #if SERVICE_INTERVAL_1 > 0
-      static PGMSTR(service1, "> " SERVICE_NAME_1 "!");
+      static PGMSTR(service1, "** " SERVICE_NAME_1 "! **");
     #endif
     #if SERVICE_INTERVAL_2 > 0
-      static PGMSTR(service2, "> " SERVICE_NAME_2 "!");
+      static PGMSTR(service2, "** " SERVICE_NAME_2 "! **");
     #endif
     #if SERVICE_INTERVAL_3 > 0
-      static PGMSTR(service3, "> " SERVICE_NAME_3 "!");
+      static PGMSTR(service3, "** " SERVICE_NAME_3 "! **");
     #endif
     FSTR_P msg;
     if (printingIsPaused())
