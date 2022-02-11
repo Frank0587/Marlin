@@ -2246,8 +2246,8 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             #endif
 
             Draw_Menu_Item(INFO_SIZE, ICON_PrintSize, F(MACHINE_NAME), F(MACHINE_SIZE), false, true);
-            Draw_Menu_Item(INFO_VERSION, ICON_Version, F(DETAILED_BUILD_VERSION), F(__DATE__ " " __TIME__), false, true);
-            Draw_Menu_Item(INFO_CONTACT, ICON_Contact, F(SOURCE_CODE_URL), F(SHORT_BUILD_VERSION), false, true);
+            Draw_Menu_Item(INFO_VERSION, ICON_Version, F(SHORT_BUILD_VERSION), F(__DATE__ " " __TIME__), false, true);
+            Draw_Menu_Item(INFO_CONTACT, ICON_Contact, F(SOURCE_CODE_URL), F(DETAILED_BUILD_VERSION), false, true);
           }
           else {
             if (menu == Info)
