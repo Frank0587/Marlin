@@ -21,8 +21,6 @@
  */
 #pragma once
 
-#define CONFIG_EXAMPLES_DIR "Creality/Ender-3 V2/CrealityV422/CrealityUI"
-
 /**
  * Configuration.h
  *
@@ -71,12 +69,7 @@
 // @section info
 
 // Author info of this build printed to the host during boot and M115
-#define STRING_CONFIG_H_AUTHOR "SP#5" // Who made the changes.
-
-// Info shown at Info-Screen
-#define HW_FEATURE   "Ender3 V2.SP#5"
-#define CORP_WEBSITE "github.com/Frank0587"
-#define GIT_BRANCH   "SP#5-all-in"
+#define STRING_CONFIG_H_AUTHOR "SP# (JyersUI)" // Who made the changes.
 
 //#define CUSTOM_VERSION_FILE Version.h // Path from the root directory (no quotes)
 
@@ -164,7 +157,7 @@
 //#define BLUETOOTH
 
 // Name displayed in the LCD "Ready" message and Info menu
-#define CUSTOM_MACHINE_NAME "Ender-3 V2"
+#define CUSTOM_MACHINE_NAME "Ender3v2+Mod#2"
 
 // Printer's unique ID, used by some programs to differentiate between machines.
 // Choose your own or use a service like https://www.uuidgenerator.net/version4
@@ -2854,6 +2847,8 @@
 // Ender-3 v2 OEM display with enhancements by Jacob Myers
 //
 #define DWIN_CREALITY_LCD_JYERSUI
+  //#define DWIN_CREALITY_LCD_CUSTOM_ICONS
+  #define DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW
 
 //
 // MarlinUI for Creality's DWIN display (and others)
