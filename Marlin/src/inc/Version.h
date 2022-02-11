@@ -26,7 +26,7 @@
  */
 #ifndef SHORT_BUILD_VERSION
   // = git branch 
-  #define SHORT_BUILD_VERSION ">_generalCleanUp"
+  #define SHORT_BUILD_VERSION ">develop"
 #endif
 
 /**
