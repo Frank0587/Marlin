@@ -21,8 +21,6 @@
  */
 #pragma once
 
-#define CONFIG_EXAMPLES_DIR "Creality/Ender-3 V2/CrealityV422/CrealityUI"
-
 /**
  * Configuration.h
  *
@@ -70,28 +68,8 @@
 
 // @section info
 
-////////////////////////////////////////
-
 // Author info of this build printed to the host during boot and M115
-#define STRING_CONFIG_H_AUTHOR "SP#xx" // Who made the changes.
-
-// Info shown at Info-Screen
-#define HW_FEATURE   "Ender3 V2.SP#xx"
-#define CORP_WEBSITE "github.com/Frank0587"
-#define GIT_BRANCH   "f/SP#xx-dev"
-
-////////////////////////////////////////
-//#define DWIN_CREALITY_LCD
-//#define DWIN_CREALITY_LCD_ENHANCED
-#define DWIN_CREALITY_LCD_JYERSUI
-//#define DWIN_MARLINUI_PORTRAIT
-//#define DWIN_MARLINUI_LANDSCAPE
-////////////////////////////////////////
-
-//#define DWIN_CREALITY_LCD_CUSTOM_ICONS
-#define DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW
-
-////////////////////////////////////////
+#define STRING_CONFIG_H_AUTHOR "SP# (JyersUI)" // Who made the changes.
 
 //#define CUSTOM_VERSION_FILE Version.h // Path from the root directory (no quotes)
 
@@ -104,7 +82,7 @@
  */
 //#define DEBUG_LEVELING_FEATURE
 
-#define DEBUG_POWER_LOSS_RECOVERY   // M1000
+//#define DEBUG_POWER_LOSS_RECOVERY   // M1000
 #define DEBUG_PAUSE_RESUME    // Pause, M25, M125, M600, ...
 #define DEBUG_LCD_UI          // LCD dwinui, dwin_lcd, marlinui...
 
@@ -179,7 +157,7 @@
 //#define BLUETOOTH
 
 // Name displayed in the LCD "Ready" message and Info menu
-#define CUSTOM_MACHINE_NAME "Ender-3 V2"
+#define CUSTOM_MACHINE_NAME "Ender3v2+Mod#2"
 
 // Printer's unique ID, used by some programs to differentiate between machines.
 // Choose your own or use a service like https://www.uuidgenerator.net/version4
@@ -1955,7 +1933,8 @@
 #if ENABLED(NOZZLE_PARK_FEATURE)
   // Specify a park position as { X, Y, Z_raise }
   #define NOZZLE_PARK_POINT { (X_MAX_POS - 25), (Y_MAX_POS - 10), 10 }
-  #define NOZZLE_PARK_MOVE          0   // Park motion: 0 = XY Move, 1 = X Only, 2 = Y Only, 3 = X before Y, 4 = Y before X
+  //#define NOZZLE_PARK_X_ONLY          // X move only is required to park
+  //#define NOZZLE_PARK_Y_ONLY          // Y move only is required to park
   #define NOZZLE_PARK_Z_RAISE_MIN   2   // (mm) Always raise Z by at least this distance
   #define NOZZLE_PARK_XY_FEEDRATE 100   // (mm/s) X and Y axes feedrate (also used for delta Z axis)
   #define NOZZLE_PARK_Z_FEEDRATE    5   // (mm/s) Z axis feedrate (not used for delta printers)
@@ -2855,8 +2834,6 @@
 //============================  Other Controllers  ============================
 //=============================================================================
 
-// E3v2-Controller defined at top in this file
-
 //
 // Ender-3 v2 OEM display. A DWIN display with Rotary Encoder.
 //
@@ -2870,7 +2847,9 @@
 //
 // Ender-3 v2 OEM display with enhancements by Jacob Myers
 //
-//#define DWIN_CREALITY_LCD_JYERSUI
+#define DWIN_CREALITY_LCD_JYERSUI
+  //#define DWIN_CREALITY_LCD_CUSTOM_ICONS
+  #define DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW
 
 //
 // MarlinUI for Creality's DWIN display (and others)
