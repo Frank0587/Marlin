@@ -1,4 +1,3 @@
-
 /* Menu Item Config */
 
 void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/*=true*/) {
@@ -3270,3 +3269,4 @@ uint8_t CrealityDWINClass::Get_Menu_Size(uint8_t menu) {
   }
   return 0;
 }
+
