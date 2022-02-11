@@ -85,10 +85,10 @@
 #endif
 
 #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
-#include "../../../libs/base64.hpp"
-#include <map>
-#include <string>
-using namespace std;
+  #include "../../../libs/base64.hpp"
+  #include <map>
+  #include <string>
+  using namespace std;
 #endif
 
 #define MACHINE_SIZE STRINGIFY(X_BED_SIZE) "x" STRINGIFY(Y_BED_SIZE) "x" STRINGIFY(Z_MAX_POS)
