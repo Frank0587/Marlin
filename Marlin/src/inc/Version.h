@@ -25,7 +25,8 @@
  * Release version. Leave the Marlin version or apply a custom scheme.
  */
 #ifndef SHORT_BUILD_VERSION
-  #define SHORT_BUILD_VERSION "bugfix-2.0.x"
+  // = git branch 
+  #define SHORT_BUILD_VERSION ">add_Jyers202i"
 #endif
 
 /**
@@ -33,7 +34,8 @@
  * vendor name, download location, GitHub account, etc.
  */
 #ifndef DETAILED_BUILD_VERSION
-  #define DETAILED_BUILD_VERSION SHORT_BUILD_VERSION
+  // = details for info screen 
+  #define DETAILED_BUILD_VERSION "Jy>2.0.2i @ Mar>bugfix"
 #endif
 
 /**
@@ -73,7 +75,7 @@
  * Define a generic printer name to be output to the LCD after booting Marlin.
  */
 #ifndef MACHINE_NAME
-  #define MACHINE_NAME "3D Printer"
+  #define MACHINE_NAME CUSTOM_MACHINE_NAME
 #endif
 
 /**
@@ -82,7 +84,7 @@
  * providing the source code to your customers.)
  */
 #ifndef SOURCE_CODE_URL
-  #define SOURCE_CODE_URL "github.com/MarlinFirmware/Marlin"
+  #define SOURCE_CODE_URL "github.com/Frank0587"
 #endif
 
 /**
