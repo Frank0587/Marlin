@@ -63,6 +63,10 @@
   #define strcasecmp_P(a, b) strcasecmp((a), (b))
 #endif
 
+#ifdef BLTOUCH_HS_MODE
+  #include "../../../feature/bltouch.h"
+#endif
+
 #if HAS_LEVELING
   #include "../../../feature/bedlevel/bedlevel.h"
 #endif
@@ -78,6 +82,13 @@
 
 #if ENABLED(POWER_LOSS_RECOVERY)
   #include "../../../feature/powerloss.h"
+#endif
+
+#if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+  #include "../../../libs/base64.hpp"
+  #include <map>
+  #include <string>
+  using namespace std;
 #endif
 
 #define MACHINE_SIZE STRINGIFY(X_BED_SIZE) "x" STRINGIFY(Y_BED_SIZE) "x" STRINGIFY(Z_MAX_POS)
@@ -198,18 +209,27 @@ float corner_pos;
 
 bool probe_deployed = false;
 
+#if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+  std::map<string, int> image_cache;
+  uint16_t next_available_address = 1;
+  static millis_t thumbtime = 0;
+  static millis_t name_scroll_time = 0;
+  #define SCROLL_WAIT 1000
+#endif
+
+
 #ifdef DEBUG_LCD_UI
   #define DEBUG_INFOLINE(a)  dbg_UpdateInfoLine(a)
-  
+
   char dbg_InfoLine1[64], dbg_InfoLine2[64];
 
   bool dbg_UpdateInfoLine (uint8_t idx) {
     bool rtn = false;
     static uint8_t fresh = 0;
-    static uint64_t lastHash = 0; 
+    static uint64_t lastHash = 0;
     uint8_t timer = print_job_timer.isPaused() + 2* print_job_timer.isRunning();
-    uint64_t hash =    
-            (printing                    ? 1 : 0) 
+    uint64_t hash =
+            (printing                    ? 1 : 0)
           + (paused                      ? 2 : 0)
           + (wait_for_user               ? 4 : 0)
           + 0x000000000010 * timer
@@ -224,9 +244,9 @@ bool probe_deployed = false;
       fresh = 0xFF;
       rtn = true;
 
-      sprintf_P(dbg_InfoLine1, PSTR("prc:%i/%i|prt:%i|pau=%i|tim:%i|wfu:%i|sel:%i/%i"), 
+      sprintf_P(dbg_InfoLine1, PSTR("prc:%i/%i|prt:%i|pau=%i|tim:%i|wfu:%i|sel:%i/%i"),
               process, last_process, printing, paused, timer, wait_for_user, selection, last_selection );
-      sprintf_P(dbg_InfoLine2, PSTR(" - was geht up (line 2) - ")); 
+      sprintf_P(dbg_InfoLine2, PSTR(" - was geht up (line 2) - "));
     }
     if (idx > 7) idx = 0;
     if (fresh & (1<<idx)) {
@@ -234,9 +254,9 @@ bool probe_deployed = false;
       rtn = true;
     }
     return rtn;
-  }  
+  }
 #else
-  #define DEBUG_INFOLINE(a) false 
+  #define DEBUG_INFOLINE(a) false
 #endif
 
 
@@ -571,22 +591,41 @@ void _Decorate_Menu_Item(uint8_t row, uint8_t icon, bool more) {
   DWIN_Draw_Line(CrealityDWIN.GetColor(CrealityDWIN.eeprom_settings.menu_split_line, Line_Color, true), 16, MBASE(row) + 33, 256, MBASE(row) + 33); // Draw Menu Line
 }
 
-void CrealityDWINClass::Draw_Menu_Item(uint8_t row, uint8_t icon/*=0*/, const char * label1, const char * label2, bool more/*=false*/, bool centered/*=false*/) {
+uint16_t image_address;
+void CrealityDWINClass::Draw_Menu_Item(uint16_t row, uint8_t icon/*=0*/, const char * label1, const char * label2, bool more/*=false*/, bool centered/*=false*/, bool onlyCachedFileIcon/*=false*/) {
   const uint8_t label_offset_y = (label1 && label2) ? MENU_CHR_H * 3 / 5 : 0,
                 label1_offset_x = !centered ? LBLX : LBLX * 4/5 + _MAX(LBLX * 1U/5, (DWIN_WIDTH - LBLX - (label1 ? strlen(label1) : 0) * MENU_CHR_W) / 2),
                 label2_offset_x = !centered ? LBLX : LBLX * 4/5 + _MAX(LBLX * 1U/5, (DWIN_WIDTH - LBLX - (label2 ? strlen(label2) : 0) * MENU_CHR_W) / 2);
   if (label1) DWIN_Draw_String(false, DWIN_FONT_MENU, Color_White, Color_Bg_Black, label1_offset_x, MBASE(row) - 1 - label_offset_y, label1); // Draw Label
   if (label2) DWIN_Draw_String(false, DWIN_FONT_MENU, Color_White, Color_Bg_Black, label2_offset_x, MBASE(row) - 1 + label_offset_y, label2); // Draw Label
-  _Decorate_Menu_Item(row, icon, more);
-}
+  //_Decorate_Menu_Item(row, icon, more);
+  #ifdef DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW
+   if (eeprom_settings.show_gcode_thumbnails && icon == ICON_File && find_and_decode_gcode_preview(card.filename, Thumnail_Icon, &image_address, onlyCachedFileIcon))
+    DWIN_SRAM_Memory_Icon_Display(9, MBASE(row) - 18, image_address);
+   else if (icon) DWIN_ICON_Show(ICON, icon, 26, MBASE(row) - 3);   //Draw Menu Icon
+  #else
+   if (icon) DWIN_ICON_Show(ICON, icon, 26, MBASE(row) - 3);   //Draw Menu Icon
+  #endif
+   if (more) DWIN_ICON_Show(ICON, ICON_More, 226, MBASE(row) - 3); // Draw More Arrow
+  DWIN_Draw_Line(GetColor(eeprom_settings.menu_split_line, Line_Color, true), 16, MBASE(row) + 33, 256, MBASE(row) + 33); // Draw Menu Line
+  }
 
-void CrealityDWINClass::Draw_Menu_Item(uint8_t row, uint8_t icon/*=0*/, FSTR_P const flabel1, FSTR_P const flabel2, bool more/*=false*/, bool centered/*=false*/) {
+void CrealityDWINClass::Draw_Menu_Item(uint8_t row, uint8_t icon/*=0*/, FSTR_P const flabel1, FSTR_P const flabel2, bool more/*=false*/, bool centered/*=false*/, bool onlyCachedFileIcon/*=false*/) {
   const uint8_t label_offset_y = (flabel1 && flabel2) ? MENU_CHR_H * 3 / 5 : 0,
                 label1_offset_x = !centered ? LBLX : LBLX * 4/5 + _MAX(LBLX * 1U/5, (DWIN_WIDTH - LBLX - (flabel1 ? strlen_P(FTOP(flabel1)) : 0) * MENU_CHR_W) / 2),
                 label2_offset_x = !centered ? LBLX : LBLX * 4/5 + _MAX(LBLX * 1U/5, (DWIN_WIDTH - LBLX - (flabel2 ? strlen_P(FTOP(flabel2)) : 0) * MENU_CHR_W) / 2);
   if (flabel1) DWIN_Draw_String(false, DWIN_FONT_MENU, Color_White, Color_Bg_Black, label1_offset_x, MBASE(row) - 1 - label_offset_y, flabel1); // Draw Label
   if (flabel2) DWIN_Draw_String(false, DWIN_FONT_MENU, Color_White, Color_Bg_Black, label2_offset_x, MBASE(row) - 1 + label_offset_y, flabel2); // Draw Label
-  _Decorate_Menu_Item(row, icon, more);
+  //_Decorate_Menu_Item(row, icon, more);
+  #ifdef DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW
+   if (eeprom_settings.show_gcode_thumbnails && icon == ICON_File && find_and_decode_gcode_preview(card.filename, Thumnail_Icon, &image_address, onlyCachedFileIcon))
+    DWIN_SRAM_Memory_Icon_Display(9, MBASE(row) - 18, image_address);
+   else if (icon) DWIN_ICON_Show(ICON, icon, 26, MBASE(row) - 3);   //Draw Menu Icon
+  #else
+   if (icon) DWIN_ICON_Show(ICON, icon, 26, MBASE(row) - 3);   //Draw Menu Icon
+  #endif
+   if (more) DWIN_ICON_Show(ICON, ICON_More, 226, MBASE(row) - 3); // Draw More Arrow
+  DWIN_Draw_Line(GetColor(eeprom_settings.menu_split_line, Line_Color, true), 16, MBASE(row) + 33, 256, MBASE(row) + 33); // Draw Menu Line
 }
 
 void CrealityDWINClass::Draw_Checkbox(uint8_t row, bool value) {
@@ -844,7 +883,7 @@ void CrealityDWINClass::Draw_Print_confirm() {
   DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 85, 281, 188, 322);
 }
 
-void CrealityDWINClass::Draw_SD_Item(uint8_t item, uint8_t row) {
+void CrealityDWINClass::Draw_SD_Item(uint8_t item, uint8_t row, bool onlyCachedFileIcon/*=false*/) {
   if (item == 0)
     Draw_Menu_Item(0, ICON_Back, card.flag.workDirIsRoot ? F("Back") : F(".."));
   else {
@@ -861,19 +900,23 @@ void CrealityDWINClass::Draw_SD_Item(uint8_t item, uint8_t row) {
     if (pos > max)
       LOOP_S_L_N(i, len - 3, len) name[i] = '.';
     name[len] = '\0';
-    Draw_Menu_Item(row, card.flag.filenameIsDir ? ICON_More : ICON_File, name);
+    Draw_Menu_Item(row, card.flag.filenameIsDir ? ICON_More : ICON_File, name, NULL, NULL, false, onlyCachedFileIcon);
   }
 }
 
-void CrealityDWINClass::Draw_SD_List(bool removed/*=false*/) {
+void CrealityDWINClass::Draw_SD_List(bool removed/*=false*/, uint8_t select/*=0*/, uint8_t scroll/*=0*/, bool onlyCachedFileIcon/*=false*/) {
   Clear_Screen();
   Draw_Title("Select File");
-  selection = 0;
-  scrollpos = 0;
-  process = File;
+  // selection = 0;
+  // scrollpos = 0;
+  // process = File;
+  selection = min((int)select, card.get_num_Files()+1);
+  scrollpos = scroll;
+  if (selection-scrollpos > MROWS)
+    scrollpos = selection - MROWS;
   if (card.isMounted() && !removed) {
     LOOP_L_N(i, _MIN(card.get_num_Files() + 1, TROWS))
-      Draw_SD_Item(i, i);
+      Draw_SD_Item(i+scrollpos, i, onlyCachedFileIcon);
   }
   else {
     Draw_Menu_Item(0, ICON_Back, F("Back"));

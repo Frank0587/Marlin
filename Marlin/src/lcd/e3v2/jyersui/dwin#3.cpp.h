@@ -26,6 +26,7 @@ void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
     case Runout:        Draw_Popup(F("Filament Runout"), F(""), F(""), Wait, ICON_BLTouch); break;
     case PIDWait:       Draw_Popup(F("PID Autotune"), F("in process"), F("Please wait until done."), Wait, ICON_BLTouch); break;
     case Resuming:      Draw_Popup(F("Resuming Print"), F("Please wait until done."), F(""), Wait, ICON_BLTouch); break;
+    case ConfirmStartPrint: Draw_Popup(option ? F("Loading Preview...") : F("Print file?"), F(""), F(""), Popup); break;
     default: break;
   }
 }
@@ -200,6 +201,116 @@ void CrealityDWINClass::Option_Control() {
   DWIN_UpdateLCD();
 }
 
+
+#if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+bool CrealityDWINClass::find_and_decode_gcode_preview(char *name, uint8_t preview_type, uint16_t *address, bool onlyCachedFileIcon/*=false*/) {
+  // Won't work if we don't copy the name
+  // for (char *c = &name[0]; *c; c++) *c = tolower(*c);
+
+  char file_name[strlen(name) + 1]; // Room for filename and null
+  sprintf_P(file_name, "%s", name);
+  char file_path[strlen(name) + 1 + MAXPATHNAMELENGTH]; // Room for path, filename and null
+  sprintf_P(file_path, "%s/%s", card.getWorkDirName(), file_name);
+
+  // Check if cached
+  bool use_cache = preview_type == Thumnail_Icon;
+  if (use_cache) {
+    auto it = image_cache.find(file_path+to_string(Thumnail_Icon));
+    if (it != image_cache.end()) { // already cached
+      if (it->second == 0) return false; // no image available
+      *address = it->second;
+      return true;
+    } else if (onlyCachedFileIcon) return false;
+  }
+
+  const uint16_t buff_size = 256;
+  char public_buf[buff_size+1];
+  uint8_t output_buffer[6144];
+  uint32_t position_in_file = 0;
+  char *encoded_image = NULL;
+
+  card.openFileRead(file_name);
+  uint8_t n_reads = 0;
+  int16_t data_read = card.read(public_buf, buff_size);
+  card.setIndex(card.getIndex()+data_read);
+  char key[31] = "";
+  switch (preview_type) {
+    case Thumnail_Icon: strcpy_P(key, "; jpeg thumbnail begin 50x50"); break;
+    case Thumnail_Preview: strcpy_P(key, "; jpeg thumbnail begin 180x180"); break;
+  }
+  while(n_reads < 16 && data_read) { // Max 16 passes so we don't loop forever
+  if (Encoder_ReceiveAnalyze() != ENCODER_DIFF_NO) return false;
+    encoded_image = strstr(public_buf, key);
+    if (encoded_image) {
+      uint32_t index_bw = &public_buf[buff_size] - encoded_image;
+      position_in_file = card.getIndex() - index_bw;
+      break;
+    }
+
+    card.setIndex(card.getIndex()-32);
+    data_read = card.read(public_buf, buff_size);
+    card.setIndex(card.getIndex()+data_read);
+
+    n_reads++;
+  }
+
+  // If we found the image, decode it
+  if (encoded_image) {
+  memset(public_buf, 0, sizeof(public_buf));
+  card.setIndex(position_in_file+23); // ; thumbnail begin <move here>180x180 99999
+  while (card.get() != ' '); // ; thumbnail begin 180x180 <move here>180x180
+
+  char size_buf[10];
+  for (size_t i = 0; i < sizeof(size_buf); i++)
+  {
+    uint8_t c = card.get();
+    if (ISEOL(c)) {
+      size_buf[i] = 0;
+      break;
+    }
+    else
+      size_buf[i] = c;
+  }
+  uint16_t image_size = atoi(size_buf);
+  uint16_t stored_in_buffer = 0;
+  uint8_t encoded_image_data[image_size+1];
+  while (stored_in_buffer < image_size) {
+    char c = card.get();
+    if (ISEOL(c) || c == ';' || c == ' ') {
+      continue;
+    }
+    else {
+      encoded_image_data[stored_in_buffer] = c;
+      stored_in_buffer++;
+    }
+  }
+
+  encoded_image_data[stored_in_buffer] = 0;
+  unsigned int output_size = decode_base64(encoded_image_data, output_buffer);
+  if (next_available_address + output_size >= 0x7530) { // cache is full, invalidate it
+    next_available_address = 0;
+    image_cache.clear();
+    SERIAL_ECHOLNPGM("Preview cache full, cleaning up...");
+  }
+  DWIN_Save_JPEG_in_SRAM((uint8_t *)output_buffer, output_size, next_available_address);
+  *address = next_available_address;
+  if(use_cache) {
+    image_cache[file_path+to_string(preview_type)] = next_available_address;
+    next_available_address += output_size + 1;
+  }
+  } else if (use_cache)  // If we didn't find the image, but we are using the cache, mark it as image not available
+  {
+    //image_cache[file_path+to_string(preview_type)] = 0;
+    image_cache[file_path+to_string(preview_type)] = 0;
+  }
+
+  card.closefile(); 
+  gcode.process_subcommands_now(F("M117")); // Clear the message sent by the card API
+  return encoded_image;
+}
+#endif // DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW
+
+
 void CrealityDWINClass::File_Control() {
   EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
   static uint8_t filescrl = 0;
@@ -227,7 +338,8 @@ void CrealityDWINClass::File_Control() {
         }
         name[len] = '\0';
         DWIN_Draw_Rectangle(1, Color_Bg_Black, LBLX, MBASE(selection - scrollpos) - 14, 271, MBASE(selection - scrollpos) + 28);
-        Draw_Menu_Item(selection - scrollpos, card.flag.filenameIsDir ? ICON_More : ICON_File, name);
+        //Draw_Menu_Item(selection - scrollpos, card.flag.filenameIsDir ? ICON_More : ICON_File, name);
+        Draw_Menu_Item(selection-scrollpos, card.flag.filenameIsDir ? ICON_More : ICON_File, name, NULL, NULL, false, true);
         if (-pos >= MENU_CHAR_LIMIT) filescrl = 0;
         filescrl++;
         DWIN_UpdateLCD();
@@ -248,6 +360,12 @@ void CrealityDWINClass::File_Control() {
       DWIN_Frame_AreaMove(1, 2, MLINE, Color_Bg_Black, 0, 31, DWIN_WIDTH, 349);
       Draw_SD_Item(selection, selection - scrollpos);
     }
+
+    #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+      thumbtime = millis() + SCROLL_WAIT;
+      name_scroll_time = millis() + SCROLL_WAIT;
+    #endif
+
     DWIN_Draw_Rectangle(1, GetColor(eeprom_settings.cursor_color, Rectangle_Color), 0, MBASE(selection - scrollpos) - 18, 14, MBASE(selection - scrollpos) + 33);
   }
   else if (encoder_diffState == ENCODER_DIFF_CCW && selection > 0) {
@@ -261,6 +379,12 @@ void CrealityDWINClass::File_Control() {
       DWIN_Frame_AreaMove(1, 3, MLINE, Color_Bg_Black, 0, 31, DWIN_WIDTH, 349);
       Draw_SD_Item(selection, selection - scrollpos);
     }
+
+    #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+      thumbtime = millis() + SCROLL_WAIT;
+      name_scroll_time = millis() + SCROLL_WAIT;
+    #endif
+
     DWIN_Draw_Rectangle(1, GetColor(eeprom_settings.cursor_color, Rectangle_Color), 0, MBASE(selection - scrollpos) - 18, 14, MBASE(selection - scrollpos) + 33);
   }
   else if (encoder_diffState == ENCODER_DIFF_ENTER) {
@@ -281,7 +405,20 @@ void CrealityDWINClass::File_Control() {
         Draw_SD_List();
       }
       else {
+        #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+        uint16_t image_address;
+        bool has_preview = find_and_decode_gcode_preview(card.filename, Thumnail_Preview, &image_address);
+        Popup_Handler(ConfirmStartPrint, has_preview);
+        Draw_Title("Print file ?");
+        if (has_preview) {
+          DWIN_SRAM_Memory_Icon_Display(48,78,image_address);
+        }
+        else {
+          gcode.process_subcommands_now(F("M117 Preview not found.")); 
+        }
+       #else
         card.openAndPrintFile(card.filename);
+       #endif
       }
     }
   }
@@ -459,6 +596,14 @@ void CrealityDWINClass::Popup_Control() {
             else Redraw_Menu(true, true, (active_menu==PreheatHotend));
           }
           break;
+        case ConfirmStartPrint:
+          if (selection==0) {
+            card.openAndPrintFile(card.filename);}
+          else{
+            Redraw_Menu(true, true, true);
+            gcode.process_subcommands_now(F("M117"));}
+          break;
+
       #endif // ADVANCED_PAUSE_FEATURE
 
       #if HAS_MESH
@@ -752,7 +897,6 @@ void CrealityDWINClass::Stop_Print() {
 }
 
 void CrealityDWINClass::Update() {
-
   State_Update();
   Screen_Update();
   switch (process) {
@@ -774,13 +918,10 @@ void MarlinUI::update() { CrealityDWIN.Update(); }
   void MarlinUI::_set_brightness() { DWIN_LCD_Brightness(backlight ? brightness : 0); }
 #endif
 
-
 void CrealityDWINClass::State_Update() {
-  
   if (DEBUG_INFOLINE(2)) {
     DEBUG_ECHOLNPGM("CrealityDWINClass::State_Update (", dbg_InfoLine1, ")" );
   }
-  
   if ((print_job_timer.isRunning() || print_job_timer.isPaused()) != printing) {
     if (!printing) Start_Print(card.isFileOpen() || TERN0(POWER_LOSS_RECOVERY, recovery.valid()));
     else Stop_Print();
@@ -839,9 +980,37 @@ void CrealityDWINClass::Screen_Update() {
   static bool mounted = card.isMounted();
   if (mounted != card.isMounted()) {
     mounted = card.isMounted();
+    #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+    image_cache.clear();
+    #endif
     if (process == File)
       Draw_SD_List();
   }
+
+  #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+  if (eeprom_settings.show_gcode_thumbnails && ELAPSED(millis(), thumbtime)) {
+    thumbtime = millis() + 60000;
+    if (process == File){
+      // Draw_SD_List(!mounted, selection, scrollpos);
+      if (selection-scrollpos > MROWS) scrollpos = selection - MROWS;
+      LOOP_L_N(i, _MIN(card.get_num_Files()+1, TROWS)) {
+        if (Encoder_ReceiveAnalyze() != ENCODER_DIFF_NO) break;
+        if (i+scrollpos == 0) {
+          if (card.flag.workDirIsRoot)
+            Draw_Menu_Item(0, ICON_Back, "Back");
+          else
+            Draw_Menu_Item(0, ICON_Back, "..");
+        } else {
+          card.getfilename_sorted(SD_ORDER(i+scrollpos-1, card.get_num_Files()));
+
+          Draw_Menu_Item(i, card.flag.filenameIsDir ? ICON_More : ICON_File);
+        }
+        DWIN_UpdateLCD();
+      }
+      DWIN_Draw_Rectangle(1, GetColor(eeprom_settings.cursor_color, Rectangle_Color), 0, MBASE(selection-scrollpos) - 18, 8, MBASE(selection-scrollpos) + 31);
+    }
+  }
+  #endif
 
   #if HAS_HOTEND
     static int16_t hotendtarget = -1;
@@ -1014,6 +1183,9 @@ void CrealityDWINClass::Reset_Settings() {
   TERN_(AUTO_BED_LEVELING_UBL, mesh_conf.tilt_grid = eeprom_settings.tilt_grid_size + 1);
   corner_pos = eeprom_settings.corner_pos / 10.0f;
   TERN_(SOUND_MENU_ITEM, ui.buzzer_enabled = true);
+  #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+    eeprom_settings.show_gcode_thumbnails = true;
+  #endif
   Redraw_Screen();
 }
 
@@ -1041,7 +1213,7 @@ void MarlinUI::init_lcd() {
 
     switch (message) {
       case PAUSE_MESSAGE_INSERT:  CrealityDWIN.Confirm_Handler(FilInsert);  break;
-      case PAUSE_MESSAGE_PURGE:
+      case PAUSE_MESSAGE_PURGE: break;
       case PAUSE_MESSAGE_OPTION:
         pause_menu_response = PAUSE_RESPONSE_WAIT_FOR;
         CrealityDWIN.Popup_Handler(PurgeMore);
