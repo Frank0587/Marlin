@@ -26,7 +26,7 @@
  */
 #ifndef SHORT_BUILD_VERSION
   // = git branch 
-  #define SHORT_BUILD_VERSION ">develop"
+  #define SHORT_BUILD_VERSION ">bugfix-SP"
 #endif
 
 /**
