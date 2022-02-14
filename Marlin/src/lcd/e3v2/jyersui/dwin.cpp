@@ -944,17 +944,17 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
   int16_t zoX = STATUS_X3, zoY = STATUS_Y2;		// Z-Offset
 
   #ifdef DEBUG_LCD_UI
-    htX = STATUS_X2, htY = STATUS_Y2;		// Hotend temp
-    frX = flX = faX = 0;
-    
-    if ( DEBUG_INFOLINE(1)){
-      DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, STATUS_Y1, DWIN_WIDTH, STATUS_Y2);
-    
-      DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1, dbg_InfoLine1);
-      DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1+13, dbg_InfoLine2);
-    }
-  
-  
+    #ifdef DEBUG_ONSCREEN
+      htX = STATUS_X2, htY = STATUS_Y2;		// Hotend temp
+      frX = flX = faX = 0;
+      
+      if ( DEBUG_INFOLINE(1)){
+        DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, STATUS_Y1, DWIN_WIDTH, STATUS_Y2);
+      
+        DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1, dbg_InfoLine1);
+        DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1+13, dbg_InfoLine2);
+      }
+    #endif
   #endif
 
   #if HAS_HOTEND
