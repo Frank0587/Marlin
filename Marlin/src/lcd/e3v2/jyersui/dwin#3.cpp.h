@@ -1212,16 +1212,22 @@ void MarlinUI::init_lcd() {
   DEBUG_ECHOLNPGM("MarlinUI::pause_show_message (message=", message, ", mode=", mode, ")");
 
     switch (message) {
-      case PAUSE_MESSAGE_INSERT:  CrealityDWIN.Confirm_Handler(FilInsert);  break;
-      case PAUSE_MESSAGE_PURGE: break;
-      case PAUSE_MESSAGE_OPTION:
-        pause_menu_response = PAUSE_RESPONSE_WAIT_FOR;
-        CrealityDWIN.Popup_Handler(PurgeMore);
-        break;
-      case PAUSE_MESSAGE_HEAT:    CrealityDWIN.Confirm_Handler(HeaterTime); break;
+      case PAUSE_MESSAGE_INSERT:  CrealityDWIN.Confirm_Handler(FilInsert);  
+                                  break;
+
+      case PAUSE_MESSAGE_PURGE:   break;
+      
+      case PAUSE_MESSAGE_OPTION:  pause_menu_response = PAUSE_RESPONSE_WAIT_FOR;
+                                  CrealityDWIN.Popup_Handler(PurgeMore);
+                                  break;
+
+      case PAUSE_MESSAGE_HEAT:    CrealityDWIN.Confirm_Handler(HeaterTime); 
+                                  break;
+
       case PAUSE_MESSAGE_WAITING: CrealityDWIN.Update_Status(GET_TEXT(MSG_ADVANCED_PAUSE_WAITING));
                                   CrealityDWIN.Draw_Print_Screen();         
                                   break;
+
       case PAUSE_MESSAGE_PARKING: CrealityDWIN.Update_Status(GET_TEXT(MSG_PAUSE_PRINT_PARKING)); 
                                   CrealityDWIN.Popup_Handler(Home);   
                                   break;
