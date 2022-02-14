@@ -35,7 +35,7 @@
  */
 #ifndef DETAILED_BUILD_VERSION
   // = details for info screen 
-  #define DETAILED_BUILD_VERSION "SP +Jy>2.0.2i +Mar>bugfix"
+  #define DETAILED_BUILD_VERSION "SP / Jy / Mar>bugfix"
 #endif
 
 /**
