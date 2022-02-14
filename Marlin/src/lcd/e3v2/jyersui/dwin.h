@@ -181,6 +181,10 @@ public:
     #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
       bool show_gcode_thumbnails : 1;
     #endif
+//  #if ENABLED(DEBUG_LCD_UI)
+    bool show_debug_on_LCD : 1;   // define always to enable compatibility
+//  #endif
+    
   } eeprom_settings;
 
   static constexpr const char * const color_names[11] = { "Default", "White", "Green", "Cyan", "Blue", "Magenta", "Red", "Orange", "Yellow", "Brown", "Black" };

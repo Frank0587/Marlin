@@ -1749,7 +1749,8 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
       #define VISUAL_TIME_FORMAT (VISUAL_BRIGHTNESS + 1)
       #define VISUAL_COLOR_THEMES (VISUAL_TIME_FORMAT + 1)
       #define VISUAL_FILE_TUMBNAILS (VISUAL_COLOR_THEMES + ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW))
-      #define VISUAL_TOTAL VISUAL_FILE_TUMBNAILS
+      #define VISUAL_SHOW_DEBUGLINES (VISUAL_FILE_TUMBNAILS + ENABLED(DEBUG_LCD_UI))
+      #define VISUAL_TOTAL VISUAL_SHOW_DEBUGLINES
 
       switch (item) {
         case VISUAL_BACK:
@@ -1800,6 +1801,19 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             }
             break;
         #endif
+        #if ENABLED(DEBUG_LCD_UI)
+          case VISUAL_SHOW_DEBUGLINES:
+            if (draw) {
+              Draw_Menu_Item(row, ICON_Contact, F("Show debug lines"));
+              Draw_Checkbox(row, eeprom_settings.show_debug_on_LCD);
+            }
+            else {
+              eeprom_settings.show_debug_on_LCD = !eeprom_settings.show_debug_on_LCD;
+              Draw_Checkbox(row, eeprom_settings.show_debug_on_LCD);
+            }
+            break;
+        #endif
+        
       }
       break;
 

@@ -1186,6 +1186,7 @@ void CrealityDWINClass::Reset_Settings() {
   #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
     eeprom_settings.show_gcode_thumbnails = true;
   #endif
+  eeprom_settings.show_debug_on_LCD = false;
   Redraw_Screen();
 }
 

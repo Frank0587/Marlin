@@ -85,7 +85,7 @@
 //#define DEBUG_POWER_LOSS_RECOVERY   // M1000
 #define DEBUG_PAUSE_RESUME    // Pause, M25, M125, M600, ...
 #define DEBUG_LCD_UI          // LCD dwinui, dwin_lcd, marlinui...
-#define DEBUG_ONSCREEN        // add infolines on LCD-screen
+#define DEBUG_ONSCREEN    show_debug_on_LCD    // add infolines on LCD-screen
 
 /**
  * *** VENDORS PLEASE READ ***

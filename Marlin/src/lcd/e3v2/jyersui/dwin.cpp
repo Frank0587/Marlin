@@ -944,7 +944,7 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
   int16_t zoX = STATUS_X3, zoY = STATUS_Y2;		// Z-Offset
 
   #ifdef DEBUG_LCD_UI
-    #ifdef DEBUG_ONSCREEN
+    if (eeprom_settings.show_debug_on_LCD) {
       htX = STATUS_X2, htY = STATUS_Y2;		// Hotend temp
       frX = flX = faX = 0;
       
@@ -954,7 +954,7 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
         DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1, dbg_InfoLine1);
         DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1+13, dbg_InfoLine2);
       }
-    #endif
+    }
   #endif
 
   #if HAS_HOTEND
