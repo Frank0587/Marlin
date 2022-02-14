@@ -791,7 +791,7 @@ void CrealityDWINClass::Draw_Print_Screen() {
   process = Print;
   selection = 0;
   Clear_Screen();
-  DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, STATUS_Y, DWIN_WIDTH-8, 376);
+  // DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, STATUS_Y, DWIN_WIDTH-8, 376);
   Draw_Title("Printing...");
   Print_Screen_Icons();
   DWIN_ICON_Show(ICON, ICON_PrintTime, 14, 171);
