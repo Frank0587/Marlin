@@ -909,7 +909,7 @@ void CrealityDWINClass::Draw_SD_List(bool removed/*=false*/, uint8_t select/*=0*
   Draw_Title("Select File");
   // selection = 0;
   // scrollpos = 0;
-  // process = File;
+  process = File;
   selection = min((int)select, card.get_num_Files()+1);
   scrollpos = scroll;
   if (selection-scrollpos > MROWS)

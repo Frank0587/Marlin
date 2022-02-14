@@ -2847,7 +2847,7 @@
 // Ender-3 v2 OEM display with enhancements by Jacob Myers
 //
 #define DWIN_CREALITY_LCD_JYERSUI
-  //#define DWIN_CREALITY_LCD_CUSTOM_ICONS
+  #define DWIN_CREALITY_LCD_CUSTOM_ICONS                  // needed DWIN-Firmware IconSet: Custom or Gotscha, not Orginal
   #define DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW
 
 //
