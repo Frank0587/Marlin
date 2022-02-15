@@ -1749,8 +1749,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
       #define VISUAL_TIME_FORMAT (VISUAL_BRIGHTNESS + 1)
       #define VISUAL_COLOR_THEMES (VISUAL_TIME_FORMAT + 1)
       #define VISUAL_FILE_TUMBNAILS (VISUAL_COLOR_THEMES + ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW))
-      #define VISUAL_SHOW_DEBUGLINES (VISUAL_FILE_TUMBNAILS + ENABLED(DEBUG_LCD_UI))
-      #define VISUAL_TOTAL VISUAL_SHOW_DEBUGLINES
+      #define VISUAL_TOTAL VISUAL_FILE_TUMBNAILS
 
       switch (item) {
         case VISUAL_BACK:
@@ -1801,19 +1800,6 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             }
             break;
         #endif
-        #if ENABLED(DEBUG_LCD_UI)
-          case VISUAL_SHOW_DEBUGLINES:
-            if (draw) {
-              Draw_Menu_Item(row, ICON_Contact, F("Show debug lines"));
-              Draw_Checkbox(row, eeprom_settings.show_debug_on_LCD);
-            }
-            else {
-              eeprom_settings.show_debug_on_LCD = !eeprom_settings.show_debug_on_LCD;
-              Draw_Checkbox(row, eeprom_settings.show_debug_on_LCD);
-            }
-            break;
-        #endif
-        
       }
       break;
 
@@ -2020,7 +2006,9 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
       #define ADVANCED_FILSENSORENABLED (ADVANCED_COLD_EXTRUDE + ENABLED(FILAMENT_RUNOUT_SENSOR))
       #define ADVANCED_FILSENSORDISTANCE (ADVANCED_FILSENSORENABLED + ENABLED(HAS_FILAMENT_RUNOUT_DISTANCE))
       #define ADVANCED_POWER_LOSS (ADVANCED_FILSENSORDISTANCE + ENABLED(POWER_LOSS_RECOVERY))
-      #define ADVANCED_TOTAL ADVANCED_POWER_LOSS
+      #define ADVANCED_DEBUGLINES (ADVANCED_POWER_LOSS + ENABLED(DEBUG_LCD_UI))
+      #define ADVANCED_TOTAL ADVANCED_DEBUGLINES
+
 
       switch (item) {
         case ADVANCED_BACK:
@@ -2137,6 +2125,20 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             else {
               recovery.enable(!recovery.enabled);
               Draw_Checkbox(row, recovery.enabled);
+            }
+            break;
+        #endif
+
+        #if ENABLED(DEBUG_LCD_UI)
+          case ADVANCED_DEBUGLINES:
+            if (draw) {
+              Draw_Menu_Item(row, ICON_Contact, F("Show debug lines"));
+              Draw_Checkbox(row, eeprom_settings.show_debug_on_LCD);
+            }
+            else {
+              eeprom_settings.show_debug_on_LCD = !eeprom_settings.show_debug_on_LCD;
+              Draw_Checkbox(row, eeprom_settings.show_debug_on_LCD);
+              Draw_Status_Area(true);
             }
             break;
         #endif
