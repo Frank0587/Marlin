@@ -875,12 +875,16 @@ void CrealityDWINClass::Draw_Print_ProgressElapsed() {
 
 void CrealityDWINClass::Draw_Print_confirm() {
   Draw_Print_Screen();
+  Confirm_Handler(Complete);
+
+/*
   process = Confirm;
   popup = Complete;
   DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, 252, 263, 351);
   DWIN_ICON_Show(ICON, ICON_Confirm_E, 87, 283);
   DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 86, 282, 187, 321);
   DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 85, 281, 188, 322);
+*/
 }
 
 void CrealityDWINClass::Draw_SD_Item(uint8_t item, uint8_t row, bool onlyCachedFileIcon/*=false*/) {

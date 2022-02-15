@@ -42,7 +42,8 @@ void CrealityDWINClass::Confirm_Handler(PopupID popupid) {
     case UserInput:   Draw_Popup(F("Waiting for Input"), F("Press to Continue"), F(""), Confirm); break;
     case LevelError:  Draw_Popup(F("Couldn't enable Leveling"), F("(Valid mesh must exist)"), F(""), Confirm); break;
     case InvalidMesh: Draw_Popup(F("Valid mesh must exist"), F("before tuning can be"), F("performed"), Confirm); break;
-    default: break;
+    case Complete:    Draw_Popup(F("Printing finished !!"), F(""), F(""), Confirm); break;
+  default: break;
   }
 }
 
@@ -853,7 +854,8 @@ void CrealityDWINClass::Update_Status(const char * const text) {
   char header[4];
   LOOP_L_N(i, 3) header[i] = text[i];
   header[3] = '\0';
-  if (strcmp_P(header, PSTR("<F>")) == 0) {
+  //if (strcmp_P(header, PSTR("<F>")) == 0) {
+  if (false) {
     LOOP_L_N(i, _MIN((size_t)LONG_FILENAME_LENGTH, strlen(text))) filename[i] = text[i + 3];
     filename[_MIN((size_t)LONG_FILENAME_LENGTH - 1, strlen(text))] = '\0';
     Draw_Print_Filename(true);
@@ -1213,16 +1215,20 @@ void MarlinUI::init_lcd() {
   DEBUG_ECHOLNPGM("MarlinUI::pause_show_message (message=", message, ", mode=", mode, ")");
 
     switch (message) {
-      case PAUSE_MESSAGE_INSERT:  CrealityDWIN.Confirm_Handler(FilInsert);  
+      case PAUSE_MESSAGE_INSERT:  CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_INSERT));
+                                  CrealityDWIN.Confirm_Handler(FilInsert);  
                                   break;
 
-      case PAUSE_MESSAGE_PURGE:   break;
+      case PAUSE_MESSAGE_PURGE:   CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_PURGE)); 
+                                  break;
       
-      case PAUSE_MESSAGE_OPTION:  pause_menu_response = PAUSE_RESPONSE_WAIT_FOR;
+      case PAUSE_MESSAGE_OPTION:  CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_OPTION_HEADER)); 
+                                  pause_menu_response = PAUSE_RESPONSE_WAIT_FOR;
                                   CrealityDWIN.Popup_Handler(PurgeMore);
                                   break;
 
-      case PAUSE_MESSAGE_HEAT:    CrealityDWIN.Confirm_Handler(HeaterTime); 
+      case PAUSE_MESSAGE_HEAT:    CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_HEAT)); 
+                                  CrealityDWIN.Confirm_Handler(HeaterTime); 
                                   break;
 
       case PAUSE_MESSAGE_WAITING: CrealityDWIN.Update_Status(GET_TEXT(MSG_ADVANCED_PAUSE_WAITING));
@@ -1232,6 +1238,21 @@ void MarlinUI::init_lcd() {
       case PAUSE_MESSAGE_PARKING: CrealityDWIN.Update_Status(GET_TEXT(MSG_PAUSE_PRINT_PARKING)); 
                                   CrealityDWIN.Popup_Handler(Home);   
                                   break;
+      case PAUSE_MESSAGE_CHANGING: CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_INIT)); 
+                                  break;
+      case PAUSE_MESSAGE_UNLOAD:  CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_UNLOAD)); 
+                                  break;
+      case PAUSE_MESSAGE_LOAD:    CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_LOAD)); 
+                                  break;
+      case PAUSE_MESSAGE_RESUME:  CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_RESUME)); 
+                                  CrealityDWIN.Popup_Handler(Resume);
+                                  break;
+      case PAUSE_MESSAGE_STATUS:  CrealityDWIN.Update_Status("Pause message: Status"); 
+                                  break;
+      case PAUSE_MESSAGE_HEATING: CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_HEATING)); 
+                                  CrealityDWIN.Popup_Handler(Heating);
+                                  break;
+
       default: break;
     }
   }
