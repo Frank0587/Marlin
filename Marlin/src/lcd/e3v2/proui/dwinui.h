@@ -32,7 +32,7 @@
   #ifdef ICON
     #undef ICON
   #endif
-  #define ICON                    0x09  // Default Creality DWIN_SET
+  #define ICON                    0x07  // Official DWIN_SET:  9= Creality  -or-  7= Marlin/my printer
 #endif
 
 // Extra Icons

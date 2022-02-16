@@ -659,11 +659,11 @@ void _update_axis_value(const AxisEnum axis, const uint16_t x, const uint16_t y,
 
   if (force || changed || draw_qmark || draw_empty) {
     if (blink && draw_qmark)
-      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, F("  - ? -"));
+      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, (axis == Z_AXIS ? F("--??--") : F("--?--")));
     else if (blink && draw_empty)
-      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, F("       "));
+      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, (axis == Z_AXIS ? F("      ") : F("     ")));
     else
-      DWINUI::Draw_Signed_Float(HMI_data.Coordinate_Color, HMI_data.Background_Color, 3, 2, x, y, p);
+      DWINUI::Draw_Signed_Float(HMI_data.Coordinate_Color, HMI_data.Background_Color, 3, (axis == Z_AXIS ? 2 : 1), x, y, p);
   }
 }
 
@@ -674,9 +674,9 @@ void _draw_xyz_position(const bool force) {
   if (force || blink != _blink) {
     _blink = blink;
     //SERIAL_ECHOPGM(" (blink)");
-    _update_axis_value(X_AXIS,  27, 459, blink, true);
-    _update_axis_value(Y_AXIS, 112, 459, blink, true);
-    _update_axis_value(Z_AXIS, 197, 459, blink, true);
+    _update_axis_value(X_AXIS,  35, 459, blink, true);
+    _update_axis_value(Y_AXIS, 120, 459, blink, true);
+    _update_axis_value(Z_AXIS, 205, 459, blink, true);
   }
   //SERIAL_EOL();
 }
@@ -1850,6 +1850,7 @@ void DWIN_InitScreen() {
   DWINUI::onTitleDraw = Draw_Title;
   DWINUI::onMenuDraw = Draw_Menu;
   DWIN_DrawStatusLine(nullptr);
+  Draw_Main_Area();
   Draw_Status_Area(true);
   Goto_Main_Menu();
 }
@@ -2503,6 +2504,12 @@ void SetSpeed() { SetPIntOnClick(MIN_PRINT_SPEED, MAX_PRINT_SPEED); }
 void ApplyFlow() { planner.refresh_e_factor(0); }
 void SetFlow() { SetPIntOnClick(MIN_PRINT_FLOW, MAX_PRINT_FLOW, ApplyFlow); }
 
+float TramZval = 0.20;
+
+void setTramZval() {
+  SetPFloatOnClick(0.0, 3.0, 2);   
+}
+
 // Bed Tramming
 void Tram(uint8_t point) {
   char cmd[100] = "";
@@ -2511,9 +2518,10 @@ void Tram(uint8_t point) {
     float xpos = 0, ypos = 0, zval = 0, margin = 0;
     char str_1[6] = "", str_2[6] = "", str_3[6] = "";
     if (inLev) return;
-    margin = HMI_data.FullManualTramming ? 30 : PROBING_MARGIN;
+    margin = 30; // = HMI_data.FullManualTramming ? 30 : PROBING_MARGIN;
   #else
     int16_t xpos = 0, ypos = 0;
+	char str_3[6] = "";
     int16_t margin = 30;
   #endif
 
@@ -2538,39 +2546,48 @@ void Tram(uint8_t point) {
       LCD_MESSAGE(MSG_LEVBED_C);
       xpos = X_BED_SIZE / 2; ypos = Y_BED_SIZE / 2;
       break;
+    case 5:
+      LCD_MESSAGE(MSG_LEVBED_ML);
+      xpos = margin; ypos = Y_BED_SIZE / 2;
+      break;
+    case 6:
+      LCD_MESSAGE(MSG_LEVBED_MR);
+      xpos = X_BED_SIZE - margin; ypos = Y_BED_SIZE / 2;
+      break;
   }
 
   #if HAS_ONESTEP_LEVELING
     planner.synchronize();
     if (HMI_data.FullManualTramming) {
       planner.synchronize();
-      sprintf_P(cmd, PSTR("M420S0\nG28O\nG90\nG0Z5F300\nG0X%sY%sF5000\nG0Z0F300"),
+      sprintf_P(cmd, PSTR("M420S0\nG28O\nG90\nG0Z5F300\nG0X%sY%sF5000\nG0Z%sF300"),
         dtostrf(xpos, 1, 1, str_1),
-        dtostrf(ypos, 1, 1, str_2)
+        dtostrf(ypos, 1, 1, str_2),
+        dtostrf(TramZval, 1, 1, str_3)
       );
       queue.inject(cmd);
     }
     else {
-    probe.stow();
-    gcode.process_subcommands_now(F("M420S0\nG28O"));
-    planner.synchronize();
-    inLev = true;
-    zval = probe.probe_at_point(xpos, ypos, PROBE_PT_STOW);
+      probe.stow();
+      gcode.process_subcommands_now(F("M420S0\nG28O"));
+      planner.synchronize();
+      inLev = true;
+      zval = probe.probe_at_point(xpos, ypos, PROBE_PT_STOW);
       if (isnan(zval))
         ui.set_status(F("Position Not Reachable, check offsets"));
       else { 
-      sprintf_P(cmd, PSTR("X:%s, Y:%s, Z:%s"),
-      dtostrf(xpos, 1, 1, str_1),
-      dtostrf(ypos, 1, 1, str_2),
-      dtostrf(zval, 1, 2, str_3)
-    );
-    ui.set_status(cmd);
+        sprintf_P(cmd, PSTR("X:%s, Y:%s, Z:%s"),
+          dtostrf(xpos, 1, 1, str_1),
+          dtostrf(ypos, 1, 1, str_2),
+          dtostrf(zval, 1, 2, str_3)
+          );
+        ui.set_status(cmd);
       }
-    inLev = false;
+      inLev = false;
     }
   #else
     planner.synchronize();
-    sprintf_P(cmd, PSTR("M420S0\nG28O\nG90\nG0Z5F300\nG0X%iY%iF5000\nG0Z0F300"), xpos, ypos);
+    sprintf_P(cmd, PSTR("M420S0\nG28O\nG90\nG0Z5F300\nG0X%iY%iF5000\nG0Z%sF300"), xpos, ypos, dtostrf(TramZval, 1, 2, str_3));
     queue.inject(cmd);
   #endif
 }
@@ -2580,6 +2597,8 @@ void TramFR() { Tram(1); }
 void TramBR() { Tram(2); }
 void TramBL() { Tram(3); }
 void TramC () { Tram(4); }
+void TramML() { Tram(5); }
+void TramMR() { Tram(6); }
 
 #if HAS_ONESTEP_LEVELING
   void SetManualTramming() {
@@ -3050,10 +3069,12 @@ void Draw_Tramming_Menu() {
     CurrentMenu->MenuTitle.SetCaption(GET_TEXT_F(MSG_BED_TRAMMING));
     DWINUI::MenuItemsPrepare(7);
     MENU_ITEM(ICON_Back, GET_TEXT_F(MSG_BUTTON_BACK), onDrawMenuItem, Draw_Prepare_Menu);
+    // SP_MOD: Z-Value for Tramming
+    EDIT_ITEM(ICON_Zoffset, GET_TEXT_F(MSG_LEVBED_ZVAL), onDrawPFloat2Menu, setTramZval, &TramZval);
+    // SP_MOD: Tramming adapted to 3 point mounted bed
     MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_FL), onDrawMenuItem, TramFL);
-    MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_FR), onDrawMenuItem, TramFR);
-    MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_BR), onDrawMenuItem, TramBR);
     MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_BL), onDrawMenuItem, TramBL);
+    MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_MR), onDrawMenuItem, TramMR);
     MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_C ), onDrawMenuItem, TramC );
     #if HAS_ONESTEP_LEVELING
       MENU_ITEM(ICON_ProbeSet, GET_TEXT_F(MSG_BED_TRAMMING_MANUAL), onDrawManualTramming, SetManualTramming);
