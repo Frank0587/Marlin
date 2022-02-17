@@ -190,6 +190,7 @@ char filename[LONG_FILENAME_LENGTH];
 bool printing = false;
 bool paused = false;
 bool sdprint = false;
+bool PopUp_FirstGoOn = false;
 
 int16_t pausetemp, pausebed, pausefan;
 
@@ -1784,6 +1785,11 @@ void CrealityDWINClass::Print_Screen_Control() {
 
 void CrealityDWINClass::Popup_Control() {
   EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
+  if (PopUp_FirstGoOn){
+    encoder_diffState = ENCODER_DIFF_ENTER;
+    selection = 0;
+    PopUp_FirstGoOn = false;
+  }
   if (encoder_diffState == ENCODER_DIFF_NO) return;
   if (encoder_diffState == ENCODER_DIFF_CW && selection < 1) {
     selection++;
