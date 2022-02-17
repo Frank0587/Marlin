@@ -1260,6 +1260,7 @@ void CrealityDWINClass::Draw_Keys(uint8_t index, bool selected, bool uppercase/*
 
 #include "dwin_menu.cpp.h"   // replace lines 1223...4580 (orginal)
 
+
 /* Popup Config */
 
 void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
@@ -1565,7 +1566,7 @@ bool CrealityDWINClass::find_and_decode_gcode_preview(char *name, uint8_t previe
     image_cache[file_path+to_string(preview_type)] = 0;
   }
 
-  card.closefile();
+  card.closefile(); 
   gcode.process_subcommands_now(F("M117")); // Clear the message sent by the card API
   return encoded_image;
 }
@@ -1675,7 +1676,7 @@ void CrealityDWINClass::File_Control() {
           DWIN_SRAM_Memory_Icon_Display(48,78,image_address);
         }
         else {
-          gcode.process_subcommands_now(F("M117 Preview not found."));
+          gcode.process_subcommands_now(F("M117 Preview not found.")); 
         }
        #else
         card.openAndPrintFile(card.filename);
@@ -2285,7 +2286,7 @@ void CrealityDWINClass::Screen_Update() {
 
   #if HAS_ZOFFSET_ITEM
     static float lastzoffset = zoffsetvalue;
-    if (zoffsetvalue != lastzoffset) {
+    if (zoffsetvalue != lastzoffset && !printing) {
       lastzoffset = zoffsetvalue;
       #if HAS_BED_PROBE
         probe.offset.z = zoffsetvalue;
@@ -2390,7 +2391,7 @@ void CrealityDWINClass::Save_Settings(char *buff) {
     eeprom_settings.host_action_label_2 = Encode_String(action2);
     eeprom_settings.host_action_label_3 = Encode_String(action3);
   #endif
-
+  
   TERN_(PREVENT_COLD_EXTRUSION, eeprom_settings.extrude_min_temp = _MIN(thermalManager.extrude_min_temp, 255));
 
   memcpy(buff, &eeprom_settings, _MIN(sizeof(eeprom_settings), eeprom_data_size));
@@ -2406,7 +2407,7 @@ void CrealityDWINClass::Load_Settings(const char *buff) {
     Decode_String(eeprom_settings.host_action_label_2, action2);
     Decode_String(eeprom_settings.host_action_label_3, action3);
   #endif
-
+  
   TERN_(PREVENT_COLD_EXTRUSION, thermalManager.extrude_min_temp = eeprom_settings.extrude_min_temp);
 
   Redraw_Screen();
