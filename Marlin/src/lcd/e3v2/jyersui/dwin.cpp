@@ -222,11 +222,11 @@ bool probe_deployed = false;
 #ifdef DEBUG_LCD_UI
   #define DEBUG_INFOLINE(a)  dbg_UpdateInfoLine(a)
 
-  char dbg_InfoLine1[64], dbg_InfoLine2[64];
+  char dd_InfoLine1[64], dd_InfoLine2[64];
+  uint8_t dd_fresh = 0;
 
   bool dbg_UpdateInfoLine (uint8_t idx) {
     bool rtn = false;
-    static uint8_t fresh = 0;
     static uint64_t lastHash = 0;
     uint8_t timer = print_job_timer.isPaused() + 2* print_job_timer.isRunning();
     uint64_t hash =
@@ -242,16 +242,16 @@ bool probe_deployed = false;
 
     if (lastHash != hash) {
       lastHash = hash;
-      fresh = 0xFF;
+      dd_fresh = 0xFF;
       rtn = true;
 
-      sprintf_P(dbg_InfoLine1, PSTR("prc:%i/%i|prt:%i|pau=%i|tim:%i|wfu:%i|sel:%i/%i"),
+//    sprintf_P(dd_InfoLine1, PSTR(" - was geht up (line 2) - "));
+      sprintf_P(dd_InfoLine2, PSTR("prc:%i/%i|prt:%i|pau=%i|tim:%i|wfu:%i|sel:%i/%i"),
               process, last_process, printing, paused, timer, wait_for_user, selection, last_selection );
-      sprintf_P(dbg_InfoLine2, PSTR(" - was geht up (line 2) - "));
     }
     if (idx > 7) idx = 0;
-    if (fresh & (1<<idx)) {
-      fresh &= ~(1<<idx);
+    if (dd_fresh & (1<<idx)) {
+      dd_fresh &= ~(1<<idx);
       rtn = true;
     }
     return rtn;
@@ -956,8 +956,8 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
       if ( DEBUG_INFOLINE(1)){
         DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, STATUS_Y1, DWIN_WIDTH, STATUS_Y2);
 
-        DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1, dbg_InfoLine1);
-        DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1+13, dbg_InfoLine2);
+        DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1,    dd_InfoLine1);
+        DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1+13, dd_InfoLine2);
       }
     }
   #endif
@@ -1309,7 +1309,7 @@ void CrealityDWINClass::Draw_Keys(uint8_t index, bool selected, bool uppercase/*
 void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
   popup = last_popup = popupid;
 
-  DEBUG_ECHOLNPGM("CrealityDWINClass::Popup_Handler (popupid=", popupid, ", option=", option, ")");
+  DEBUG_ECHOLNPGM("CrDwCl::Popup_Handler (popupid=", popupid, ", option=", option, ")");
 
   switch (popupid) {
     case Pause:         Draw_Popup(F("Pause Print"), F(""), F(""), Popup); break;
@@ -1338,7 +1338,7 @@ void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
 
 void CrealityDWINClass::Confirm_Handler(PopupID popupid) {
 
-  DEBUG_ECHOLNPGM("CrealityDWINClass::Confirm_Handler (popupid=", popupid, ")");
+  DEBUG_ECHOLNPGM("CrDwCl::Confirm_Handler (popupid=", popupid, ")");
 
   popup = popupid;
   switch (popupid) {
@@ -1348,7 +1348,7 @@ void CrealityDWINClass::Confirm_Handler(PopupID popupid) {
     case LevelError:  Draw_Popup(F("Couldn't enable Leveling"), F("(Valid mesh must exist)"), F(""), Confirm); break;
     case InvalidMesh: Draw_Popup(F("Valid mesh must exist"), F("before tuning can be"), F("performed"), Confirm); break;
     case Complete:    Draw_Popup(F("Printing finished !!"), F(""), F(""), Confirm); break;
-  default: break;
+    default:          break;
   }
 }
 
@@ -2159,7 +2159,7 @@ void CrealityDWINClass::Modify_String(char * string, uint8_t maxlength, bool res
 
 void CrealityDWINClass::Update_Status(const char * const text) {
 
-  DEBUG_ECHOLNPGM("CrealityDWINClass::Update_Status (", text, ")");
+  DEBUG_ECHOLNPGM("CrDwCl::Update_Status (", text, ")");
 
   char header[4];
   LOOP_L_N(i, 3) header[i] = text[i];
@@ -2232,7 +2232,7 @@ void MarlinUI::update() { CrealityDWIN.Update(); }
 
 void CrealityDWINClass::State_Update() {
   if (DEBUG_INFOLINE(2)) {
-    DEBUG_ECHOLNPGM("CrealityDWINClass::State_Update (", dbg_InfoLine1, ")" );
+    //DEBUG_ECHOLNPGM("CrDwCl::State_Update (", dd_InfoLine2, ")" );
   }
   if ((print_job_timer.isRunning() || print_job_timer.isPaused()) != printing) {
     if (!printing) Start_Print(card.isFileOpen() || TERN0(POWER_LOSS_RECOVERY, recovery.valid()));
