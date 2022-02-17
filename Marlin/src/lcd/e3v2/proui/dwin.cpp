@@ -659,9 +659,9 @@ void _update_axis_value(const AxisEnum axis, const uint16_t x, const uint16_t y,
 
   if (force || changed || draw_qmark || draw_empty) {
     if (blink && draw_qmark)
-      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, (axis == Z_AXIS ? F("--??--") : F("--?--")));
+      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, (axis == Z_AXIS ? F("  - ? -") : F(" - ? -")));
     else if (blink && draw_empty)
-      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, (axis == Z_AXIS ? F("      ") : F("     ")));
+      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, (axis == Z_AXIS ? F("       ") : F("      ")));
     else
       DWINUI::Draw_Signed_Float(HMI_data.Coordinate_Color, HMI_data.Background_Color, 3, (axis == Z_AXIS ? 2 : 1), x, y, p);
   }
@@ -674,9 +674,9 @@ void _draw_xyz_position(const bool force) {
   if (force || blink != _blink) {
     _blink = blink;
     //SERIAL_ECHOPGM(" (blink)");
-    _update_axis_value(X_AXIS,  35, 459, blink, true);
-    _update_axis_value(Y_AXIS, 120, 459, blink, true);
-    _update_axis_value(Z_AXIS, 205, 459, blink, true);
+    _update_axis_value(X_AXIS,  27, 459, blink, true);
+    _update_axis_value(Y_AXIS, 112, 459, blink, true);
+    _update_axis_value(Z_AXIS, 197, 459, blink, true);
   }
   //SERIAL_EOL();
 }
