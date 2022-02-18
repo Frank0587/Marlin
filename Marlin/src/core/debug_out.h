@@ -54,9 +54,7 @@
 #undef DEBUG_SYNCHRONIZE
 
 #if DEBUG_OUT
-  extern char dd_InfoLine1[64];
-  extern uint8_t dd_fresh;
-  
+
   #include "debug_section.h"
   #define DEBUG_SECTION(N,S,D)    SectionLog N(F(S),D)
 
@@ -67,16 +65,15 @@
   #define DEBUG_DECIMAL           SERIAL_DECIMAL
   #define DEBUG_ECHO_F            SERIAL_ECHO_F
   #define DEBUG_ECHOLN            SERIAL_ECHOLN
+  #define DEBUG_ECHOPGM           SERIAL_ECHOPGM
+  #define DEBUG_ECHOLNPGM         SERIAL_ECHOLNPGM
   #define DEBUG_ECHOF             SERIAL_ECHOF
   #define DEBUG_ECHOLNF           SERIAL_ECHOLNF
   #define DEBUG_ECHOPGM           SERIAL_ECHOPGM
   #define DEBUG_ECHOPGM_P         SERIAL_ECHOPGM_P
   #define DEBUG_ECHOPAIR_F        SERIAL_ECHOPAIR_F
   #define DEBUG_ECHOPAIR_F_P      SERIAL_ECHOPAIR_F_P
-
-  #define DEBUG_ECHOLNPGM(...)   {SERIAL_ECHOLNPGM( __VA_ARGS__);  sprintf_P(dd_InfoLine1, __VA_ARGS__);  dd_fresh = 0xFF; }
-  //#define DEBUG_ECHOLNPGM(...)   sprintf_P(dd_InfoLine1, __VA_ARGS__); dd_fresh = 0xFF; }
-  
+  #define DEBUG_ECHOLNPGM         SERIAL_ECHOLNPGM
   #define DEBUG_ECHOLNPGM_P       SERIAL_ECHOLNPGM_P
   #define DEBUG_ECHOLNPAIR_F      SERIAL_ECHOLNPAIR_F
   #define DEBUG_ECHOLNPAIR_F_P    SERIAL_ECHOLNPAIR_F_P

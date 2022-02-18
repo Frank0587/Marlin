@@ -34,6 +34,16 @@
 
 #include "../../../inc/MarlinConfigPre.h"
 
+#ifdef DEBUG_LCD_UI
+  extern bool dd_UpdateInfoLine (uint8_t idx);
+  extern void dd_EchoToDebugLine(uint8_t c);
+  #define DEBUG_INFOLINE(a) dd_UpdateInfoLine(a)
+  #define ECHO_TO_SCREEN(a) dd_EchoToDebugLine(a) 
+#else
+  #define DEBUG_INFOLINE(a)      (false)
+  #define ECHO_TO_SCREEN(a)
+#endif
+
 enum processID : uint8_t {
   Main, Print, Menu, Value, Option, File, Popup, Confirm, Keyboard, Wait
 };
@@ -181,10 +191,7 @@ public:
     #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
       bool show_gcode_thumbnails : 1;
     #endif
-//  #if ENABLED(DEBUG_LCD_UI)
     bool show_debug_on_LCD : 1;   // define always to enable compatibility
-//  #endif
-    
   } eeprom_settings;
 
   static constexpr const char * const color_names[11] = { "Default", "White", "Green", "Cyan", "Blue", "Magenta", "Red", "Orange", "Yellow", "Brown", "Black" };

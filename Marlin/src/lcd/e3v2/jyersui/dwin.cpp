@@ -220,12 +220,26 @@ bool probe_deployed = false;
 
 
 #ifdef DEBUG_LCD_UI
-  #define DEBUG_INFOLINE(a)  dbg_UpdateInfoLine(a)
 
-  char dd_InfoLine1[64], dd_InfoLine2[64];
+  #define dd_LINELEN 64
+  char dd_InfoLine1[dd_LINELEN], dd_InfoLine2[dd_LINELEN];
   uint8_t dd_fresh = 0;
 
-  bool dbg_UpdateInfoLine (uint8_t idx) {
+  void dd_EchoToDebugLine(uint8_t c) {
+    static uint8_t idx = 0;
+    if (idx > dd_LINELEN-2 || c == '\r') 
+      c = '\n';
+
+    if (c == '\n' ){
+      dd_InfoLine1[idx] = '\0';
+      dd_fresh = 0xFF;
+      idx = 0;
+    }
+    else 
+      dd_InfoLine1[idx++] = c;
+  }
+
+  bool dd_UpdateInfoLine (uint8_t idx) {
     bool rtn = false;
     static uint64_t lastHash = 0;
     uint8_t timer = print_job_timer.isPaused() + 2* print_job_timer.isRunning();
@@ -256,8 +270,6 @@ bool probe_deployed = false;
     }
     return rtn;
   }
-#else
-  #define DEBUG_INFOLINE(a) false
 #endif
 
 
@@ -2557,8 +2569,7 @@ void MarlinUI::init_lcd() {
       case PAUSE_MESSAGE_RESUME:  CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_RESUME));
                                   CrealityDWIN.Popup_Handler(Resume);
                                   break;
-      case PAUSE_MESSAGE_STATUS:  CrealityDWIN.Update_Status("Pause message: Status");
-                                  break;
+      case PAUSE_MESSAGE_STATUS:  break;
       case PAUSE_MESSAGE_HEATING: CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_HEATING));
                                   CrealityDWIN.Popup_Handler(Heating);
                                   break;

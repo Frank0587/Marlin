@@ -27,6 +27,13 @@
   #include "../feature/e_parser.h"
 #endif
 
+#if BOTH( DWIN_CREALITY_LCD_JYERSUI, DEBUG_LCD_UI)
+  extern void dd_EchoToDebugLine(uint8_t c);
+  #define ECHO_TO_SCREEN(a) dd_EchoToDebugLine(a)
+#else
+  #define ECHO_TO_SCREEN(a)  
+#endif
+
 // Used in multiple places
 // You can build it but not manipulate it.
 // There are only few places where it's required to access the underlying member: GCodeQueue, SerialMask and MultiSerial
@@ -100,7 +107,7 @@ struct SerialBase {
 
   // Static dispatch methods below:
   // The most important method here is where it all ends to:
-  void write(uint8_t c)             { SerialChild->write(c); }
+  void write(uint8_t c)             { SerialChild->write(c); ECHO_TO_SCREEN(c); }
 
   // Called when the parser finished processing an instruction, usually build to nothing
   void msgDone() const              { SerialChild->msgDone(); }
