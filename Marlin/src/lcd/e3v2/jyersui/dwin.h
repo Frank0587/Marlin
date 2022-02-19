@@ -35,12 +35,10 @@
 #include "../../../inc/MarlinConfigPre.h"
 
 #ifdef DEBUG_LCD_UI
-  extern bool dd_UpdateInfoLine (uint8_t idx);
   extern void dd_EchoToDebugLine(uint8_t c);
-  #define DEBUG_INFOLINE(a) dd_UpdateInfoLine(a)
+  extern bool dd_PreventEcho;
   #define ECHO_TO_SCREEN(a) dd_EchoToDebugLine(a) 
 #else
-  #define DEBUG_INFOLINE(a)      (false)
   #define ECHO_TO_SCREEN(a)
 #endif
 
