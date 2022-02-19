@@ -97,7 +97,7 @@ enum menuID : uint8_t {
 #define Language_English    1
 #define Language_Chinese    2
 
-#define ICON                      0x09
+#define ICON                      0x07
 #define ICON_PACK                 0x03
 #define ICON_LOGO                  0
 #define ICON_Print_0               1
