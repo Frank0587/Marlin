@@ -242,7 +242,6 @@ void GcodeSuite::G28() {
   TERN_(EXTENSIBLE_UI, ExtUI::onHomingStart());
   TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Update_Status(GET_TEXT(MSG_LEVEL_BED_HOMING)));
 //  TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Popup_Handler(Home));
-  
 
   planner.synchronize();          // Wait for planner moves to finish!
 
@@ -558,7 +557,6 @@ void GcodeSuite::G28() {
   TERN_(EXTENSIBLE_UI, ExtUI::onHomingComplete());
   TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Update_Status(""));
   //TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Draw_Print_Screen());
-
 
   report_current_position();
 

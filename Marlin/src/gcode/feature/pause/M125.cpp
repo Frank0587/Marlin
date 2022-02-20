@@ -64,7 +64,7 @@ void GcodeSuite::M125() {
   // Initial retract before move to filament change position
   const float retract = TERN0(HAS_EXTRUDERS, -ABS(parser.axisunitsval('L', E_AXIS, PAUSE_PARK_RETRACT_LENGTH)));
 
-  DEBUG_ECHOLNPGM("GcodeSuite::M125() start");
+  DEBUG_SECTION(GSm125, "GcodeSuite::M125", true);
 
   xyz_pos_t park_point = NOZZLE_PARK_POINT;
 
@@ -87,7 +87,7 @@ void GcodeSuite::M125() {
 
   const bool sd_printing = TERN0(SDSUPPORT, IS_SD_PRINTING());
 
-  DEBUG_ECHOLNPGM("GcodeSuite::M125: call ui.pause_show_message(..)");
+  DEBUG_ECHOLNPGM("...M125: call ui.pause_show_message(..)");
   ui.pause_show_message(PAUSE_MESSAGE_PARKING, PAUSE_MODE_PAUSE_PRINT);
 
   // If possible, show an LCD prompt with the 'P' flag
@@ -97,16 +97,15 @@ void GcodeSuite::M125() {
     const bool show_lcd = 0;
   #endif
 
-  DEBUG_ECHOLNPGM("GcodeSuite::M125: call pause_print(..)");
+  DEBUG_ECHOLNPGM("...M125: call pause_print(..show_lcd=", show_lcd, ")");
   if (pause_print(retract, park_point, show_lcd, 0)) {
     if (ENABLED(EXTENSIBLE_UI) || BOTH(EMERGENCY_PARSER, HOST_PROMPT_SUPPORT) || !sd_printing || show_lcd) {
-      DEBUG_ECHOLNPGM("GcodeSuite::M125: call wait_for_confirmation(..)");
+      DEBUG_ECHOLNPGM("...M125: call wait_for_confirmation(..)");
       wait_for_confirmation(false, 0);
-      DEBUG_ECHOLNPGM("GcodeSuite::M125: call resume_print(..)");
+      DEBUG_ECHOLNPGM("...M125: call resume_print(..)");
       resume_print(0, 0, -retract, 0);
     }
   }
-  DEBUG_ECHOLNPGM("GcodeSuite::M125: return");
 }
 
 #endif // PARK_HEAD_ON_PAUSE

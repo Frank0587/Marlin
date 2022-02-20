@@ -1413,7 +1413,7 @@ void MarlinUI::init() {
       msg = GET_TEXT_F(MSG_PRINT_PAUSED);
     #if ENABLED(SDSUPPORT)
       else if (IS_SD_PRINTING()){
-        TERN_(DWIN_CREALITY_LCD_JYERSUI, return);
+        TERN_(DWIN_CREALITY_LCD_JYERSUI, return set_status(""));
         return set_status(card.longest_filename(), true);
       }
     #endif

@@ -65,12 +65,12 @@ inline void plr_error(FSTR_P const prefix) {
  */
 void GcodeSuite::M1000() {
 
-  DEBUG_ECHOLNPGM("GcodeSuite::M1000() start");
+  DEBUG_SECTION(GSm1000, "GcodeSuite::M1000", true);
 
   if (recovery.valid()) {
     if (parser.seen_test('S')) {
 
-      DEBUG_ECHOLNPGM("GcodeSuite::M1000 valid + 'S'");
+      DEBUG_ECHOLNPGM("...M1000: valid + 'S'");
 
       #if HAS_MARLINUI_MENU
         ui.goto_screen(menu_job_recovery);
@@ -86,7 +86,7 @@ void GcodeSuite::M1000() {
     }
     else if (parser.seen_test('C')) {
 
-      DEBUG_ECHOLNPGM("GcodeSuite::M1000 valid + 'C'");
+      DEBUG_ECHOLNPGM("...M1000: valid + 'C'");
 
       #if HAS_MARLINUI_MENU
         lcd_power_loss_recovery_cancel();
@@ -95,15 +95,15 @@ void GcodeSuite::M1000() {
       #endif
       TERN_(EXTENSIBLE_UI, ExtUI::onPrintTimerStopped());
     }
-    else
-      DEBUG_ECHOLNPGM("GcodeSuite::M1000 call recovery.resume()");
+    else {
+      DEBUG_ECHOLNPGM("...M1000:  call recovery.resume()");
       recovery.resume();
+    }
   }
-  else
-      DEBUG_ECHOLNPGM("GcodeSuite::M1000 call recovery.resume()");
+  else {
+    DEBUG_ECHOLNPGM("...M1000: plr_error(valid_head=", recovery.info.valid_head, ")");
     plr_error(recovery.info.valid_head ? F("No") : F("Invalid"));
-
-DEBUG_ECHOLNPGM("GcodeSuite::M1000() end");
+  }
 }
 
 #endif // POWER_LOSS_RECOVERY
