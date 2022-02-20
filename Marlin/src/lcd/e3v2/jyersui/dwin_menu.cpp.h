@@ -376,6 +376,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MIN, 1, 3, str_1), dtostrf(PROBE_Y_MIN, 1, 3, str_2));
                 gcode.process_subcommands_now(cmd);
                 planner.synchronize();
+                PopUp_FirstGoOn = true;
                 Popup_Handler(ManualProbing);
               #endif
             }
@@ -397,6 +398,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MIN, 1, 3, str_1), dtostrf(PROBE_Y_MAX, 1, 3, str_2));
                 gcode.process_subcommands_now(cmd);
                 planner.synchronize();
+                PopUp_FirstGoOn = true;
                 Popup_Handler(ManualProbing);
               #endif
             }
@@ -418,6 +420,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MAX, 1, 3, str_1), dtostrf(PROBE_Y_MID, 1, 3, str_2));
                 gcode.process_subcommands_now(cmd);
                 planner.synchronize();
+                PopUp_FirstGoOn = true;
                 Popup_Handler(ManualProbing);
               #endif
             }
@@ -439,6 +442,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MID, 1, 3, str_1), dtostrf(PROBE_Y_MID, 1, 3, str_2));
                 gcode.process_subcommands_now(cmd);
                 planner.synchronize();
+                PopUp_FirstGoOn = true;
                 Popup_Handler(ManualProbing);
               #endif
             }
@@ -460,6 +464,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MAX, 1, 3, str_1), dtostrf(PROBE_Y_MAX, 1, 3, str_2));
                 gcode.process_subcommands_now(cmd);
                 planner.synchronize();
+                PopUp_FirstGoOn = true;
                 Popup_Handler(ManualProbing);
               #endif
             }
@@ -481,6 +486,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MAX, 1, 3, str_1), dtostrf(PROBE_Y_MIN, 1, 3, str_2));
                 gcode.process_subcommands_now(cmd);
                 planner.synchronize();
+                PopUp_FirstGoOn = true;
                 Popup_Handler(ManualProbing);
               #endif
             }
@@ -2007,7 +2013,9 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
       #define ADVANCED_FILSENSORENABLED (ADVANCED_COLD_EXTRUDE + ENABLED(FILAMENT_RUNOUT_SENSOR))
       #define ADVANCED_FILSENSORDISTANCE (ADVANCED_FILSENSORENABLED + ENABLED(HAS_FILAMENT_RUNOUT_DISTANCE))
       #define ADVANCED_POWER_LOSS (ADVANCED_FILSENSORDISTANCE + ENABLED(POWER_LOSS_RECOVERY))
-      #define ADVANCED_TOTAL ADVANCED_POWER_LOSS
+      #define ADVANCED_DEBUGLINES (ADVANCED_POWER_LOSS + ENABLED(DEBUG_LCD_UI))
+      #define ADVANCED_TOTAL ADVANCED_DEBUGLINES
+
 
       switch (item) {
         case ADVANCED_BACK:
@@ -2124,6 +2132,20 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
             else {
               recovery.enable(!recovery.enabled);
               Draw_Checkbox(row, recovery.enabled);
+            }
+            break;
+        #endif
+
+        #if ENABLED(DEBUG_LCD_UI)
+          case ADVANCED_DEBUGLINES:
+            if (draw) {
+              Draw_Menu_Item(row, ICON_Contact, F("Show debug lines"));
+              Draw_Checkbox(row, eeprom_settings.show_debug_on_LCD);
+            }
+            else {
+              eeprom_settings.show_debug_on_LCD = !eeprom_settings.show_debug_on_LCD;
+              Draw_Checkbox(row, eeprom_settings.show_debug_on_LCD);
+              Draw_Status_Area(true);
             }
             break;
         #endif

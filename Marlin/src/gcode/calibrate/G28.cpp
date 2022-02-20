@@ -53,6 +53,8 @@
   #include "../../lcd/e3v2/creality/dwin.h"
 #elif ENABLED(DWIN_CREALITY_LCD_ENHANCED)
   #include "../../lcd/e3v2/proui/dwin.h"
+#elif ENABLED(DWIN_CREALITY_LCD_JYERSUI)
+  #include "../../lcd/e3v2/jyersui/dwin.h"
 #endif
 
 #if HAS_L64XX                         // set L6470 absolute position registers to counts
@@ -238,6 +240,7 @@ void GcodeSuite::G28() {
 
   TERN_(HAS_DWIN_E3V2_BASIC, DWIN_StartHoming());
   TERN_(EXTENSIBLE_UI, ExtUI::onHomingStart());
+  TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Update_Status(GET_TEXT(MSG_LEVEL_BED_HOMING)));
 
   planner.synchronize();          // Wait for planner moves to finish!
 
@@ -551,6 +554,7 @@ void GcodeSuite::G28() {
 
   TERN_(HAS_DWIN_E3V2_BASIC, DWIN_CompletedHoming());
   TERN_(EXTENSIBLE_UI, ExtUI::onHomingComplete());
+  TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Update_Status(""));
 
   report_current_position();
 

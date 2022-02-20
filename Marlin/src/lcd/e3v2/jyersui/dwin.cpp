@@ -190,6 +190,7 @@ char filename[LONG_FILENAME_LENGTH];
 bool printing = false;
 bool paused = false;
 bool sdprint = false;
+bool PopUp_FirstGoOn = false;
 
 int16_t pausetemp, pausebed, pausefan;
 
@@ -219,13 +220,14 @@ bool probe_deployed = false;
 
 
 #ifdef DEBUG_LCD_UI
-  #define DEBUG_INFOLINE(a)  dbg_UpdateInfoLine(a)
 
-  char dbg_InfoLine1[64], dbg_InfoLine2[64];
+  #define dd_LINELEN 64
+  char dd_InfoLine1[dd_LINELEN], dd_InfoLine2[dd_LINELEN];
+  bool dd_PreventEcho = false;
+  uint8_t dd_fresh = 0;
 
-  bool dbg_UpdateInfoLine (uint8_t idx) {
+  bool dd_UpdateInfoLine (uint8_t idx) {
     bool rtn = false;
-    static uint8_t fresh = 0;
     static uint64_t lastHash = 0;
     uint8_t timer = print_job_timer.isPaused() + 2* print_job_timer.isRunning();
     uint64_t hash =
@@ -241,22 +243,19 @@ bool probe_deployed = false;
 
     if (lastHash != hash) {
       lastHash = hash;
-      fresh = 0xFF;
+      dd_fresh = 0xFF;
       rtn = true;
 
-      sprintf_P(dbg_InfoLine1, PSTR("prc:%i/%i|prt:%i|pau=%i|tim:%i|wfu:%i|sel:%i/%i"),
+      sprintf_P(dd_InfoLine2, PSTR("prc:%i/%i|prt:%i|pau=%i|tim:%i|wfu:%i|sel:%i/%i"),
               process, last_process, printing, paused, timer, wait_for_user, selection, last_selection );
-      sprintf_P(dbg_InfoLine2, PSTR(" - was geht up (line 2) - "));
     }
     if (idx > 7) idx = 0;
-    if (fresh & (1<<idx)) {
-      fresh &= ~(1<<idx);
+    if (dd_fresh & (1<<idx)) {
+      dd_fresh &= ~(1<<idx);
       rtn = true;
     }
     return rtn;
   }
-#else
-  #define DEBUG_INFOLINE(a) false
 #endif
 
 
@@ -878,9 +877,11 @@ void CrealityDWINClass::Draw_Print_confirm() {
   process = Confirm;
   popup = Complete;
   DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, 252, 263, 351);
-  DWIN_ICON_Show(ICON, ICON_Confirm_E, 87, 283);
-  DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 86, 282, 187, 321);
-  DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 85, 281, 188, 322);
+  //DWIN_ICON_Show(ICON, ICON_Confirm_E, 87, 283);
+  DWIN_Draw_Rectangle(1, RGB(2,30,2), 67, 283, 206, 330);
+  DWIN_Draw_String(false, DWIN_FONT_HEAD, Color_White, Color_Light_Cyan, 87 + ((99 - 7 * STAT_CHR_W) / 2), 299, F("Confirm"));
+  DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 66, 282, 207, 331);
+  DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 65, 281, 208, 332);
 }
 
 void CrealityDWINClass::Draw_SD_Item(uint8_t item, uint8_t row, bool onlyCachedFileIcon/*=false*/) {
@@ -935,52 +936,57 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
   #define STATUS_X3 187
   #define STATUS_Y1 383
   #define STATUS_Y2 417
+
   int16_t htX = STATUS_X1, htY = STATUS_Y1;		// Hotend temp
   int16_t btX = STATUS_X1, btY = STATUS_Y2;   // Bed temp
   int16_t frX = STATUS_X2, frY = STATUS_Y1;		// feed rate
   int16_t flX = STATUS_X2, flY = STATUS_Y2;		// flow speed
   int16_t faX = STATUS_X3, faY = STATUS_Y1;		// Fan
   int16_t zoX = STATUS_X3, zoY = STATUS_Y2;		// Z-Offset
+
   #ifdef DEBUG_LCD_UI
-    #ifdef DEBUG_ONSCREEN
+    if (eeprom_settings.show_debug_on_LCD) {
       htX = STATUS_X2, htY = STATUS_Y2;		// Hotend temp
       frX = flX = faX = 0;
-      if ( DEBUG_INFOLINE(1)){
+
+      if ( dd_UpdateInfoLine(1)){
         DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, STATUS_Y1, DWIN_WIDTH, STATUS_Y2);
-        DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1, dbg_InfoLine1);
-        DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1+13, dbg_InfoLine2);
+
+        DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1,    dd_InfoLine1);
+        DWIN_Draw_String(false, font6x12, Color_White, Color_Bg_Black, 0, STATUS_Y1+13, dd_InfoLine2);
       }
-    #endif
+    }
   #endif
+
   #if HAS_HOTEND
     static float hotend = -1;
     static int16_t hotendtarget = -1, flow = -1;
     if (htX) {
-    if (icons) {
-      hotend = -1;
-      hotendtarget = -1;
+      if (icons) {
+        hotend = -1;
+        hotendtarget = -1;
         DWIN_ICON_Show(ICON, ICON_HotendTemp, htX, htY);
         DWIN_Draw_String(false, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, htX+15 + 3 * STAT_CHR_W + 5, htY+1, F("/"));
-    }
-    if (thermalManager.temp_hotend[0].celsius != hotend) {
-      hotend = thermalManager.temp_hotend[0].celsius;
+      }
+      if (thermalManager.temp_hotend[0].celsius != hotend) {
+        hotend = thermalManager.temp_hotend[0].celsius;
         DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, htX+13, htY+1, thermalManager.temp_hotend[0].celsius);
         DWIN_Draw_DegreeSymbol(GetColor(eeprom_settings.status_area_text, Color_White), htX+15 + 3 * STAT_CHR_W + 5, htY+3);
-    }
-    if (thermalManager.temp_hotend[0].target != hotendtarget) {
-      hotendtarget = thermalManager.temp_hotend[0].target;
+      }
+      if (thermalManager.temp_hotend[0].target != hotendtarget) {
+        hotendtarget = thermalManager.temp_hotend[0].target;
         DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, htX+15 + 4 * STAT_CHR_W + 6, htY+1, thermalManager.temp_hotend[0].target);
         DWIN_Draw_DegreeSymbol(GetColor(eeprom_settings.status_area_text, Color_White), htX+15 + 4 * STAT_CHR_W + 39, htY+3);
       }
     }
     if(flX){
-    if (icons) {
-      flow = -1;
+      if (icons) {
+        flow = -1;
         DWIN_ICON_Show(ICON, ICON_StepE, flX, flY);
         DWIN_Draw_String(false, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, flX+4 + 5 * STAT_CHR_W + 2, flY, F("%"));
-    }
-    if (planner.flow_percentage[0] != flow) {
-      flow = planner.flow_percentage[0];
+      }
+      if (planner.flow_percentage[0] != flow) {
+        flow = planner.flow_percentage[0];
         DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, flX+4 + 2 * STAT_CHR_W, flY, planner.flow_percentage[0]);
       }
     }
@@ -990,19 +996,19 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
     static float bed = -1;
     static int16_t bedtarget = -1;
     if (btX) {
-    if (icons) {
-      bed = -1;
-      bedtarget = -1;
+      if (icons) {
+        bed = -1;
+        bedtarget = -1;
         DWIN_ICON_Show(ICON, ICON_BedTemp, btX, btY-1);
         DWIN_Draw_String(false, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, btX+15 + 3 * STAT_CHR_W + 5, btY, F("/"));
-    }
-    if (thermalManager.temp_bed.celsius != bed) {
-      bed = thermalManager.temp_bed.celsius;
+      }
+      if (thermalManager.temp_bed.celsius != bed) {
+        bed = thermalManager.temp_bed.celsius;
         DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, btX+18, btY, thermalManager.temp_bed.celsius);
         DWIN_Draw_DegreeSymbol(GetColor(eeprom_settings.status_area_text, Color_White), btX+15 + 3 * STAT_CHR_W + 5, btY+2);
-    }
-    if (thermalManager.temp_bed.target != bedtarget) {
-      bedtarget = thermalManager.temp_bed.target;
+      }
+      if (thermalManager.temp_bed.target != bedtarget) {
+        bedtarget = thermalManager.temp_bed.target;
         DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, btX+15 + 4 * STAT_CHR_W + 6, btY, thermalManager.temp_bed.target);
         DWIN_Draw_DegreeSymbol(GetColor(eeprom_settings.status_area_text, Color_White), btX+15 + 4 * STAT_CHR_W + 39, btY+2);
       }
@@ -1012,12 +1018,12 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
   #if HAS_FAN
     static uint8_t fan = -1;
     if (faX) {
-    if (icons) {
-      fan = -1;
+      if (icons) {
+        fan = -1;
         DWIN_ICON_Show(ICON, ICON_FanSpeed, faX, faY);
-    }
-    if (thermalManager.fan_speed[0] != fan) {
-      fan = thermalManager.fan_speed[0];
+      }
+      if (thermalManager.fan_speed[0] != fan) {
+        fan = thermalManager.fan_speed[0];
         DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, faX+8 + 2 * STAT_CHR_W, faY+1, thermalManager.fan_speed[0]);
       }
     }
@@ -1026,12 +1032,12 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
   #if HAS_ZOFFSET_ITEM
     static float offset = -1;
     if (zoX) {
-    if (icons) {
-      offset = -1;
+      if (icons) {
+        offset = -1;
         DWIN_ICON_Show(ICON, ICON_Zoffset, zoX, zoY-1);
-    }
-    if (zoffsetvalue != offset) {
-      offset = zoffsetvalue;
+      }
+      if (zoffsetvalue != offset) {
+        offset = zoffsetvalue;
         DWIN_Draw_FloatValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 2, 2, zoX+20, zoY, (zoffsetvalue < 0 ? -zoffsetvalue : zoffsetvalue));
         DWIN_Draw_String(true, DWIN_FONT_MENU, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, zoX+18, zoY+2, zoffsetvalue < 0 ? F("-") : F(" "));
       }
@@ -1041,12 +1047,12 @@ void CrealityDWINClass::Draw_Status_Area(bool icons/*=false*/) {
   static int16_t feedrate = -1;
   if (icons) {
     if (frX) {
-    feedrate = -1;
+      feedrate = -1;
       DWIN_ICON_Show(ICON, ICON_Speed, frX+1, frY);
       DWIN_Draw_String(false, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, frX+4 + 5 * STAT_CHR_W + 2, frY+1, F("%"));
-  }
-  if (feedrate_percentage != feedrate) {
-    feedrate = feedrate_percentage;
+    }
+    if (feedrate_percentage != feedrate) {
+      feedrate = feedrate_percentage;
       DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, GetColor(eeprom_settings.status_area_text, Color_White), Color_Bg_Black, 3, frX+4 + 2 * STAT_CHR_W, frY+1, feedrate_percentage);
     }
   }
@@ -1299,7 +1305,7 @@ void CrealityDWINClass::Draw_Keys(uint8_t index, bool selected, bool uppercase/*
 void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
   popup = last_popup = popupid;
 
-  DEBUG_ECHOLNPGM("CrealityDWINClass::Popup_Handler (popupid=", popupid, ", option=", option, ")");
+  DEBUG_ECHOLNPGM("CrDwCl::Popup_Handler (popupid=", popupid, ", option=", option, ")");
 
   switch (popupid) {
     case Pause:         Draw_Popup(F("Pause Print"), F(""), F(""), Popup); break;
@@ -1328,7 +1334,7 @@ void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
 
 void CrealityDWINClass::Confirm_Handler(PopupID popupid) {
 
-  DEBUG_ECHOLNPGM("CrealityDWINClass::Confirm_Handler (popupid=", popupid, ")");
+  DEBUG_ECHOLNPGM("CrDwCl::Confirm_Handler (popupid=", popupid, ")");
 
   popup = popupid;
   switch (popupid) {
@@ -1337,7 +1343,7 @@ void CrealityDWINClass::Confirm_Handler(PopupID popupid) {
     case UserInput:   Draw_Popup(F("Waiting for Input"), F("Press to Continue"), F(""), Confirm); break;
     case LevelError:  Draw_Popup(F("Couldn't enable Leveling"), F("(Valid mesh must exist)"), F(""), Confirm); break;
     case InvalidMesh: Draw_Popup(F("Valid mesh must exist"), F("before tuning can be"), F("performed"), Confirm); break;
-    default: break;
+    default:          break;
   }
 }
 
@@ -1774,6 +1780,11 @@ void CrealityDWINClass::Print_Screen_Control() {
 
 void CrealityDWINClass::Popup_Control() {
   EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
+  if (PopUp_FirstGoOn){
+    encoder_diffState = ENCODER_DIFF_ENTER;
+    selection = 0;
+    PopUp_FirstGoOn = false;
+  }
   if (encoder_diffState == ENCODER_DIFF_NO) return;
   if (encoder_diffState == ENCODER_DIFF_CW && selection < 1) {
     selection++;
@@ -1797,7 +1808,7 @@ void CrealityDWINClass::Popup_Control() {
                 if (IS_SD_PRINTING()) card.pauseSDPrint();
               #endif
               planner.synchronize();
-              queue.inject(F("M125"));
+              queue.inject(F("M125 P1"));
               planner.synchronize();
             #else
               queue.inject(F("M25"));
@@ -1828,9 +1839,9 @@ void CrealityDWINClass::Popup_Control() {
         break;
       case Resume:
         if (selection == 0)
-          queue.inject(F("M1000"));
+            queue.inject( TERN(POWER_LOSS_RECOVERY, F("M1000"), F("M25")) );
         else {
-          queue.inject(F("M1000 C"));
+            queue.inject( TERN(POWER_LOSS_RECOVERY, F("M1000 C"), F("M25")) );
           Draw_Main_Menu();
         }
         break;
@@ -2143,7 +2154,7 @@ void CrealityDWINClass::Modify_String(char * string, uint8_t maxlength, bool res
 
 void CrealityDWINClass::Update_Status(const char * const text) {
 
-  DEBUG_ECHOLNPGM("CrealityDWINClass::Update_Status (", text, ")");
+  DEBUG_ECHOLNPGM("CrDwCl::Update_Status (", text, ")");
 
   char header[4];
   LOOP_L_N(i, 3) header[i] = text[i];
@@ -2214,8 +2225,8 @@ void MarlinUI::update() { CrealityDWIN.Update(); }
 #endif
 
 void CrealityDWINClass::State_Update() {
-  if (DEBUG_INFOLINE(2)) {
-    DEBUG_ECHOLNPGM("CrealityDWINClass::State_Update (", dbg_InfoLine1, ")" );
+  if (dd_UpdateInfoLine(2)) {
+    DEBUG_ECHOLNPGM("StUpd:", dd_InfoLine2);
   }
   if ((print_job_timer.isRunning() || print_job_timer.isPaused()) != printing) {
     if (!printing) Start_Print(card.isFileOpen() || TERN0(POWER_LOSS_RECOVERY, recovery.valid()));
@@ -2424,6 +2435,7 @@ void CrealityDWINClass::Save_Settings(char *buff) {
     eeprom_settings.host_action_label_2 = Encode_String(action2);
     eeprom_settings.host_action_label_3 = Encode_String(action3);
   #endif
+
   TERN_(PREVENT_COLD_EXTRUSION, eeprom_settings.extrude_min_temp = _MIN(thermalManager.extrude_min_temp, 255));
 
   memcpy(buff, &eeprom_settings, _MIN(sizeof(eeprom_settings), eeprom_data_size));
@@ -2439,7 +2451,9 @@ void CrealityDWINClass::Load_Settings(const char *buff) {
     Decode_String(eeprom_settings.host_action_label_2, action2);
     Decode_String(eeprom_settings.host_action_label_3, action3);
   #endif
-  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.extrude_min_temp = eeprom_settings.extrude_min_temp);
+
+  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.extrude_min_temp   = eeprom_settings.extrude_min_temp);
+  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.allow_cold_extrude = (thermalManager.extrude_min_temp == 0));
 
   Redraw_Screen();
   #if ENABLED(POWER_LOSS_RECOVERY)
@@ -2473,12 +2487,15 @@ void CrealityDWINClass::Reset_Settings() {
     action1[0] = action2[0] = action3[0] = '-';
   #endif
   TERN_(PREVENT_COLD_EXTRUSION, thermalManager.extrude_min_temp = eeprom_settings.extrude_min_temp = EXTRUDE_MINTEMP);
+  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.allow_cold_extrude = (thermalManager.extrude_min_temp == 0));
+
   TERN_(AUTO_BED_LEVELING_UBL, mesh_conf.tilt_grid = eeprom_settings.tilt_grid_size + 1);
   corner_pos = eeprom_settings.corner_pos / 10.0f;
   TERN_(SOUND_MENU_ITEM, ui.buzzer_enabled = true);
   #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
     eeprom_settings.show_gcode_thumbnails = true;
   #endif
+  eeprom_settings.show_debug_on_LCD = false;
   Redraw_Screen();
 }
 
@@ -2505,19 +2522,43 @@ void MarlinUI::init_lcd() {
   DEBUG_ECHOLNPGM("MarlinUI::pause_show_message (message=", message, ", mode=", mode, ")");
 
     switch (message) {
-      case PAUSE_MESSAGE_INSERT:  CrealityDWIN.Confirm_Handler(FilInsert);  break;
-      case PAUSE_MESSAGE_PURGE: break;
-      case PAUSE_MESSAGE_OPTION:
-        pause_menu_response = PAUSE_RESPONSE_WAIT_FOR;
-        CrealityDWIN.Popup_Handler(PurgeMore);
-        break;
-      case PAUSE_MESSAGE_HEAT:    CrealityDWIN.Confirm_Handler(HeaterTime); break;
+      case PAUSE_MESSAGE_INSERT:  CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_INSERT));
+                                  CrealityDWIN.Confirm_Handler(FilInsert);
+                                  break;
+
+      case PAUSE_MESSAGE_PURGE:   CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_PURGE));
+                                  break;
+
+      case PAUSE_MESSAGE_OPTION:  CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_OPTION_HEADER));
+                                  pause_menu_response = PAUSE_RESPONSE_WAIT_FOR;
+                                  CrealityDWIN.Popup_Handler(PurgeMore);
+                                  break;
+
+      case PAUSE_MESSAGE_HEAT:    CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_HEAT));
+                                  CrealityDWIN.Confirm_Handler(HeaterTime);
+                                  break;
+
       case PAUSE_MESSAGE_WAITING: CrealityDWIN.Update_Status(GET_TEXT(MSG_ADVANCED_PAUSE_WAITING));
                                   CrealityDWIN.Draw_Print_Screen();
                                   break;
+
       case PAUSE_MESSAGE_PARKING: CrealityDWIN.Update_Status(GET_TEXT(MSG_PAUSE_PRINT_PARKING));
                                   CrealityDWIN.Popup_Handler(Home);
                                   break;
+      case PAUSE_MESSAGE_CHANGING: CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_INIT));
+                                  break;
+      case PAUSE_MESSAGE_UNLOAD:  CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_UNLOAD));
+                                  break;
+      case PAUSE_MESSAGE_LOAD:    CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_LOAD));
+                                  break;
+      case PAUSE_MESSAGE_RESUME:  CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_RESUME));
+                                  CrealityDWIN.Popup_Handler(Resume);
+                                  break;
+      case PAUSE_MESSAGE_STATUS:  break;
+      case PAUSE_MESSAGE_HEATING: CrealityDWIN.Update_Status(GET_TEXT(MSG_FILAMENT_CHANGE_HEATING));
+                                  CrealityDWIN.Popup_Handler(Heating);
+                                  break;
+
       default: break;
     }
   }
