@@ -231,9 +231,6 @@ bool probe_deployed = false;
     if (!dd_PreventEcho){
       if (idx > dd_LINELEN-5 || c == '\n' || c == '\r') {
         dd_fresh = 0xFF;
-        dd_InfoLine1[idx++]   = '*';
-        dd_InfoLine1[idx++]   = '0' + idx/10;
-        dd_InfoLine1[idx++]   = '0' + idx%10;
         dd_InfoLine1[idx]     = '\0';
         idx = 0;
       }
