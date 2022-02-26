@@ -223,7 +223,6 @@ bool probe_deployed = false;
 
   #define dd_LINELEN 64
   char dd_InfoLine1[dd_LINELEN], dd_InfoLine2[dd_LINELEN];
-  bool dd_PreventEcho = false;
   uint8_t dd_fresh = 0;
 
   bool dd_UpdateInfoLine (uint8_t idx) {
