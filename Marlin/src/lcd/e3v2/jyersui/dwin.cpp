@@ -219,13 +219,13 @@ bool probe_deployed = false;
 
 
 #ifdef DEBUG_LCD_UI
-  #define DEBUG_INFOLINE(a)  dbg_UpdateInfoLine(a)
 
-  char dbg_InfoLine1[64], dbg_InfoLine2[64];
+  #define dd_LINELEN 64
+  char dd_InfoLine1[dd_LINELEN], dd_InfoLine2[dd_LINELEN];
+  uint8_t dd_fresh = 0;
 
-  bool dbg_UpdateInfoLine (uint8_t idx) {
+  bool dd_UpdateInfoLine (uint8_t idx) {
     bool rtn = false;
-    static uint8_t fresh = 0;
     static uint64_t lastHash = 0;
     uint8_t timer = print_job_timer.isPaused() + 2* print_job_timer.isRunning();
     uint64_t hash =
@@ -241,22 +241,19 @@ bool probe_deployed = false;
 
     if (lastHash != hash) {
       lastHash = hash;
-      fresh = 0xFF;
+      dd_fresh = 0xFF;
       rtn = true;
 
-      sprintf_P(dbg_InfoLine1, PSTR("prc:%i/%i|prt:%i|pau=%i|tim:%i|wfu:%i|sel:%i/%i"),
+      sprintf_P(dd_InfoLine2, PSTR("prc:%i/%i|prt:%i|pau=%i|tim:%i|wfu:%i|sel:%i/%i"),
               process, last_process, printing, paused, timer, wait_for_user, selection, last_selection );
-      sprintf_P(dbg_InfoLine2, PSTR(" - was geht up (line 2) - "));
     }
     if (idx > 7) idx = 0;
-    if (fresh & (1<<idx)) {
-      fresh &= ~(1<<idx);
+    if (dd_fresh & (1<<idx)) {
+      dd_fresh &= ~(1<<idx);
       rtn = true;
     }
     return rtn;
   }
-#else
-  #define DEBUG_INFOLINE(a) false
 #endif
 
 
@@ -878,9 +875,11 @@ void CrealityDWINClass::Draw_Print_confirm() {
   process = Confirm;
   popup = Complete;
   DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, 252, 263, 351);
-  DWIN_ICON_Show(ICON, ICON_Confirm_E, 87, 283);
-  DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 86, 282, 187, 321);
-  DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 85, 281, 188, 322);
+  //DWIN_ICON_Show(ICON, ICON_Confirm_E, 87, 283);
+  DWIN_Draw_Rectangle(1, RGB(2,30,2), 67, 283, 206, 330);
+  DWIN_Draw_String(false, DWIN_FONT_HEAD, Color_White, Color_Light_Cyan, 87 + ((99 - 7 * STAT_CHR_W) / 2), 299, F("Confirm"));
+  DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 66, 282, 207, 331);
+  DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 65, 281, 208, 332);
 }
 
 void CrealityDWINClass::Draw_SD_Item(uint8_t item, uint8_t row, bool onlyCachedFileIcon/*=false*/) {
@@ -1266,7 +1265,7 @@ void CrealityDWINClass::Draw_Keys(uint8_t index, bool selected, bool uppercase/*
 void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
   popup = last_popup = popupid;
 
-  DEBUG_ECHOLNPGM("CrealityDWINClass::Popup_Handler (popupid=", popupid, ", option=", option, ")");
+  DEBUG_ECHOLNPGM("CrDwCl::Popup_Handler (popupid=", popupid, ", option=", option, ")");
 
   switch (popupid) {
     case Pause:         Draw_Popup(F("Pause Print"), F(""), F(""), Popup); break;
@@ -1295,7 +1294,7 @@ void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
 
 void CrealityDWINClass::Confirm_Handler(PopupID popupid) {
 
-  DEBUG_ECHOLNPGM("CrealityDWINClass::Confirm_Handler (popupid=", popupid, ")");
+  DEBUG_ECHOLNPGM("CrDwCl::Confirm_Handler (popupid=", popupid, ")");
 
   popup = popupid;
   switch (popupid) {
@@ -1304,7 +1303,7 @@ void CrealityDWINClass::Confirm_Handler(PopupID popupid) {
     case UserInput:   Draw_Popup(F("Waiting for Input"), F("Press to Continue"), F(""), Confirm); break;
     case LevelError:  Draw_Popup(F("Couldn't enable Leveling"), F("(Valid mesh must exist)"), F(""), Confirm); break;
     case InvalidMesh: Draw_Popup(F("Valid mesh must exist"), F("before tuning can be"), F("performed"), Confirm); break;
-    default: break;
+    default:          break;
   }
 }
 
@@ -2110,7 +2109,7 @@ void CrealityDWINClass::Modify_String(char * string, uint8_t maxlength, bool res
 
 void CrealityDWINClass::Update_Status(const char * const text) {
 
-  DEBUG_ECHOLNPGM("CrealityDWINClass::Update_Status (", text, ")");
+  DEBUG_ECHOLNPGM("CrDwCl::Update_Status (", text, ")");
 
   char header[4];
   LOOP_L_N(i, 3) header[i] = text[i];
@@ -2181,8 +2180,8 @@ void MarlinUI::update() { CrealityDWIN.Update(); }
 #endif
 
 void CrealityDWINClass::State_Update() {
-  if (DEBUG_INFOLINE(2)) {
-    DEBUG_ECHOLNPGM("CrealityDWINClass::State_Update (", dbg_InfoLine1, ")" );
+  if (dd_UpdateInfoLine(2)) {
+    DEBUG_ECHOLNPGM("StUpd:", dd_InfoLine2);
   }
   if ((print_job_timer.isRunning() || print_job_timer.isPaused()) != printing) {
     if (!printing) Start_Print(card.isFileOpen() || TERN0(POWER_LOSS_RECOVERY, recovery.valid()));
@@ -2391,7 +2390,7 @@ void CrealityDWINClass::Save_Settings(char *buff) {
     eeprom_settings.host_action_label_2 = Encode_String(action2);
     eeprom_settings.host_action_label_3 = Encode_String(action3);
   #endif
-  
+
   TERN_(PREVENT_COLD_EXTRUSION, eeprom_settings.extrude_min_temp = _MIN(thermalManager.extrude_min_temp, 255));
 
   memcpy(buff, &eeprom_settings, _MIN(sizeof(eeprom_settings), eeprom_data_size));
@@ -2407,8 +2406,9 @@ void CrealityDWINClass::Load_Settings(const char *buff) {
     Decode_String(eeprom_settings.host_action_label_2, action2);
     Decode_String(eeprom_settings.host_action_label_3, action3);
   #endif
-  
-  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.extrude_min_temp = eeprom_settings.extrude_min_temp);
+
+  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.extrude_min_temp   = eeprom_settings.extrude_min_temp);
+  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.allow_cold_extrude = (thermalManager.extrude_min_temp == 0));
 
   Redraw_Screen();
   #if ENABLED(POWER_LOSS_RECOVERY)
@@ -2442,12 +2442,15 @@ void CrealityDWINClass::Reset_Settings() {
     action1[0] = action2[0] = action3[0] = '-';
   #endif
   TERN_(PREVENT_COLD_EXTRUSION, thermalManager.extrude_min_temp = eeprom_settings.extrude_min_temp = EXTRUDE_MINTEMP);
+  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.allow_cold_extrude = (thermalManager.extrude_min_temp == 0));
+
   TERN_(AUTO_BED_LEVELING_UBL, mesh_conf.tilt_grid = eeprom_settings.tilt_grid_size + 1);
   corner_pos = eeprom_settings.corner_pos / 10.0f;
   TERN_(SOUND_MENU_ITEM, ui.buzzer_enabled = true);
   #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
     eeprom_settings.show_gcode_thumbnails = true;
   #endif
+  eeprom_settings.show_debug_on_LCD = false;
   Redraw_Screen();
 }
 
