@@ -85,6 +85,9 @@ namespace Language_en {
   LSTR MSG_LEVBED_C                       = _UxGT("Center");
   LSTR MSG_LEVBED_BL                      = _UxGT("Back Left");
   LSTR MSG_LEVBED_BR                      = _UxGT("Back Right");
+  LSTR MSG_LEVBED_ML                      = _UxGT("Mid Left");
+  LSTR MSG_LEVBED_MR                      = _UxGT("Mid Right");
+  LSTR MSG_LEVBED_ZVAL                    = _UxGT("Z Value:");
   LSTR MSG_MANUAL_MESH                    = _UxGT("Manual Mesh");
   LSTR MSG_AUTO_MESH                      = _UxGT("Auto Build Mesh");
   LSTR MSG_AUTO_Z_ALIGN                   = _UxGT("Auto Z-Align");
