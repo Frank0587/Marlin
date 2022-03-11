@@ -2842,7 +2842,7 @@
 //
 // Ender-3 v2 OEM display, enhanced.
 //
-//#define DWIN_CREALITY_LCD_ENHANCED
+//#define DWIN_LCD_PROUI              // Pro UI by MRiscoC
 
 //
 // Ender-3 v2 OEM display with enhancements by Jacob Myers
