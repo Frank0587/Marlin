@@ -25,6 +25,8 @@
  * Author: Miguel A. Risco-Castillo (MRISCOC)
  * Version: 3.11.1
  * Date: 2022/02/28
+ *
+ * Based on the original code provided by Creality under GPL
  */
 
 #include "../../../inc/MarlinConfigPre.h"
@@ -34,6 +36,8 @@
 #include "dwin.h"
 #include "dwinui.h"
 #include "dwin_popup.h"
+
+#include "../../../MarlinCore.h" // for wait_for_user
 
 void (*ClickPopup)()=nullptr;
 void (*PopupChange)(bool state)=nullptr;

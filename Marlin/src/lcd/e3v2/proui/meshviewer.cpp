@@ -25,6 +25,8 @@
  * Author: Miguel A. Risco-Castillo (MRISCOC)
  * version: 3.12.1
  * Date: 2022/02/24
+ *
+ * Based on the original code provided by Creality under GPL
  */
 
 #include "../../../inc/MarlinConfigPre.h"
@@ -108,7 +110,7 @@ void MeshViewerClass::DrawMesh(bed_mesh_t zval, const uint8_t sizex, const uint8
 
 void MeshViewerClass::Draw(bool withsave /*= false*/) {
   Title.ShowCaption(F("Mesh Viewer"));
-  DrawMesh(TERN(MESH_BED_LEVELING,mbl.z_values,z_values), GRID_MAX_POINTS_X, GRID_MAX_POINTS_Y);
+  DrawMesh(Z_VALUES_ARR, GRID_MAX_POINTS_X, GRID_MAX_POINTS_Y);
   if (withsave) {
     DWINUI::Draw_Button(BTN_Save, 26, 305);
     DWINUI::Draw_Button(BTN_Continue, 146, 305);
@@ -124,6 +126,5 @@ void MeshViewerClass::Draw(bool withsave /*= false*/) {
 void Draw_MeshViewer() { MeshViewer.Draw(true); }
 void onClick_MeshViewer() { if (HMI_flag.select_flag) WriteEeprom(); HMI_ReturnScreen(); }
 void Goto_MeshViewer() { if (leveling_is_valid()) Goto_Popup(Draw_MeshViewer, onClick_MeshViewer);  else HMI_ReturnScreen(); }
-
 
 #endif // DWIN_LCD_PROUI && HAS_MESH

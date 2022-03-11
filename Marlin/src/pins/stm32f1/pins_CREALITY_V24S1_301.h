@@ -44,12 +44,7 @@
 //
 // Limit Switches
 //
-#ifdef BLTOUCH
-  #define Z_STOP_PIN                        PC14
-  #define Z_STOP_PIN_NADD                   PA15  //Added z-axis limit switch  rock_20210816
-#else
-  #define Z_STOP_PIN                        PA15
-#endif
+#define Z_STOP_PIN                          PA15
 
 #ifndef Z_MIN_PROBE_PIN
   #define Z_MIN_PROBE_PIN                   PC14  // BLTouch IN
@@ -78,9 +73,9 @@
 // M3/M4/M5 - Spindle/Laser Control
 //
 #if HAS_CUTTER
-  // #undef HEATER_0_PIN
-  // #undef HEATER_BED_PIN
-  #undef FAN_PIN
+  //#define HEATER_0_PIN                    -1
+  //#define HEATER_BED_PIN                  -1
+  #define FAN_PIN                           -1
   #define SPINDLE_LASER_ENA_PIN             PA0  // FET 1
   #define SPINDLE_LASER_PWM_PIN             PA0  // Bed FET
   #define SPINDLE_DIR_PIN                   PA0  // FET 4

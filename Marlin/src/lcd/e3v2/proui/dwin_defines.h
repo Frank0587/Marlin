@@ -26,12 +26,35 @@
  * Author: Miguel A. Risco-Castillo (MRISCOC)
  * Version: 3.11.2
  * Date: 2022/02/28
+ *
+ * Based on the original code provided by Creality under GPL
  */
 
 //#define DEBUG_DWIN 1
 //#define NEED_HEX_PRINT 1
 
-#include "../../../core/types.h"
+#include "../../../inc/MarlinConfigPre.h"
+#include <stddef.h>
+
+#if DISABLED(INDIVIDUAL_AXIS_HOMING_SUBMENU)
+  #error "INDIVIDUAL_AXIS_HOMING_SUBMENU is required with ProUI."
+#endif
+#if DISABLED(LCD_SET_PROGRESS_MANUALLY)
+  #error "LCD_SET_PROGRESS_MANUALLY is required with ProUI."
+#endif
+#if DISABLED(STATUS_MESSAGE_SCROLLING)
+  #error "STATUS_MESSAGE_SCROLLING is required with ProUI."
+#endif
+#if DISABLED(BAUD_RATE_GCODE)
+  #error "BAUD_RATE_GCODE is required with ProUI."
+#endif
+#if DISABLED(SOUND_MENU_ITEM)
+  #error "SOUND_MENU_ITEM is required with ProUI."
+#endif
+#if DISABLED(PRINTCOUNTER)
+  #error "PRINTCOUNTER is required with ProUI."
+#endif
+
 #include "../common/dwin_color.h"
 #if ENABLED(LED_CONTROL_MENU)
   #include "../../../feature/leds/leds.h"
@@ -58,30 +81,6 @@
 #define Def_Button_Color      RGB( 0, 23, 16)
 
 #define HAS_ESDIAG 1
-#ifndef INDIVIDUAL_AXIS_HOMING_SUBMENU
-  #define INDIVIDUAL_AXIS_HOMING_SUBMENU
-#endif
-#ifndef LCD_SET_PROGRESS_MANUALLY
-  #define LCD_SET_PROGRESS_MANUALLY
-#endif
-#ifndef STATUS_MESSAGE_SCROLLING
-  #define STATUS_MESSAGE_SCROLLING
-#endif
-#ifndef BAUD_RATE_GCODE
-  #define BAUD_RATE_GCODE
-#endif
-#ifndef HAS_LCD_BRIGHTNESS
-  #define HAS_LCD_BRIGHTNESS 1
-#endif
-#ifndef LCD_BRIGHTNESS_DEFAULT
-  #define LCD_BRIGHTNESS_DEFAULT 127
-#endif
-#ifndef SOUND_MENU_ITEM
-  #define SOUND_MENU_ITEM
-#endif
-#ifndef PRINTCOUNTER
-  #define PRINTCOUNTER
-#endif
 
 #if ENABLED(LED_CONTROL_MENU, HAS_COLOR_LEDS)
   #define Def_Leds_Color      LEDColorWhite()
@@ -91,7 +90,7 @@
 #endif
 
 typedef struct {
-// Color settings
+  // Color settings
   uint16_t Background_Color = Def_Background_Color;
   uint16_t Cursor_color     = Def_Cursor_color;
   uint16_t TitleBg_color    = Def_TitleBg_color;
@@ -114,7 +113,7 @@ typedef struct {
   #if HAS_HOTEND && defined(PREHEAT_1_TEMP_HOTEND)
     int16_t HotendPidT = PREHEAT_1_TEMP_HOTEND;
   #endif
-  #if defined(PREHEAT_1_TEMP_BED)
+  #if HAS_HEATED_BED && defined(PREHEAT_1_TEMP_BED)
     int16_t BedPidT = PREHEAT_1_TEMP_BED;
   #endif
   #if HAS_HOTEND || HAS_HEATED_BED

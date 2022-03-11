@@ -1467,16 +1467,18 @@ void MarlinSettings::postprocess() {
     //
     #if ENABLED(DWIN_LCD_PROUI)
     {
+      _FIELD_TEST(dwin_data);
       char dwin_data[eeprom_data_size] = { 0 };
       DWIN_StoreSettings(dwin_data);
-      _FIELD_TEST(dwin_data);
       EEPROM_WRITE(dwin_data);
     }
-    #elif ENABLED(DWIN_CREALITY_LCD_JYERSUI)
+    #endif
+
+    #if ENABLED(DWIN_CREALITY_LCD_JYERSUI)
     {
+      _FIELD_TEST(dwin_settings);
       char dwin_settings[CrealityDWIN.eeprom_data_size] = { 0 };
       CrealityDWIN.Save_Settings(dwin_settings);
-      _FIELD_TEST(dwin_settings);
       EEPROM_WRITE(dwin_settings);
     }
     #endif
@@ -3203,9 +3205,11 @@ void MarlinSettings::reset() {
 
   postprocess();
 
-  FSTR_P const hdsl = F("Hardcoded Default Settings Loaded");
-  TERN_(HOST_EEPROM_CHITCHAT, hostui.notify(hdsl));
-  DEBUG_ECHO_START(); DEBUG_ECHOLNF(hdsl);
+  #if EITHER(EEPROM_CHITCHAT, DEBUG_LEVELING_FEATURE)
+    FSTR_P const hdsl = F("Hardcoded Default Settings Loaded");
+    TERN_(HOST_EEPROM_CHITCHAT, hostui.notify(hdsl));
+    DEBUG_ECHO_START(); DEBUG_ECHOLNF(hdsl);
+  #endif
 
   TERN_(EXTENSIBLE_UI, ExtUI::onFactoryReset());
 }

@@ -30,24 +30,12 @@
  * Based on the original code provided by Creality under GPL
  */
 
-#include "../../../inc/MarlinConfigPre.h"
+#include "dwin_defines.h"
 #include "dwinui.h"
 #include "../common/encoder.h"
 #include "../../../libs/BL24CXX.h"
 
-#if ANY(AUTO_BED_LEVELING_BILINEAR, AUTO_BED_LEVELING_LINEAR, AUTO_BED_LEVELING_3POINT) && DISABLED(PROBE_MANUALLY)
-  #define HAS_ONESTEP_LEVELING 1
-#endif
-
-#if !HAS_BED_PROBE && ENABLED(BABYSTEPPING)
-  #define JUST_BABYSTEP 1
-#endif
-
-#if ANY(BABYSTEPPING, HAS_BED_PROBE, HAS_WORKSPACE_OFFSET)
-  #define HAS_ZOFFSET_ITEM 1
-#endif
-
-#include "dwin_defines.h"
+#include "../../../inc/MarlinConfig.h"
 
 enum processID : uint8_t {
   // Process ID
@@ -138,6 +126,7 @@ void ApplyExtMinT();
 void HMI_SetLanguageCache(); // Set the languaje image cache
 void RebootPrinter();
 #if ENABLED(BAUD_RATE_GCODE)
+  void HMI_SetBaudRate();
   void SetBaud115K();
   void SetBaud250K();
 #endif
@@ -158,12 +147,12 @@ void DWIN_CheckStatusMessage();
 void DWIN_StartHoming();
 void DWIN_CompletedHoming();
 #if HAS_MESH
-  void DWIN_MeshUpdate(const int8_t xpos, const int8_t ypos, const float zval);
+  void DWIN_MeshUpdate(const int8_t xpos, const int8_t ypos, const_float_t zval);
 #endif
 void DWIN_MeshLevelingStart();
 void DWIN_CompletedLeveling();
 void DWIN_PidTuning(pidresult_t result);
-void DWIN_Print_Started(const bool sd = false);
+void DWIN_Print_Started(const bool sd=false);
 void DWIN_Print_Pause();
 void DWIN_Print_Resume();
 void DWIN_Print_Finished();
@@ -181,7 +170,7 @@ void DWIN_SetDataDefaults();
 void DWIN_RebootScreen();
 
 #if ENABLED(ADVANCED_PAUSE_FEATURE)
-  void DWIN_Popup_Pause(FSTR_P const fmsg, uint8_t button = 0);
+  void DWIN_Popup_Pause(FSTR_P const fmsg, uint8_t button=0);
   void Draw_Popup_FilamentPurge();
   void Goto_FilamentPurge();
   void HMI_FilamentPurge();
