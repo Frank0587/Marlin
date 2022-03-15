@@ -51,7 +51,6 @@ MarlinUI ui;
 #if ENABLED(DWIN_CREALITY_LCD)
   #include "e3v2/creality/dwin.h"
 #elif ENABLED(DWIN_LCD_PROUI)
-  #include "fontutils.h"
   #include "e3v2/proui/dwin.h"
 #elif ENABLED(DWIN_CREALITY_LCD_JYERSUI)
   #include "e3v2/jyersui/dwin.h"
@@ -1444,8 +1443,10 @@ void MarlinUI::init() {
       else if (print_job_timer.needsService(3)) msg = FPSTR(service3);
     #endif
 
-    else if (!no_welcome)
-      msg = GET_TEXT_F(WELCOME_MSG);
+    else if (!no_welcome) msg = GET_TEXT_F(WELCOME_MSG);
+
+    else if (ENABLED(DWIN_LCD_PROUI))
+        msg = F("");
     else
       return;
 
