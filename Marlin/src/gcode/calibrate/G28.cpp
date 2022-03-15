@@ -241,7 +241,7 @@ void GcodeSuite::G28() {
     set_and_report_grblstate(M_HOMING);
   #endif
 
-  TERN_(HAS_DWIN_E3V2_BASIC, DWIN_StartHoming());
+  TERN_(HAS_DWIN_E3V2_BASIC, DWIN_HomingStart());
   TERN_(EXTENSIBLE_UI, ExtUI::onHomingStart());
   TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Update_Status(GET_TEXT(MSG_LEVEL_BED_HOMING)));
 
@@ -555,8 +555,8 @@ void GcodeSuite::G28() {
 
   ui.refresh();
 
-  TERN_(HAS_DWIN_E3V2_BASIC, DWIN_CompletedHoming());
-  TERN_(EXTENSIBLE_UI, ExtUI::onHomingComplete());
+  TERN_(HAS_DWIN_E3V2_BASIC, DWIN_HomingDone());
+  TERN_(EXTENSIBLE_UI, ExtUI::onHomingDone());
   TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Update_Status(""));
 
   report_current_position();
