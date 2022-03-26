@@ -2320,7 +2320,7 @@ TERN(HAS_ONESTEP_LEVELING, float, void) Tram(uint8_t point) {
       inLev = true;
       zval = probe.probe_at_point(xpos, ypos, PROBE_PT_STOW);
       if (isnan(zval))
-        ui.set_status(F("Position Not Reachable, check offsets"));
+        LCD_MESSAGE_F("Position Not Reachable, check offsets");
       else {
         sprintf_P(cmd, PSTR("X:%s, Y:%s, Z:%s"),
           dtostrf(xpos, 1, 1, str_1),
@@ -2354,7 +2354,7 @@ void TramMR() { Tram(6); }
   void Trammingwizard() {
     bed_mesh_t zval = {0};
     if (HMI_data.FullManualTramming) {
-      ui.set_status(F("Disable manual tramming"));
+      LCD_MESSAGE_F("Disable manual tramming");
       return;
     }
     zval[0][0] = Tram(0);
