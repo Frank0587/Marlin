@@ -34,14 +34,6 @@
 
 #include "../../../inc/MarlinConfigPre.h"
 
-#ifdef DEBUG_LCD_UI
-  extern void dd_EchoToDebugLine(uint8_t c);
-  extern bool dd_PreventEcho;
-  #define ECHO_TO_SCREEN(a) dd_EchoToDebugLine(a) 
-#else
-  #define ECHO_TO_SCREEN(a)
-#endif
-
 enum processID : uint8_t {
   Main, Print, Menu, Value, Option, File, Popup, Confirm, Keyboard, Wait
 };

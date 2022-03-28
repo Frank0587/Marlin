@@ -223,23 +223,7 @@ bool probe_deployed = false;
 
   #define dd_LINELEN 64
   char dd_InfoLine1[dd_LINELEN], dd_InfoLine2[dd_LINELEN];
-  bool dd_PreventEcho = false;
   uint8_t dd_fresh = 0;
-
-  void dd_EchoToDebugLine(uint8_t c) {
-    static uint8_t idx = 0;
-    if (!dd_PreventEcho){
-      if (idx > dd_LINELEN-5 || c == '\n' || c == '\r') {
-        dd_fresh = 0xFF;
-        dd_InfoLine1[idx]     = '\0';
-        idx = 0;
-      }
-      else {
-        dd_InfoLine1[idx++] = c;
-        dd_InfoLine1[idx]   = '\0';
-      }
-    }
-  }
 
   bool dd_UpdateInfoLine (uint8_t idx) {
     bool rtn = false;
@@ -889,9 +873,6 @@ void CrealityDWINClass::Draw_Print_ProgressElapsed() {
 
 void CrealityDWINClass::Draw_Print_confirm() {
   Draw_Print_Screen();
-#if (0)
-  Confirm_Handler(Complete);
-#else
   process = Confirm;
   popup = Complete;
   DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, 252, 263, 351);
@@ -900,7 +881,6 @@ void CrealityDWINClass::Draw_Print_confirm() {
   DWIN_Draw_String(false, DWIN_FONT_HEAD, Color_White, Color_Light_Cyan, 87 + ((99 - 7 * STAT_CHR_W) / 2), 299, F("Confirm"));
   DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 66, 282, 207, 331);
   DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 65, 281, 208, 332);
-#endif
 }
 
 void CrealityDWINClass::Draw_SD_Item(uint8_t item, uint8_t row, bool onlyCachedFileIcon/*=false*/) {
@@ -1364,7 +1344,6 @@ void CrealityDWINClass::Confirm_Handler(PopupID popupid) {
     case UserInput:   Draw_Popup(F("Waiting for Input"), F("Press to Continue"), F(""), Confirm); break;
     case LevelError:  Draw_Popup(F("Couldn't enable Leveling"), F("(Valid mesh must exist)"), F(""), Confirm); break;
     case InvalidMesh: Draw_Popup(F("Valid mesh must exist"), F("before tuning can be"), F("performed"), Confirm); break;
-    case Complete:    Draw_Popup(F("Printing finished !!"), F(""), F(""), Confirm); break;
     default:          break;
   }
 }
@@ -2246,9 +2225,7 @@ void MarlinUI::update() { CrealityDWIN.Update(); }
 
 void CrealityDWINClass::State_Update() {
   if (dd_UpdateInfoLine(2)) {
-    dd_PreventEcho = true;
     DEBUG_ECHOLNPGM("StUpd:", dd_InfoLine2);
-    dd_PreventEcho = false;
   }
   if ((print_job_timer.isRunning() || print_job_timer.isPaused()) != printing) {
     if (!printing) Start_Print(card.isFileOpen() || TERN0(POWER_LOSS_RECOVERY, recovery.valid()));

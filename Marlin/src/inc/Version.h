@@ -26,7 +26,7 @@
  */
 #ifndef SHORT_BUILD_VERSION
   // = git branch 
-  #define SHORT_BUILD_VERSION ">SP#xx-dev"
+  #define SHORT_BUILD_VERSION ">SP#5-all-in"
 #endif
 
 /**
@@ -44,7 +44,7 @@
  * version was tagged.
  */
 #ifndef STRING_DISTRIBUTION_DATE
-  #define STRING_DISTRIBUTION_DATE "2022-03-19"
+  #define STRING_DISTRIBUTION_DATE "2022-03-28"
 #endif
 
 /**
