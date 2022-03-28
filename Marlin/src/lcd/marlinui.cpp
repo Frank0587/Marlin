@@ -76,6 +76,10 @@ constexpr uint8_t epps = ENCODER_PULSES_PER_STEP;
   #endif
   char MarlinUI::status_message[MAX_MESSAGE_LENGTH + 1];
   uint8_t MarlinUI::alert_level; // = 0
+  #if HAS_STATUS_MESSAGE_TIMEOUT
+    millis_t MarlinUI::status_message_expire_ms; // = 0
+  #endif
+  statusResetFunc_t MarlinUI::status_reset_callback; // = nullptr
 #endif
 
 #if ENABLED(LCD_SET_PROGRESS_MANUALLY)
@@ -596,7 +600,7 @@ void MarlinUI::init() {
       // share the same line on the display.
       //
 
-      #if DISABLED(PROGRESS_MSG_ONCE) || (PROGRESS_MSG_EXPIRE > 0)
+      #if DISABLED(PROGRESS_MSG_ONCE) || PROGRESS_MSG_EXPIRE > 0
         #define GOT_MS
         const millis_t ms = millis();
       #endif
@@ -629,6 +633,18 @@ void MarlinUI::init() {
       #endif // PROGRESS_MSG_EXPIRE
 
     #endif // BASIC_PROGRESS_BAR
+
+    bool did_expire = status_reset_callback && (*status_reset_callback)();
+
+    #if HAS_STATUS_MESSAGE_TIMEOUT
+      #ifndef GOT_MS
+        #define GOT_MS
+        const millis_t ms = millis();
+      #endif
+      did_expire |= status_message_expire_ms && ELAPSED(ms, status_message_expire_ms);
+    #endif
+
+    if (did_expire) reset_status();
 
     #if HAS_MARLINUI_MENU
       if (use_click()) {
@@ -1209,7 +1225,7 @@ void MarlinUI::init() {
     #define ADC_BUTTON_VALUE(r)  raw_adc_t(HAL_ADC_RANGE * (ADC_BUTTONS_VALUE_SCALE) * r / (r + ADC_BUTTONS_R_PULLUP))
 
     static constexpr raw_adc_t adc_button_tolerance = HAL_ADC_RANGE *   25 / 1024,
-                                   adc_other_button = HAL_ADC_RANGE * 1000 / 1024;
+                                   adc_other_button = raw_adc_t(uint32_t(HAL_ADC_RANGE * 1000UL) / 1024UL);
     static const _stADCKeypadTable_ stADCKeyTable[] PROGMEM = {
       // VALUE_MIN, VALUE_MAX, KEY
       { adc_other_button, HAL_ADC_RANGE, 1 + BLEN_KEYPAD_F1     }, // F1
@@ -1427,6 +1443,7 @@ void MarlinUI::init() {
     #if SERVICE_INTERVAL_3 > 0
       static PGMSTR(service3, "> " SERVICE_NAME_3 "!");
     #endif
+
     FSTR_P msg;
     if (printingIsPaused())
       msg = GET_TEXT_F(MSG_PRINT_PAUSED);
@@ -1459,8 +1476,13 @@ void MarlinUI::init() {
     set_status(msg, -1);
   }
 
+  /**
+   * Set Status with a fixed string and alert level.
+   * @param fstr  A constant F-string to set as the status.
+   * @param level Alert level. Negative to ignore and reset the level. Non-zero never expires.
+   */
   void MarlinUI::set_status(FSTR_P const fstr, int8_t level) {
-    PGM_P const pstr = FTOP(fstr);
+    // Alerts block lower priority messages
 
     DEBUG_ECHOLNPGM("MarlinUI::set_status (", fstr, " - level:", level, "/", alert_level, ")");
 
@@ -1468,8 +1490,7 @@ void MarlinUI::init() {
     if (level < alert_level) return;
     alert_level = level;
 
-    TERN_(HOST_STATUS_NOTIFICATIONS, hostui.notify(fstr));
-    TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Update_Status((const char*)(fstr)));
+    PGM_P const pstr = FTOP(fstr);
 
     // Since the message is encoded in UTF8 it must
     // only be cut on a character boundary.
@@ -1489,6 +1510,9 @@ void MarlinUI::init() {
     strncpy_P(status_message, pstr, maxLen);
     status_message[maxLen] = '\0';
 
+    TERN_(HOST_STATUS_NOTIFICATIONS, hostui.notify(fstr));
+    TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Update_Status((const char*)(fstr)));
+
     finish_status(level > 0);
   }
 
@@ -1500,12 +1524,14 @@ void MarlinUI::init() {
 
   #include <stdarg.h>
 
-  void MarlinUI::status_printf(const uint8_t level, FSTR_P const fmt, ...) {
-    
+  void MarlinUI::status_printf(int8_t level, FSTR_P const fmt, ...) {
+
     DEBUG_ECHOLNPGM("MarlinUI::status_printf (", fmt, " - level:", level, "/", alert_level, ")");
 
+    if (level < 0) level = alert_level = 0;
     if (level < alert_level) return;
     alert_level = level;
+
     va_list args;
     va_start(args, FTOP(fmt));
     vsnprintf_P(status_message, MAX_MESSAGE_LENGTH, FTOP(fmt), args);
@@ -1520,6 +1546,10 @@ void MarlinUI::init() {
   void MarlinUI::finish_status(const bool persist) {
 
     UNUSED(persist);
+
+    set_status_reset_fn();
+
+    TERN_(HAS_STATUS_MESSAGE_TIMEOUT, status_message_expire_ms = persist ? 0 : millis() + (STATUS_MESSAGE_TIMEOUT_SEC) * 1000UL);
 
     #if HAS_WIRED_LCD
 
@@ -1568,7 +1598,22 @@ void MarlinUI::init() {
 
   #endif
 
-#endif
+#else // !HAS_STATUS_MESSAGE
+
+  //
+  // Send the status line as a host notification
+  //
+  void MarlinUI::set_status(const char * const cstr, const bool) {
+    TERN(HOST_PROMPT_SUPPORT, hostui.notify(cstr), UNUSED(cstr));
+  }
+  void MarlinUI::set_status(FSTR_P const fstr, const int8_t) {
+    TERN(HOST_PROMPT_SUPPORT, hostui.notify(fstr), UNUSED(fstr));
+  }
+  void MarlinUI::status_printf(int8_t, FSTR_P const fstr, ...) {
+    TERN(HOST_PROMPT_SUPPORT, hostui.notify(fstr), UNUSED(fstr));
+  }
+
+#endif // !HAS_STATUS_MESSAGE
 
 #if HAS_DISPLAY
 
@@ -1680,22 +1725,7 @@ void MarlinUI::init() {
 
   #endif
 
-#elif !HAS_STATUS_MESSAGE // && !HAS_DISPLAY
-
-  //
-  // Send the status line as a host notification
-  //
-  void MarlinUI::set_status(const char * const cstr, const bool) {
-    TERN(HOST_PROMPT_SUPPORT, hostui.notify(cstr), UNUSED(cstr));
-  }
-  void MarlinUI::set_status(FSTR_P const fstr, const int8_t) {
-    TERN(HOST_PROMPT_SUPPORT, hostui.notify(fstr), UNUSED(fstr));
-  }
-  void MarlinUI::status_printf(const uint8_t, FSTR_P const fstr, ...) {
-    TERN(HOST_PROMPT_SUPPORT, hostui.notify(fstr), UNUSED(fstr));
-  }
-
-#endif // !HAS_DISPLAY && !HAS_STATUS_MESSAGE
+#endif // HAS_DISPLAY
 
 #if ENABLED(SDSUPPORT)
 
