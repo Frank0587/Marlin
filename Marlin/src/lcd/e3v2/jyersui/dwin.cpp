@@ -4622,7 +4622,7 @@ uint8_t CrealityDWINClass::Get_Menu_Size(uint8_t menu) {
 void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
   popup = last_popup = popupid;
 
-  DEBUG_ECHOLNPGM("CrealityDWINClass::Popup_Handler (popupid=", popupid, ", option=", option, ")");
+  DEBUG_ECHOLNPGM("CrDwCl::Popup_Handler (popupid=", popupid, ", option=", option, ")");
 
   switch (popupid) {
     case Pause:         Draw_Popup(F("Pause Print"), F(""), F(""), Popup); break;
@@ -4651,7 +4651,7 @@ void CrealityDWINClass::Popup_Handler(PopupID popupid, bool option/*=false*/) {
 
 void CrealityDWINClass::Confirm_Handler(PopupID popupid) {
 
-  DEBUG_ECHOLNPGM("CrealityDWINClass::Confirm_Handler (popupid=", popupid, ")");
+  DEBUG_ECHOLNPGM("CrDwCl::Confirm_Handler (popupid=", popupid, ")");
 
   popup = popupid;
   switch (popupid) {
@@ -5466,7 +5466,7 @@ void CrealityDWINClass::Modify_String(char * string, uint8_t maxlength, bool res
 
 void CrealityDWINClass::Update_Status(const char * const text) {
 
-  DEBUG_ECHOLNPGM("CrealityDWINClass::Update_Status (", text, ")");
+  DEBUG_ECHOLNPGM("CrDwCl::Update_Status (", text, ")");
 
   if (strncmp_P(text, PSTR("<F>"), 3) == 0) {
     LOOP_L_N(i, _MIN((size_t)LONG_FILENAME_LENGTH, strlen(text))) filename[i] = text[i + 3];
@@ -5535,7 +5535,7 @@ void MarlinUI::update() { CrealityDWIN.Update(); }
 
 void CrealityDWINClass::State_Update() {
   if (DEBUG_INFOLINE(2)) {
-    DEBUG_ECHOLNPGM("CrealityDWINClass::State_Update (", dbg_InfoLine1, ")" );
+    DEBUG_ECHOLNPGM("CrDwCl::State_Update (", dbg_InfoLine1, ")" );
   }
   if ((print_job_timer.isRunning() || print_job_timer.isPaused()) != printing) {
     if (!printing) Start_Print(card.isFileOpen() || TERN0(POWER_LOSS_RECOVERY, recovery.valid()));
