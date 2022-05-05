@@ -36,6 +36,9 @@
   #include "../../../feature/powerloss.h"
 #endif
 
+#define DEBUG_OUT ENABLED(DEBUG_PAUSE_RESUME)
+#include "../../../core/debug_out.h"
+
 /**
  * M125: Store current position and move to parking position.
  *       Called on pause (by M25) to prevent material leaking onto the

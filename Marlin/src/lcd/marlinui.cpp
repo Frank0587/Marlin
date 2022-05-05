@@ -24,6 +24,9 @@
 
 #include "../MarlinCore.h" // for printingIsPaused
 
+#define DEBUG_OUT ENABLED(DEBUG_LCD_UI)
+#include "../core/debug_out.h"
+
 #if LED_POWEROFF_TIMEOUT > 0 || BOTH(HAS_WIRED_LCD, PRINTER_EVENT_LEDS)
   #include "../feature/leds/leds.h"
 #endif
