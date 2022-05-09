@@ -876,9 +876,8 @@ void CrealityDWINClass::Draw_Print_confirm() {
   process = Confirm;
   popup = Complete;
   DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, 252, 263, 351);
-  //DWIN_ICON_Show(ICON, ICON_Confirm_E, 87, 283);
-  DWIN_Draw_Rectangle(1, Color_Light_Cyan, 67, 283, 206, 330);
-  DWIN_Draw_String(false, DWIN_FONT_HEAD, Color_White, Color_Light_Cyan, 87 + ((99 - 7 * STAT_CHR_W) / 2), 299, F("Confirm"));
+  DWIN_Draw_Rectangle(1, RGB(2,30,2), 67, 283, 206, 330);
+  DWIN_Draw_String(false, DWIN_FONT_HEAD, Color_White, RGB(2,30,2), 87 + ((99 - 7 * STAT_CHR_W) / 2), 299, F("Confirm"));
   DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 66, 282, 207, 331);
   DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 65, 281, 208, 332);
 }
