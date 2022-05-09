@@ -4233,9 +4233,6 @@ FSTR_P CrealityDWINClass::Get_Menu_Title(uint8_t menu) {
     #if ENABLED(HOST_ACTION_COMMANDS)
       case HostActions:       return F("Host Action Commands");
     #endif
-    #if ENABLED(HOST_ACTION_COMMANDS)
-      case HostActions:       return F("Host Action Commands");
-    #endif
     case Control:           return F("Control");
     case TempMenu:          return F("Temperature");
     #if HAS_HOTEND || HAS_HEATED_BED
