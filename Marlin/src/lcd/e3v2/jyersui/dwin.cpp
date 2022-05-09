@@ -877,7 +877,7 @@ void CrealityDWINClass::Draw_Print_confirm() {
   popup = Complete;
   DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, 252, 263, 351);
   //DWIN_ICON_Show(ICON, ICON_Confirm_E, 87, 283);
-  DWIN_Draw_Rectangle(1, RGB(2,30,2), 67, 283, 206, 330);
+  DWIN_Draw_Rectangle(1, Color_Light_Cyan, 67, 283, 206, 330);
   DWIN_Draw_String(false, DWIN_FONT_HEAD, Color_White, Color_Light_Cyan, 87 + ((99 - 7 * STAT_CHR_W) / 2), 299, F("Confirm"));
   DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 66, 282, 207, 331);
   DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 65, 281, 208, 332);
@@ -1109,13 +1109,13 @@ void CrealityDWINClass::Draw_Popup(FSTR_P const line1, FSTR_P const line2, FSTR_
     selection = 0;
     DWIN_Draw_Rectangle(1, Confirm_Color, 26, 280, 125, 317);
     DWIN_Draw_Rectangle(1, Cancel_Color, 146, 280, 245, 317);
-    DWIN_Draw_String(false, DWIN_FONT_STAT, Color_White, Color_Bg_Window, 39, 290, F("Confirm"));
-    DWIN_Draw_String(false, DWIN_FONT_STAT, Color_White, Color_Bg_Window, 165, 290, F("Cancel"));
+    DWIN_Draw_String(false, DWIN_FONT_STAT, Color_White, Confirm_Color, 39, 290, F("Confirm"));
+    DWIN_Draw_String(false, DWIN_FONT_STAT, Color_White, Cancel_Color, 165, 290, F("Cancel"));
     Popup_Select();
   }
   else if (mode == Confirm) {
     DWIN_Draw_Rectangle(1, Confirm_Color, 87, 280, 186, 317);
-    DWIN_Draw_String(false, DWIN_FONT_STAT, Color_White, Color_Bg_Window, 96, 290, F("Continue"));
+    DWIN_Draw_String(false, DWIN_FONT_STAT, Color_White, Confirm_Color, 96, 290, F("Continue"));
   }
 }
 
