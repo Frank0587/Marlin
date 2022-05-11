@@ -59,11 +59,10 @@ enum menuID : uint8_t {
         PID,
           HotendPID,
           BedPID,
-        Preheat1,
-        Preheat2,
-        Preheat3,
-        Preheat4,
-        Preheat5,
+        #if HAS_PREHEAT
+          #define _PREHEAT_ID(N) Preheat##N,
+          REPEAT_1(PREHEAT_COUNT, _PREHEAT_ID)
+        #endif
       Motion,
         HomeOffsets,
         MaxSpeed,
@@ -181,7 +180,6 @@ public:
     #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
       bool show_gcode_thumbnails : 1;
     #endif
-    bool show_debug_on_LCD : 1;   // define always to enable compatibility
   } eeprom_settings;
 
   static constexpr const char * const color_names[11] = { "Default", "White", "Green", "Cyan", "Blue", "Magenta", "Red", "Orange", "Yellow", "Brown", "Black" };
