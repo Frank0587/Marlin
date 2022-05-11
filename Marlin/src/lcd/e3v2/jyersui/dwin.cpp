@@ -190,6 +190,7 @@ char filename[LONG_FILENAME_LENGTH];
 bool printing = false;
 bool paused = false;
 bool sdprint = false;
+bool PopUp_FirstGoOn = false;
 
 int16_t pausetemp, pausebed, pausefan;
 
@@ -219,13 +220,14 @@ bool probe_deployed = false;
 
 
 #ifdef DEBUG_LCD_UI
-  #define DEBUG_INFOLINE(a)  dbg_UpdateInfoLine(a)
+  #define DEBUG_INFOLINE(a)  dd_UpdateInfoLine(a)
 
-  char dbg_InfoLine1[64], dbg_InfoLine2[64];
+  #define dd_LINELEN 64
+  char dd_InfoLine1[dd_LINELEN], dd_InfoLine2[dd_LINELEN];
+  uint8_t dd_fresh = 0;
 
-  bool dbg_UpdateInfoLine (uint8_t idx) {
+  bool dd_UpdateInfoLine (uint8_t idx) {
     bool rtn = false;
-    static uint8_t fresh = 0;
     static uint64_t lastHash = 0;
     uint8_t timer = print_job_timer.isPaused() + 2* print_job_timer.isRunning();
     uint64_t hash =
@@ -241,16 +243,16 @@ bool probe_deployed = false;
 
     if (lastHash != hash) {
       lastHash = hash;
-      fresh = 0xFF;
+      dd_fresh = 0xFF;
       rtn = true;
 
-      sprintf_P(dbg_InfoLine1, PSTR("prc:%i/%i|prt:%i|pau=%i|tim:%i|wfu:%i|sel:%i/%i"),
+      sprintf_P(dd_InfoLine2, PSTR("prc:%i/%i|prt:%i|pau=%i|tim:%i|wfu:%i|sel:%i/%i"),
               process, last_process, printing, paused, timer, wait_for_user, selection, last_selection );
-      sprintf_P(dbg_InfoLine2, PSTR(" - was geht up (line 2) - "));
+      sprintf_P(dd_InfoLine2, PSTR(" - was geht up (line 2) - "));
     }
     if (idx > 7) idx = 0;
-    if (fresh & (1<<idx)) {
-      fresh &= ~(1<<idx);
+    if (dd_fresh & (1<<idx)) {
+      dd_fresh &= ~(1<<idx);
       rtn = true;
     }
     return rtn;
@@ -878,9 +880,10 @@ void CrealityDWINClass::Draw_Print_confirm() {
   process = Confirm;
   popup = Complete;
   DWIN_Draw_Rectangle(1, Color_Bg_Black, 8, 252, 263, 351);
-  DWIN_ICON_Show(ICON, ICON_Confirm_E, 87, 283);
-  DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 86, 282, 187, 321);
-  DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 85, 281, 188, 322);
+  DWIN_Draw_Rectangle(1, RGB(2,30,2), 67, 283, 206, 330);
+  DWIN_Draw_String(false, DWIN_FONT_HEAD, Color_White, RGB(2,30,2), 87 + ((99 - 7 * STAT_CHR_W) / 2), 299, F("Confirm"));
+  DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 66, 282, 207, 331);
+  DWIN_Draw_Rectangle(0, GetColor(eeprom_settings.highlight_box, Color_White), 65, 281, 208, 332);
 }
 
 void CrealityDWINClass::Draw_SD_Item(uint8_t item, uint8_t row, bool onlyCachedFileIcon/*=false*/) {
@@ -1071,13 +1074,13 @@ void CrealityDWINClass::Draw_Popup(FSTR_P const line1, FSTR_P const line2, FSTR_
     selection = 0;
     DWIN_Draw_Rectangle(1, Confirm_Color, 26, 280, 125, 317);
     DWIN_Draw_Rectangle(1, Cancel_Color, 146, 280, 245, 317);
-    DWIN_Draw_String(false, DWIN_FONT_STAT, Color_White, Color_Bg_Window, 39, 290, F("Confirm"));
-    DWIN_Draw_String(false, DWIN_FONT_STAT, Color_White, Color_Bg_Window, 165, 290, F("Cancel"));
+    DWIN_Draw_String(false, DWIN_FONT_STAT, Color_White, Confirm_Color, 39, 290, F("Confirm"));
+    DWIN_Draw_String(false, DWIN_FONT_STAT, Color_White, Cancel_Color, 165, 290, F("Cancel"));
     Popup_Select();
   }
   else if (mode == Confirm) {
     DWIN_Draw_Rectangle(1, Confirm_Color, 87, 280, 186, 317);
-    DWIN_Draw_String(false, DWIN_FONT_STAT, Color_White, Color_Bg_Window, 96, 290, F("Continue"));
+    DWIN_Draw_String(false, DWIN_FONT_STAT, Color_White, Confirm_Color, 96, 290, F("Continue"));
   }
 }
 
@@ -1688,6 +1691,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MIN, 1, 3, str_1), dtostrf(PROBE_Y_MIN, 1, 3, str_2));
                 gcode.process_subcommands_now(cmd);
                 planner.synchronize();
+                PopUp_FirstGoOn = true;
                 Popup_Handler(ManualProbing);
               #endif
             }
@@ -1709,6 +1713,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MIN, 1, 3, str_1), dtostrf(PROBE_Y_MAX, 1, 3, str_2));
                 gcode.process_subcommands_now(cmd);
                 planner.synchronize();
+                PopUp_FirstGoOn = true;
                 Popup_Handler(ManualProbing);
               #endif
             }
@@ -1730,6 +1735,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MAX, 1, 3, str_1), dtostrf(PROBE_Y_MID, 1, 3, str_2));
                 gcode.process_subcommands_now(cmd);
                 planner.synchronize();
+                PopUp_FirstGoOn = true;
                 Popup_Handler(ManualProbing);
               #endif
             }
@@ -1751,6 +1757,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MID, 1, 3, str_1), dtostrf(PROBE_Y_MID, 1, 3, str_2));
                 gcode.process_subcommands_now(cmd);
                 planner.synchronize();
+                PopUp_FirstGoOn = true;
                 Popup_Handler(ManualProbing);
               #endif
             }
@@ -1772,6 +1779,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MAX, 1, 3, str_1), dtostrf(PROBE_Y_MAX, 1, 3, str_2));
                 gcode.process_subcommands_now(cmd);
                 planner.synchronize();
+                PopUp_FirstGoOn = true;
                 Popup_Handler(ManualProbing);
               #endif
             }
@@ -1793,6 +1801,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
                 sprintf_P(cmd, PSTR("G0 F4000\nG0 Z10\nG0 X%s Y%s"), dtostrf(PROBE_X_MAX, 1, 3, str_1), dtostrf(PROBE_Y_MIN, 1, 3, str_2));
                 gcode.process_subcommands_now(cmd);
                 planner.synchronize();
+                PopUp_FirstGoOn = true;
                 Popup_Handler(ManualProbing);
               #endif
             }
@@ -1924,6 +1933,7 @@ void CrealityDWINClass::Menu_Item_Handler(uint8_t menu, uint8_t item, bool draw/
 
     #if HAS_PREHEAT
       case Preheat: {
+        #define PREHEAT_BACK 0
         #define PREHEAT_MODE (PREHEAT_BACK + 1)
         #define PREHEAT_1 (PREHEAT_MODE + 1)
         #define PREHEAT_2 (PREHEAT_1 + (PREHEAT_COUNT >= 2))
@@ -4345,7 +4355,7 @@ void CrealityDWINClass::Confirm_Handler(PopupID popupid) {
     case UserInput:   Draw_Popup(F("Waiting for Input"), F("Press to Continue"), F(""), Confirm); break;
     case LevelError:  Draw_Popup(F("Couldn't enable Leveling"), F("(Valid mesh must exist)"), F(""), Confirm); break;
     case InvalidMesh: Draw_Popup(F("Valid mesh must exist"), F("before tuning can be"), F("performed"), Confirm); break;
-    default: break;
+    default:          break;
   }
 }
 
@@ -4782,6 +4792,11 @@ void CrealityDWINClass::Print_Screen_Control() {
 
 void CrealityDWINClass::Popup_Control() {
   EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
+  if (PopUp_FirstGoOn){
+    encoder_diffState = ENCODER_DIFF_ENTER;
+    selection = 0;
+    PopUp_FirstGoOn = false;
+  }
   if (encoder_diffState == ENCODER_DIFF_NO) return;
   if (encoder_diffState == ENCODER_DIFF_CW && selection < 1) {
     selection++;
@@ -5220,7 +5235,7 @@ void MarlinUI::update() { CrealityDWIN.Update(); }
 
 void CrealityDWINClass::State_Update() {
   if (DEBUG_INFOLINE(2)) {
-    DEBUG_ECHOLNPGM("CrDwCl::State_Update (", dbg_InfoLine1, ")" );
+    DEBUG_ECHOLNPGM("StUpd:", dd_InfoLine2);
   }
   if ((print_job_timer.isRunning() || print_job_timer.isPaused()) != printing) {
     if (!printing) Start_Print(card.isFileOpen() || TERN0(POWER_LOSS_RECOVERY, recovery.valid()));
@@ -5438,7 +5453,8 @@ void CrealityDWINClass::Load_Settings(const char *buff) {
     Decode_String(eeprom_settings.host_action_label_3, action3);
   #endif
 
-  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.extrude_min_temp = eeprom_settings.extrude_min_temp);
+  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.extrude_min_temp   = eeprom_settings.extrude_min_temp);
+  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.allow_cold_extrude = (thermalManager.extrude_min_temp == 0));
 
   Redraw_Screen();
   #if ENABLED(POWER_LOSS_RECOVERY)
@@ -5472,6 +5488,8 @@ void CrealityDWINClass::Reset_Settings() {
     action1[0] = action2[0] = action3[0] = '-';
   #endif
   TERN_(PREVENT_COLD_EXTRUSION, thermalManager.extrude_min_temp = eeprom_settings.extrude_min_temp = EXTRUDE_MINTEMP);
+  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.allow_cold_extrude = (thermalManager.extrude_min_temp == 0));
+
   TERN_(AUTO_BED_LEVELING_UBL, mesh_conf.tilt_grid = eeprom_settings.tilt_grid_size + 1);
   corner_pos = eeprom_settings.corner_pos / 10.0f;
   TERN_(SOUND_MENU_ITEM, ui.buzzer_enabled = true);
