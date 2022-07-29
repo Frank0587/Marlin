@@ -765,11 +765,11 @@ void _update_axis_value(const AxisEnum axis, const uint16_t x, const uint16_t y,
 
   if (force || changed || draw_qmark || draw_empty) {
     if (blink && draw_qmark)
-      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, F("  - ? -"));
+      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, (axis == Z_AXIS ? F("--??--") : F("--?--")));
     else if (blink && draw_empty)
-      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, F("       "));
+      DWINUI::Draw_String(HMI_data.Coordinate_Color, HMI_data.Background_Color, x, y, (axis == Z_AXIS ? F("      ") : F("     ")));
     else
-      DWINUI::Draw_Signed_Float(HMI_data.Coordinate_Color, HMI_data.Background_Color, 3, 2, x, y, p);
+      DWINUI::Draw_Signed_Float(HMI_data.Coordinate_Color, HMI_data.Background_Color, 3, (axis == Z_AXIS ? 2 : 1), x, y, p);
   }
 }
 
@@ -780,9 +780,9 @@ void _draw_xyz_position(const bool force) {
   if (force || blink != _blink) {
     _blink = blink;
     //SERIAL_ECHOPGM(" (blink)");
-    _update_axis_value(X_AXIS,  27, 459, blink, true);
-    _update_axis_value(Y_AXIS, 112, 459, blink, true);
-    _update_axis_value(Z_AXIS, 197, 459, blink, true);
+    _update_axis_value(X_AXIS,  35, 459, blink, true);
+    _update_axis_value(Y_AXIS, 120, 459, blink, true);
+    _update_axis_value(Z_AXIS, 205, 459, blink, true);
   }
   //SERIAL_EOL();
 }
@@ -1126,10 +1126,11 @@ void Draw_Info_Menu() {
     DWINUI::Draw_CenteredString(102, F("Size"));
     DWINUI::Draw_CenteredString(175, F("Firmware version"));
     DWINUI::Draw_CenteredString(248, F("Build Datetime"));
-    DWINUI::Draw_CenteredString(268, F(STRING_DISTRIBUTION_DATE));
+    DWINUI::Draw_CenteredString(268, F(__DATE__ " " __TIME__));
   }
   DWINUI::Draw_CenteredString(122, F(MACHINE_SIZE));
-  DWINUI::Draw_CenteredString(195, F(SHORT_BUILD_VERSION));
+  DWINUI::Draw_CenteredString(190, F(SHORT_BUILD_VERSION " - " STRING_CONFIG_H_AUTHOR));
+  DWINUI::Draw_CenteredString(205, F("UI: E3v2 ProUI"));
 
   LOOP_L_N(i, 3) {
     DWINUI::Draw_Icon(ICON_PrintSize + i, ICOX, 99 + i * 73);
@@ -2421,6 +2422,12 @@ void SetSpeed() { SetPIntOnClick(MIN_PRINT_SPEED, MAX_PRINT_SPEED); }
 void ApplyFlow() { planner.refresh_e_factor(0); }
 void SetFlow() { SetPIntOnClick(MIN_PRINT_FLOW, MAX_PRINT_FLOW, ApplyFlow); }
 
+float TramZval = 0.20;
+
+void setTramZval() {
+  SetPFloatOnClick(0.0, 3.0, 2);   
+}
+
 // Bed Tramming
 
 void TramXY(const uint8_t point, const float &margin, float &x, float &y) {
@@ -2445,6 +2452,14 @@ void TramXY(const uint8_t point, const float &margin, float &x, float &y) {
       LCD_MESSAGE(MSG_LEVBED_C);
       x = X_CENTER; y = Y_CENTER;
       break;
+    case 5:
+      LCD_MESSAGE(MSG_LEVBED_ML);
+      xpos = margin; ypos = Y_CENTER;
+      break;
+    case 6:
+      LCD_MESSAGE(MSG_LEVBED_MR);
+      xpos = X_BED_SIZE - margin; ypos = Y_CENTER;
+      break;
   }
 }
 
@@ -2461,9 +2476,10 @@ void TramXY(const uint8_t point, const float &margin, float &x, float &y) {
     TramXY(point, margin, xpos, ypos);
 
     if (HMI_data.FullManualTramming) {
-      sprintf_P(cmd, PSTR("M420S0\nG28O\nG90\nG0Z5F300\nG0X%sY%sF5000\nG0Z0F300"),
+      sprintf_P(cmd, PSTR("M420S0\nG28O\nG90\nG0Z5F300\nG0X%sY%sF5000\nG0Z%sF300"),
         dtostrf(xpos, 1, 1, str_1),
-        dtostrf(ypos, 1, 1, str_2)
+        dtostrf(ypos, 1, 1, str_2),
+        dtostrf(TramZval, 1, 2, str_3)
       );
       queue.inject(cmd);
     }
@@ -2510,7 +2526,7 @@ void TramXY(const uint8_t point, const float &margin, float &x, float &y) {
     TramXY(point, margin, xpos, ypos);
 
     char cmd[100] = "", str_1[6] = "", str_2[6] = "";
-    sprintf_P(cmd, PSTR("M420S0\nG28O\nG90\nG0Z5F300\nG0X%sY%sF5000\nG0Z0F300"), dtostrf(xpos, 1, 1, str_1), dtostrf(ypos, 1, 1, str_2));
+    sprintf_P(cmd, PSTR("M420S0\nG28O\nG90\nG0Z5F300\nG0X%sY%sF5000\nG0Z%sF300"), dtostrf(xpos, 1, 1, str_1), dtostrf(ypos, 1, 1, str_2), dtostrf(TramZval, 1, 2, str_3));
     queue.inject(cmd);
   }
 
@@ -2521,6 +2537,8 @@ void TramFR() { Tram(1); }
 void TramBR() { Tram(2); }
 void TramBL() { Tram(3); }
 void TramC () { Tram(4); }
+void TramML() { Tram(5); }
+void TramMR() { Tram(6); }
 
 #if HAS_BED_PROBE
 
@@ -3165,10 +3183,12 @@ void Draw_Tramming_Menu() {
     #else
       MENU_ITEM(ICON_MoveZ0, F("Home Z and disable"), onDrawMenuItem, HomeZandDisable);
     #endif
+    // SP_MOD: Z-Value for Tramming
+    EDIT_ITEM(ICON_Zoffset, GET_TEXT_F(MSG_LEVBED_ZVAL), onDrawPFloat2Menu, setTramZval, &TramZval);
+    // SP_MOD: Tramming adapted to 3 point mounted bed
     MENU_ITEM_F(ICON_Axis, MSG_LEVBED_FL, onDrawMenuItem, TramFL);
-    MENU_ITEM_F(ICON_Axis, MSG_LEVBED_FR, onDrawMenuItem, TramFR);
-    MENU_ITEM_F(ICON_Axis, MSG_LEVBED_BR, onDrawMenuItem, TramBR);
     MENU_ITEM_F(ICON_Axis, MSG_LEVBED_BL, onDrawMenuItem, TramBL);
+    MENU_ITEM_F(ICON_Axis, MSG_LEVBED_MR, onDrawMenuItem, TramMR);
     MENU_ITEM(ICON_Axis, GET_TEXT_F(MSG_LEVBED_C ), onDrawMenuItem, TramC );
   }
   UpdateMenu(TrammingMenu);

@@ -54,6 +54,8 @@
   #include "../../lcd/e3v2/creality/dwin.h"
 #elif ENABLED(DWIN_LCD_PROUI)
   #include "../../lcd/e3v2/proui/dwin.h"
+#elif ENABLED(DWIN_CREALITY_LCD_JYERSUI)
+  #include "../../lcd/e3v2/jyersui/dwin.h"
 #endif
 
 #if ENABLED(LASER_FEATURE)
@@ -237,6 +239,7 @@ void GcodeSuite::G28() {
 
   TERN_(HAS_DWIN_E3V2_BASIC, DWIN_HomingStart());
   TERN_(EXTENSIBLE_UI, ExtUI::onHomingStart());
+  TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Update_Status(GET_TEXT(MSG_LEVEL_BED_HOMING)));
 
   planner.synchronize();          // Wait for planner moves to finish!
 
@@ -590,6 +593,7 @@ void GcodeSuite::G28() {
 
   TERN_(HAS_DWIN_E3V2_BASIC, DWIN_HomingDone());
   TERN_(EXTENSIBLE_UI, ExtUI::onHomingDone());
+  TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Update_Status(""));
 
   report_current_position();
 
