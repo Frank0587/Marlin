@@ -1456,8 +1456,8 @@ void unified_bed_leveling::smart_fill_mesh() {
   #include "../../../libs/vector_3.h"
 
   void unified_bed_leveling::tilt_mesh_based_on_probed_grid(const bool do_3_pt_leveling) {
-    const float x_min = probe.min_x(), x_max = probe.max_x(),
-                y_min = probe.min_y(), y_max = probe.max_y(),
+    const float x_min = probe.min_x()+20, x_max = probe.max_x()-5,   // put the tilt points a little bit away from border
+                y_min = probe.min_y()+20, y_max = probe.max_y()-20,
                 dx = (x_max - x_min) / (param.J_grid_size - 1),
                 dy = (y_max - y_min) / (param.J_grid_size - 1);
 

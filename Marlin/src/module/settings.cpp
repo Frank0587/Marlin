@@ -1651,6 +1651,7 @@ void MarlinSettings::postprocess() {
       }
       DEBUG_ECHO_MSG("EEPROM version mismatch (EEPROM=", stored_ver, " Marlin=" EEPROM_VERSION ")");
       TERN_(DWIN_LCD_PROUI, LCD_MESSAGE(MSG_ERR_EEPROM_VERSION));
+      TERN_(DWIN_CREALITY_LCD_JYERSUI, LCD_MESSAGE(MSG_ERR_EEPROM_VERSION));
       TERN_(HOST_PROMPT_SUPPORT, hostui.notify(GET_TEXT_F(MSG_ERR_EEPROM_VERSION)));
 
       IF_DISABLED(EEPROM_AUTO_INIT, ui.eeprom_alert_version());
@@ -2571,6 +2572,7 @@ void MarlinSettings::postprocess() {
         eeprom_error = true;
         DEBUG_ERROR_MSG("EEPROM CRC mismatch - (stored) ", stored_crc, " != ", working_crc, " (calculated)!");
         TERN_(DWIN_LCD_PROUI, LCD_MESSAGE(MSG_ERR_EEPROM_CRC));
+        TERN_(DWIN_CREALITY_LCD_JYERSUI, LCD_MESSAGE(MSG_ERR_EEPROM_CRC));
         TERN_(HOST_EEPROM_CHITCHAT, hostui.notify(GET_TEXT_F(MSG_ERR_EEPROM_CRC)));
         IF_DISABLED(EEPROM_AUTO_INIT, ui.eeprom_alert_crc());
       }

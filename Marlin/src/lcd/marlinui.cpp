@@ -24,6 +24,9 @@
 
 #include "../MarlinCore.h" // for printingIsPaused
 
+#define DEBUG_OUT ENABLED(DEBUG_LCD_UI)
+#include "../core/debug_out.h"
+
 #if LED_POWEROFF_TIMEOUT > 0 || BOTH(HAS_WIRED_LCD, PRINTER_EVENT_LEDS)
   #include "../feature/leds/leds.h"
 #endif
@@ -1407,9 +1410,13 @@ void MarlinUI::init() {
   bool MarlinUI::has_status() { return (status_message[0] != '\0'); }
 
   void MarlinUI::set_status(const char * const cstr, const bool persist) {
+    
+    DEBUG_ECHOLNPGM("MarlinUI::set_status (", cstr, " - persist:", persist, "/", alert_level, ")");
+
     if (alert_level) return;
 
     TERN_(HOST_STATUS_NOTIFICATIONS, hostui.notify(cstr));
+    TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Update_Status(cstr));
 
     // Here we have a problem. The message is encoded in UTF8, so
     // arbitrarily cutting it will be a problem. We MUST be sure
@@ -1452,8 +1459,10 @@ void MarlinUI::init() {
     if (printingIsPaused())
       msg = GET_TEXT_F(MSG_PRINT_PAUSED);
     #if ENABLED(SDSUPPORT)
-      else if (IS_SD_PRINTING())
+      else if (IS_SD_PRINTING()){
+        TERN_(DWIN_CREALITY_LCD_JYERSUI, return set_status(""));
         return set_status(card.longest_filename(), true);
+      }
     #endif
     else if (print_job_timer.isRunning())
       msg = GET_TEXT_F(MSG_PRINTING);
@@ -1485,6 +1494,9 @@ void MarlinUI::init() {
    */
   void MarlinUI::set_status(FSTR_P const fstr, int8_t level) {
     // Alerts block lower priority messages
+
+    DEBUG_ECHOLNPGM("MarlinUI::set_status (", fstr, " - level:", level, "/", alert_level, ")");
+
     if (level < 0) level = alert_level = 0;
     if (level < alert_level) return;
     alert_level = level;
@@ -1510,6 +1522,7 @@ void MarlinUI::init() {
     status_message[maxLen] = '\0';
 
     TERN_(HOST_STATUS_NOTIFICATIONS, hostui.notify(fstr));
+    TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Update_Status((const char*)(fstr)));
 
     finish_status(level > 0);
   }
@@ -1523,7 +1536,9 @@ void MarlinUI::init() {
   #include <stdarg.h>
 
   void MarlinUI::status_printf(int8_t level, FSTR_P const fmt, ...) {
-    // Alerts block lower priority messages
+
+    DEBUG_ECHOLNPGM("MarlinUI::status_printf (", fmt, " - level:", level, "/", alert_level, ")");
+
     if (level < 0) level = alert_level = 0;
     if (level < alert_level) return;
     alert_level = level;
@@ -1534,6 +1549,7 @@ void MarlinUI::init() {
     va_end(args);
 
     TERN_(HOST_STATUS_NOTIFICATIONS, hostui.notify(status_message));
+    TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Update_Status(status_message));
 
     finish_status(level > 0);
   }
