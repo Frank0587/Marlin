@@ -97,6 +97,9 @@ namespace LanguageNarrow_en {
   LSTR MSG_TRAM_C                         = _UxGT("Center");
   LSTR MSG_TRAM_BL                        = _UxGT("Back Left");
   LSTR MSG_TRAM_BR                        = _UxGT("Back Right");
+  LSTR MSG_TRAM_ML                        = _UxGT("Mid Left");
+  LSTR MSG_TRAM_MR                        = _UxGT("Mid Right");
+  LSTR MSG_TRAM_ZVAL                      = _UxGT("Z Value:");
   LSTR MSG_MANUAL_MESH                    = _UxGT("Manual Mesh");
   LSTR MSG_AUTO_MESH                      = _UxGT("Auto Build Mesh");
   LSTR MSG_AUTO_Z_ALIGN                   = _UxGT("Auto Z-Align");

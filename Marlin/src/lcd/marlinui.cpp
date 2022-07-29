@@ -24,6 +24,9 @@
 
 #include "../MarlinCore.h" // for printingIsPaused
 
+#define DEBUG_OUT ENABLED(DEBUG_LCD_UI)
+#include "../core/debug_out.h"
+
 #if LED_POWEROFF_TIMEOUT > 0 || ALL(HAS_WIRED_LCD, PRINTER_EVENT_LEDS) || (defined(LCD_BACKLIGHT_TIMEOUT_MINS) && defined(NEOPIXEL_BKGD_INDEX_FIRST))
   #include "../feature/leds/leds.h"
 #endif
@@ -1461,8 +1464,10 @@ void MarlinUI::host_status() {
     if (printingIsPaused())
       msg = GET_TEXT_F(MSG_PRINT_PAUSED);
     #if HAS_MEDIA
-      else if (IS_SD_PRINTING())
+      else if (IS_SD_PRINTING()){
+        TERN_(DWIN_CREALITY_LCD_JYERSUI, return set_status(""));
         return set_status_no_expire(card.longest_filename());
+      }
     #endif
     else if (print_job_timer.isRunning())
       msg = GET_TEXT_F(MSG_PRINTING);
@@ -1493,6 +1498,9 @@ void MarlinUI::host_status() {
    * @return      TRUE if the level could NOT be set.
    */
   bool MarlinUI::set_alert_level(int8_t &level) {
+
+    DEBUG_ECHOLNPGM("MarlinUI::set_status (", fstr, " - level:", level, "/", alert_level, ")");
+
     if (level < 0) level = alert_level = 0;
     if (level < alert_level) return true;
     alert_level = level;
@@ -1514,6 +1522,7 @@ void MarlinUI::host_status() {
     MString<30> msg;
     pgm ? msg.set_P(ustr) : msg.set(ustr);
     status_message.set(&msg).utrunc(MAX_MESSAGE_LENGTH);
+    TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Update_Status((const char*)(fstr)));
 
     finish_status(level > 0); // Persist if the status has a level
   }
@@ -1555,6 +1564,9 @@ void MarlinUI::host_status() {
    * @param pfmt    A constant format P-string
    */
   void MarlinUI::status_printf_P(int8_t level, PGM_P const fmt, ...) {
+    // Alerts block lower priority messages
+    DEBUG_ECHOLNPGM("MarlinUI::status_printf (", fmt, " - level:", level, "/", alert_level, ")");
+
     if (set_alert_level(level)) return;
 
     va_list args;
@@ -1563,6 +1575,7 @@ void MarlinUI::host_status() {
     va_end(args);
 
     host_status();
+    TERN_(DWIN_CREALITY_LCD_JYERSUI, CrealityDWIN.Update_Status(status_message));
 
     finish_status(level > 0);
   }

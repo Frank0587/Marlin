@@ -1520,7 +1520,7 @@ void unified_bed_leveling::smart_fill_mesh() {
     else { // !do_3_pt_leveling
 
       #ifndef G29J_MESH_TILT_MARGIN
-        #define G29J_MESH_TILT_MARGIN 0
+        #define G29J_MESH_TILT_MARGIN 20
       #endif
       const float x_min = _MAX((X_MIN_POS) + (G29J_MESH_TILT_MARGIN), MESH_MIN_X, probe.min_x()),
                   x_max = _MIN((X_MAX_POS) - (G29J_MESH_TILT_MARGIN), MESH_MAX_X, probe.max_x()),
