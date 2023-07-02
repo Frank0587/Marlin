@@ -39,7 +39,8 @@
 #include "../../../module/settings.h"
 #include "../../../libs/buzzer.h"
 
-//#define DEBUG_OUT 1
+
+#define DEBUG_OUT ENABLED(DEBUG_LCD_UI)
 #include "../../../core/debug_out.h"
 
 #if ENABLED(ADVANCED_PAUSE_FEATURE)
@@ -73,6 +74,13 @@
 
 #if ENABLED(POWER_LOSS_RECOVERY)
   #include "../../../feature/powerloss.h"
+#endif
+
+#if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+  #include "../../../libs/base64.hpp"
+  #include <map>
+  #include <string>
+  using namespace std;
 #endif
 
 #if HAS_TRINAMIC_CONFIG
@@ -188,6 +196,7 @@ char filename[LONG_FILENAME_LENGTH];
 bool printing = false;
 bool paused = false;
 bool sdprint = false;
+bool PopUp_FirstGoOn = false;
 
 int16_t pausetemp, pausebed, pausefan;
 
@@ -200,6 +209,56 @@ float corner_avg;
 float corner_pos;
 
 bool probe_deployed = false;
+
+#if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+  std::map<string, int> image_cache;
+  uint16_t next_available_address = 1;
+  static millis_t thumbtime = 0;
+  static millis_t name_scroll_time = 0;
+  #define SCROLL_WAIT 1000
+#endif
+
+#ifdef DEBUG_LCD_UI
+  #define DEBUG_INFOLINE(a)  dd_UpdateInfoLine(a)
+
+  #define dd_LINELEN 64
+  char dd_InfoLine1[dd_LINELEN], dd_InfoLine2[dd_LINELEN];
+  uint8_t dd_fresh = 0;
+
+  bool dd_UpdateInfoLine (uint8_t idx) {
+    bool rtn = false;
+    static uint64_t lastHash = 0;
+    uint8_t timer = print_job_timer.isPaused() + 2* print_job_timer.isRunning();
+    uint64_t hash =
+            (printing                    ? 1 : 0)
+          + (paused                      ? 2 : 0)
+          + (wait_for_user               ? 4 : 0)
+          + 0x000000000010 * timer
+          + 0x000000000100 * process
+          + 0x000000010000 * last_process
+          + 0x000001000000 * selection
+          + 0x000100000000 * last_selection
+          + 0x010000000000 * pause_menu_response;
+
+    if (lastHash != hash) {
+      lastHash = hash;
+      dd_fresh = 0xFF;
+      rtn = true;
+
+      sprintf_P(dd_InfoLine2, PSTR("prc:%i/%i|prt:%i|pau=%i|tim:%i|wfu:%i|sel:%i/%i"),
+              process, last_process, printing, paused, timer, wait_for_user, selection, last_selection );
+      sprintf_P(dd_InfoLine2, PSTR(" - was geht up (line 2) - "));
+    }
+    if (idx > 7) idx = 0;
+    if (dd_fresh & (1<<idx)) {
+      dd_fresh &= ~(1<<idx);
+      rtn = true;
+    }
+    return rtn;
+  }
+#else
+  #define DEBUG_INFOLINE(a) false
+#endif
 
 JyersDWIN jyersDWIN;
 
@@ -330,7 +389,7 @@ private:
       }
       else {
         jyersDWIN.popupHandler(Popup_MoveWait);
-        gcode.process_subcommands_now(TS(F("G0F300Z"), p_float_t(current_position.z, 3)));
+        gcode.process_subcommands_now(TS(F("G0F300Z"), p_float_t(Z_CLEARANCE_BETWEEN_PROBES, 3)));
         gcode.process_subcommands_now(TS(F("G42 F4000 I"), mesh_x, 'J', mesh_y));
         planner.synchronize();
         current_position.z = goto_mesh_value ? bedlevel.z_values[mesh_x][mesh_y] : Z_CLEARANCE_BETWEEN_PROBES;
@@ -510,13 +569,22 @@ void _decorateMenuItem(uint8_t row, uint8_t icon, bool more) {
   dwinDrawLine(jyersDWIN.getColor(jyersDWIN.eeprom_settings.menu_split_line, COLOR_LINE, true), 16, MBASE(row) + 33, 256, MBASE(row) + 33); // Draw Menu Line
 }
 
-void JyersDWIN::drawMenuItem(const uint8_t row, const uint8_t icon/*=0*/, const char * const label1, const char * const label2, const bool more/*=false*/, const bool centered/*=false*/) {
-  const uint8_t label_offset_y = label2 ? MENU_CHR_H * 3 / 5 : 0,
+void JyersDWIN::drawMenuItem(const uint16_t row, const uint8_t icon/*=0*/, const char * const label1, const char * const label2, const bool more/*=false*/, const bool centered/*=false*/, bool onlyCachedFileIcon/*=false*/) {
+  const uint8_t label_offset_y = (label1 && label2) ? MENU_CHR_H * 3 / 5 : 0,
                 label1_offset_x = !centered ? LBLX : LBLX * 4/5 + _MAX(LBLX * 1U/5, (DWIN_WIDTH - LBLX - (label1 ? strlen(label1) : 0) * MENU_CHR_W) / 2),
                 label2_offset_x = !centered ? LBLX : LBLX * 4/5 + _MAX(LBLX * 1U/5, (DWIN_WIDTH - LBLX - (label2 ? strlen(label2) : 0) * MENU_CHR_W) / 2);
   if (label1) dwinDrawString(false, DWIN_FONT_MENU, COLOR_WHITE, COLOR_BG_BLACK, label1_offset_x, MBASE(row) - 1 - label_offset_y, label1); // Draw Label
   if (label2) dwinDrawString(false, DWIN_FONT_MENU, COLOR_WHITE, COLOR_BG_BLACK, label2_offset_x, MBASE(row) - 1 + label_offset_y, label2); // Draw Label
-  _decorateMenuItem(row, icon, more);
+  //_decorateMenuItem(row, icon, more);
+  #ifdef DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW
+   if (eeprom_settings.show_gcode_thumbnails && icon == ICON_File && find_and_decode_gcode_preview(card.filename, Thumnail_Icon, &image_address, onlyCachedFileIcon))
+    DWIN_SRAM_Memory_Icon_Display(9, MBASE(row) - 18, image_address);
+   else if (icon) DWIN_ICON_Show(ICON, icon, 26, MBASE(row) - 3);   //Draw Menu Icon
+  #else
+   if (icon) DWIN_ICON_Show(ICON, icon, 26, MBASE(row) - 3);   //Draw Menu Icon
+  #endif
+   if (more) DWIN_ICON_Show(ICON, ICON_More, 226, MBASE(row) - 3); // Draw More Arrow
+  DWIN_Draw_Line(GetColor(eeprom_settings.menu_split_line, Line_Color, true), 16, MBASE(row) + 33, 256, MBASE(row) + 33); // Draw Menu Line
 }
 
 void JyersDWIN::drawMenuItem(const uint8_t row, const uint8_t icon/*=0*/, FSTR_P const flabel1, FSTR_P const flabel2, const bool more/*=false*/, const bool centered/*=false*/) {
@@ -525,7 +593,16 @@ void JyersDWIN::drawMenuItem(const uint8_t row, const uint8_t icon/*=0*/, FSTR_P
                 label2_offset_x = !centered ? LBLX : LBLX * 4/5 + _MAX(LBLX * 1U/5, (DWIN_WIDTH - LBLX - (flabel2 ? strlen_P(FTOP(flabel2)) : 0) * MENU_CHR_W) / 2);
   if (flabel1) dwinDrawString(false, DWIN_FONT_MENU, COLOR_WHITE, COLOR_BG_BLACK, label1_offset_x, MBASE(row) - 1 - label_offset_y, flabel1); // Draw Label
   if (flabel2) dwinDrawString(false, DWIN_FONT_MENU, COLOR_WHITE, COLOR_BG_BLACK, label2_offset_x, MBASE(row) - 1 + label_offset_y, flabel2); // Draw Label
-  _decorateMenuItem(row, icon, more);
+  //_decorateMenuItem(row, icon, more);
+  #ifdef DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW
+   if (eeprom_settings.show_gcode_thumbnails && icon == ICON_File && find_and_decode_gcode_preview(card.filename, Thumnail_Icon, &image_address, onlyCachedFileIcon))
+    DWIN_SRAM_Memory_Icon_Display(9, MBASE(row) - 18, image_address);
+   else if (icon) DWIN_ICON_Show(ICON, icon, 26, MBASE(row) - 3);   //Draw Menu Icon
+  #else
+   if (icon) DWIN_ICON_Show(ICON, icon, 26, MBASE(row) - 3);   //Draw Menu Icon
+  #endif
+   if (more) DWIN_ICON_Show(ICON, ICON_More, 226, MBASE(row) - 3); // Draw More Arrow
+  DWIN_Draw_Line(GetColor(eeprom_settings.menu_split_line, Line_Color, true), 16, MBASE(row) + 33, 256, MBASE(row) + 33); // Draw Menu Line
 }
 
 void JyersDWIN::drawCheckbox(const uint8_t row, const bool value) {
@@ -667,11 +744,11 @@ void JyersDWIN::printScreenIcons() {
     if (selection == 1) {
       dwinIconShow(ICON, ICON_Continue_1, 96, 252);
       dwinDrawRectangle(0, getColor(eeprom_settings.highlight_box, COLOR_WHITE), 96, 252, 175, 351);
-      dwinDrawString(false, DWIN_FONT_MENU, COLOR_WHITE, COLOR_BG_BLUE, 114, 322, F("Print"));
+      dwinDrawString(false, DWIN_FONT_MENU, COLOR_WHITE, COLOR_BG_BLUE, 114, 322, F("Resume"));
     }
     else {
       dwinIconShow(ICON, ICON_Continue_0, 96, 252);
-      dwinDrawString(false, DWIN_FONT_MENU, COLOR_WHITE, COLOR_BG_BLUE, 114, 322, F("Print"));
+      dwinDrawString(false, DWIN_FONT_MENU, COLOR_WHITE, COLOR_BG_BLUE, 114, 322, F("Resume"));
     }
   }
   else {
@@ -691,7 +768,7 @@ void JyersDWIN::drawPrintScreen() {
   process = Proc_Print;
   selection = 0;
   clearScreen();
-  dwinDrawRectangle(1, COLOR_BG_BLACK, 8, 352, DWIN_WIDTH - 8, 376);
+//  dwinDrawRectangle(1, COLOR_BG_BLACK, 8, 352, DWIN_WIDTH - 8, 376);
   drawTitle("Printing...");
   printScreenIcons();
   dwinIconShow(ICON, ICON_PrintTime, 14, 171);
@@ -760,12 +837,13 @@ void JyersDWIN::drawPrintConfirm() {
   process = Proc_Confirm;
   popup = Popup_Complete;
   dwinDrawRectangle(1, COLOR_BG_BLACK, 8, 252, 263, 351);
-  dwinIconShow(ICON, ICON_Confirm_E, 87, 283);
+  dwinDrawRectangle(1, RGB(2,30,2), 67, 283, 206, 330);
+  dwinDrawString(false, DWIN_FONT_HEAD, Color_White, RGB(2,30,2), 87 + ((99 - 7 * STAT_CHR_W) / 2), 299, F("Confirm"));
   dwinDrawRectangle(0, getColor(eeprom_settings.highlight_box, COLOR_WHITE), 86, 282, 187, 321);
   dwinDrawRectangle(0, getColor(eeprom_settings.highlight_box, COLOR_WHITE), 85, 281, 188, 322);
 }
 
-void JyersDWIN::drawSDItem(const uint8_t item, const uint8_t row) {
+void JyersDWIN::drawSDItem(const uint8_t item, const uint8_t row, bool onlyCachedFileIcon/*=false*/) {
   if (item == 0)
     drawMenuItem(0, ICON_Back, card.flag.workDirIsRoot ? F("Back") : F(".."));
   else {
@@ -782,19 +860,23 @@ void JyersDWIN::drawSDItem(const uint8_t item, const uint8_t row) {
     if (pos > max)
       for (uint8_t i = len - 3; i < len; ++i) name[i] = '.';
     name[len] = '\0';
-    drawMenuItem(row, card.flag.filenameIsDir ? ICON_More : ICON_File, name);
+    drawMenuItem(row, card.flag.filenameIsDir ? ICON_More : ICON_File, namee, NULL, NULL, false, onlyCachedFileIcon);
   }
 }
 
 void JyersDWIN::drawSDList(const bool removed/*=false*/) {
   clearScreen();
   drawTitle("Select File");
-  selection = 0;
-  scrollpos = 0;
+  //selection = 0;
+  //scrollpos = 0;
   process = Proc_File;
+  selection = min((int)select, card.get_num_Files()+1);
+  scrollpos = scroll;
+  if (selection-scrollpos > MROWS)
+    scrollpos = selection - MROWS;
   if (card.isMounted() && !removed) {
     for (uint8_t i = 0; i < _MIN(card.get_num_items() + 1, TROWS); ++i)
-      drawSDItem(i, i);
+      drawSDItem(i+scrollpos, i, onlyCachedFileIcon);
   }
   else {
     drawMenuItem(0, ICON_Back, F("Back"));
@@ -1361,22 +1443,25 @@ void JyersDWIN::menuItemHandler(const uint8_t menu, const uint8_t item, bool dra
 
       #define MLEVEL_BACK 0
       #define MLEVEL_PROBE (MLEVEL_BACK + ENABLED(HAS_BED_PROBE))
-      #define MLEVEL_BL (MLEVEL_PROBE + 1)
+      #define MLEVEL_ZPOS (MLEVEL_PROBE + 1)
+      #define MLEVEL_BL (MLEVEL_ZPOS + 1)
       #define MLEVEL_TL (MLEVEL_BL + 1)
-      #define MLEVEL_TR (MLEVEL_TL + 1)
+      #define MLEVEL_MR (MLEVEL_TL + 1)
+      #define MLEVEL_C  (MLEVEL_MR + 1)
+      #define MLEVEL_TR (MLEVEL_C + 1)
       #define MLEVEL_BR (MLEVEL_TR + 1)
-      #define MLEVEL_C (MLEVEL_BR + 1)
-      #define MLEVEL_ZPOS (MLEVEL_C + 1)
-      #define MLEVEL_TOTAL MLEVEL_ZPOS
+      #define MLEVEL_TOTAL MLEVEL_BR
 
-      static float mlev_z_pos = 0;
+      static float mlev_z_pos = 0.20;
       static bool use_probe = false;
 
       #if HAS_BED_PROBE
         const float probe_x_min = _MAX(0 + corner_pos, X_MIN_POS + probe.offset.x, X_MIN_POS + PROBING_MARGIN) - probe.offset.x,
                     probe_x_max = _MIN((X_BED_SIZE + X_MIN_POS) - corner_pos, X_MAX_POS + probe.offset.x, X_MAX_POS - PROBING_MARGIN) - probe.offset.x,
+                    probe_x_mid = (X_BED_SIZE/2 - probe.offset.x),
                     probe_y_min = _MAX(0 + corner_pos, Y_MIN_POS + probe.offset.y, Y_MIN_POS + PROBING_MARGIN) - probe.offset.y,
-                    probe_y_max = _MIN((Y_BED_SIZE + Y_MIN_POS) - corner_pos, Y_MAX_POS + probe.offset.y, Y_MAX_POS - PROBING_MARGIN) - probe.offset.y;
+                    probe_y_max = _MIN((Y_BED_SIZE + Y_MIN_POS) - corner_pos, Y_MAX_POS + probe.offset.y, Y_MAX_POS - PROBING_MARGIN) - probe.offset.y,
+                    probe_y_mid = (Y_BED_SIZE/2 - probe.offset.y);
       #endif
 
       switch (item) {
@@ -1400,24 +1485,27 @@ void JyersDWIN::menuItemHandler(const uint8_t menu, const uint8_t item, bool dra
               drawCheckbox(row, use_probe);
               if (use_probe) {
                 popupHandler(Popup_Level);
-                const struct { xy_pos_t p; ProbePtRaise r; } points[] = {
-                  { { probe_x_min, probe_y_min }, PROBE_PT_RAISE },
-                  { { probe_x_min, probe_y_max }, PROBE_PT_RAISE },
-                  { { probe_x_max, probe_y_max }, PROBE_PT_RAISE },
-                  { { probe_x_max, probe_y_min }, PROBE_PT_STOW }
-                };
+                do_z_clearance(Z_HOMING_HEIGHT);
                 corner_avg = 0;
-                for (uint8_t i = 0; i < COUNT(points); i++) {
-                  const float mz = probe.probe_at_point(points[i].p, points[i].r, 0, false);
-                  if (isnan(mz)) { corner_avg = 0; break; }
-                  corner_avg += mz;
-                }
-                corner_avg /= 4;
+
+                //lift to 15mm at least
+                do_blocking_move_to_z(_MAX(current_position.z, 15), z_probe_fast_mm_s);
+
+                // one point at the middle as reference
+                corner_avg = probe.probe_at_point(probe_x_mid, probe_y_mid, PROBE_PT_RAISE, 0, false);
                 redrawMenu();
               }
             }
             break;
         #endif
+        case MLEVEL_ZPOS:
+          if (draw) {
+            drawMenuItem(row, ICON_SetZOffset, F("Z Position"));
+            drawFloat(mlev_z_pos, row, false, 100);
+          }
+          else
+            modifyValue(mlev_z_pos, 0, MAX_Z_OFFSET, 100);
+          break;
 
         case MLEVEL_BL:
           if (draw)
@@ -1459,6 +1547,52 @@ void JyersDWIN::menuItemHandler(const uint8_t menu, const uint8_t item, bool dra
             else {
               gcode.process_subcommands_now(
                 TS(F("G0F4000\nG0Z10\nG0X"), p_float_t(corner_pos, 3), 'Y', p_float_t((Y_BED_SIZE + Y_MIN_POS) - corner_pos, 3), F("\nG0F300Z"), p_float_t(mlev_z_pos, 3))
+              );
+              planner.synchronize();
+              redrawMenu();
+            }
+          }
+          break;
+        case MLEVEL_MR:
+          if (draw)
+            drawMenuItem(row, ICON_AxisC, F("Mid Right"));
+          else {
+            popupHandler(Popup_MoveWait);
+            if (use_probe) {
+              #if HAS_BED_PROBE
+                gcode.process_subcommands_now(
+                  TS(F("G0F4000\nG0Z10\nG0X"), p_float_t(probe_x_max, 3), 'Y', p_float_t(probe_y_mid, 3))
+                );
+                planner.synchronize();
+                popupHandler(Popup_ManualProbing);
+              #endif
+            }
+            else {
+              gcode.process_subcommands_now(
+                TS(F("G0F4000\nG0Z10\nG0X"), p_float_t((X_BED_SIZE + X_MIN_POS) - corner_pos, 3), 'Y', p_float_t((Y_BED_SIZE + Y_MIN_POS) / 2.0f, 3), F("\nG0F300Z"), p_float_t(mlev_z_pos, 3))
+              );
+              planner.synchronize();
+              redrawMenu();
+            }
+          }
+          break;
+        case MLEVEL_C:
+          if (draw)
+            drawMenuItem(row, ICON_AxisC, F("Center"));
+          else {
+            popupHandler(Popup_MoveWait);
+            if (use_probe) {
+              #if HAS_BED_PROBE
+                gcode.process_subcommands_now(
+                  TS(F("G0F4000\nG0Z10\nG0X"), p_float_t((X_MAX_POS) / 2.0f - probe.offset.x, 3), 'Y', p_float_t((Y_MAX_POS) / 2.0f - probe.offset.y, 3))
+                );
+                planner.synchronize();
+                popupHandler(Popup_ManualProbing);
+              #endif
+            }
+            else {
+              gcode.process_subcommands_now(
+                TS(F("G0F4000\nG0Z10\nG0X"), p_float_t((X_BED_SIZE + X_MIN_POS) - corner_pos, 3), 'Y', p_float_t((Y_BED_SIZE + Y_MIN_POS) / 2.0f, 3), F("\nG0F300Z"), p_float_t(mlev_z_pos, 3))
               );
               planner.synchronize();
               redrawMenu();
@@ -1510,37 +1644,6 @@ void JyersDWIN::menuItemHandler(const uint8_t menu, const uint8_t item, bool dra
               redrawMenu();
             }
           }
-          break;
-        case MLEVEL_C:
-          if (draw)
-            drawMenuItem(row, ICON_AxisC, F("Center"));
-          else {
-            popupHandler(Popup_MoveWait);
-            if (use_probe) {
-              #if HAS_BED_PROBE
-                gcode.process_subcommands_now(
-                  TS(F("G0F4000\nG0Z10\nG0X"), p_float_t((X_MAX_POS) / 2.0f - probe.offset.x, 3), 'Y', p_float_t((Y_MAX_POS) / 2.0f - probe.offset.y, 3))
-                );
-                planner.synchronize();
-                popupHandler(Popup_ManualProbing);
-              #endif
-            }
-            else {
-              gcode.process_subcommands_now(
-                TS(F("G0F4000\nG0Z10\nG0X"), p_float_t((X_BED_SIZE + X_MIN_POS) - corner_pos, 3), 'Y', p_float_t((Y_BED_SIZE + Y_MIN_POS) / 2.0f, 3), F("\nG0F300Z"), p_float_t(mlev_z_pos, 3))
-              );
-              planner.synchronize();
-              redrawMenu();
-            }
-          }
-          break;
-        case MLEVEL_ZPOS:
-          if (draw) {
-            drawMenuItem(row, ICON_SetZOffset, F("Z Position"));
-            drawFloat(mlev_z_pos, row, false, 100);
-          }
-          else
-            modifyValue(mlev_z_pos, 0, MAX_Z_OFFSET, 100);
           break;
       }
 
@@ -2661,7 +2764,8 @@ void JyersDWIN::menuItemHandler(const uint8_t menu, const uint8_t item, bool dra
       #define VISUAL_BRIGHTNESS (VISUAL_BACKLIGHT + 1)
       #define VISUAL_TIME_FORMAT (VISUAL_BRIGHTNESS + 1)
       #define VISUAL_COLOR_THEMES (VISUAL_TIME_FORMAT + 1)
-      #define VISUAL_TOTAL VISUAL_COLOR_THEMES
+      #define VISUAL_FILE_TUMBNAILS (VISUAL_COLOR_THEMES + ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW))
+      #define VISUAL_TOTAL VISUAL_FILE_TUMBNAILS
 
       switch (item) {
         case VISUAL_BACK:
@@ -2700,6 +2804,18 @@ void JyersDWIN::menuItemHandler(const uint8_t menu, const uint8_t item, bool dra
           else
             drawMenu(ID_ColorSettings);
         break;
+        #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+          case VISUAL_FILE_TUMBNAILS:
+            if (draw) {
+              Draw_Menu_Item(row, ICON_File, F("Show file thumbnails"));
+              Draw_Checkbox(row, eeprom_settings.show_gcode_thumbnails);
+            }
+            else {
+              eeprom_settings.show_gcode_thumbnails = !eeprom_settings.show_gcode_thumbnails;
+              Draw_Checkbox(row, eeprom_settings.show_gcode_thumbnails);
+            }
+            break;
+        #endif
       }
       break;
 
@@ -2969,7 +3085,9 @@ void JyersDWIN::menuItemHandler(const uint8_t menu, const uint8_t item, bool dra
         #define PROBE_BACK 0
         #define PROBE_XOFFSET (PROBE_BACK + 1)
         #define PROBE_YOFFSET (PROBE_XOFFSET + 1)
-        #define PROBE_TEST (PROBE_YOFFSET + 1)
+        #define PROBE_HSMODE (PROBE_YOFFSET + ENABLED(BLTOUCH))
+        #define PROBE_ALARMR (PROBE_HSMODE + ENABLED(BLTOUCH))
+        #define PROBE_TEST (PROBE_ALARMR + 1)
         #define PROBE_TEST_COUNT (PROBE_TEST + 1)
         #define PROBE_TOTAL PROBE_TEST_COUNT
 
@@ -2999,9 +3117,30 @@ void JyersDWIN::menuItemHandler(const uint8_t menu, const uint8_t item, bool dra
               else
                 modifyValue(probe.offset.y, -MAX_XY_OFFSET, MAX_XY_OFFSET, 10);
               break;
+            #if ENABLED(BLTOUCH)
+              case PROBE_HSMODE:
+                if (draw) {
+                  Draw_Menu_Item(row, ICON_StockConfiguration, F("BLTouch HS Mode"));
+                   Draw_Checkbox(row, bltouch.high_speed_mode);
+                }
+                else {
+                  bltouch.high_speed_mode = !bltouch.high_speed_mode;
+                  Draw_Checkbox(row, bltouch.high_speed_mode);
+                }
+                break;
+              case PROBE_ALARMR:
+                if (draw) {
+                 Draw_Menu_Item(row, ICON_StockConfiguration, F("Probe Alarm Release"));
+                }
+                else {
+                  gcode.process_subcommands_now(F("M280 P0 S160"));
+                  AudioFeedback();
+                }
+                break;
+            #endif
             case PROBE_TEST:
               if (draw)
-                drawMenuItem(row, ICON_StepY, F("M48 Probe Test"));
+                drawMenuItem(row, ICON_StockConfiguration, F("M48 Probe Test"));
               else {
                 gcode.process_subcommands_now(
                   TS(F("G28O\nM48X") , p_float_t((X_BED_SIZE + X_MIN_POS) / 2.0f, 3), 'Y', p_float_t((Y_BED_SIZE + Y_MIN_POS) / 2.0f, 3), 'P', testcount)
@@ -3010,7 +3149,7 @@ void JyersDWIN::menuItemHandler(const uint8_t menu, const uint8_t item, bool dra
               break;
             case PROBE_TEST_COUNT:
               if (draw) {
-                drawMenuItem(row, ICON_StepY, F("Probe Test Count"));
+                drawMenuItem(row, ICON_StockConfiguration, F("Probe Test Count"));
                 drawFloat(testcount, row, false, 1);
               }
               else
@@ -3222,6 +3361,8 @@ void JyersDWIN::menuItemHandler(const uint8_t menu, const uint8_t item, bool dra
                 #endif
                 #if HAS_BED_PROBE
                   popupHandler(Popup_Level);
+                  gcode.process_subcommands_now(TS(F("G0 F4000 X"), PROBE_X_MID, 'Y', PROBE_Y_MID));
+
                   gcode.process_subcommands_now(F("G29P0\nG29P1"));
                   gcode.process_subcommands_now(F("G29P3\nG29P3\nG29P3\nG29P3\nG29P3\nG29P3\nG29P3\nG29P3\nG29P3\nG29P3\nG29P3\nG29P3\nG29P3\nG29P3\nG29P3\nM420S1"));
                   planner.synchronize();
@@ -4012,7 +4153,7 @@ void JyersDWIN::menuItemHandler(const uint8_t menu, const uint8_t item, bool dra
               drawFloat(thermalManager.temp_hotend[0].target, row, false, 1);
             }
             else
-              modifyValue(thermalManager.temp_hotend[0].target, EXTRUDE_MINTEMP, MAX_E_TEMP, 1);
+              modifyValue(thermalManager.temp_hotend[0].target, MIN_E_TEMP, MAX_E_TEMP, 1);
             break;
         }
         break;
@@ -4186,6 +4327,9 @@ uint8_t JyersDWIN::getMenuSize(const uint8_t menu) {
 
 void JyersDWIN::popupHandler(const PopupID popupid, const bool option/*=false*/) {
   popup = last_popup = popupid;
+
+  DEBUG_ECHOLNPGM("CrDwCl::Popup_Handler (popupid=", popupid, ", option=", option, ")");
+
   switch (popupid) {
     case Popup_Pause:         drawPopup(F("Pause Print"), F(""), F(""), Proc_Popup); break;
     case Popup_Stop:          drawPopup(F("Stop Print"), F(""), F(""), Proc_Popup); break;
@@ -4208,11 +4352,15 @@ void JyersDWIN::popupHandler(const PopupID popupid, const bool option/*=false*/)
     case Popup_MPCWait:       drawPopup(F("MPC Autotune"), F("in process"), F("Please wait until done."), Proc_Wait, ICON_BLTouch); break;
     case Popup_Resuming:      drawPopup(F("Resuming Print"), F("Please wait until done."), F(""), Proc_Wait, ICON_BLTouch); break;
     case Popup_Custom:        drawPopup(F("Running Custom GCode"), F("Please wait until done."), F(""), Proc_Wait, ICON_BLTouch); break;
+    case ConfirmStartPrint:   drawPopup(option ? F("Loading Preview...") : F("Print file?"), F(""), F(""), Popup); break;
     default: break;
   }
 }
 
 void JyersDWIN::confirmHandler(PopupID popupid) {
+
+  DEBUG_ECHOLNPGM("CrDwCl::Confirm_Handler (popupid=", popupid, ")");
+
   popup = popupid;
   switch (popupid) {
     case Popup_FilInsert:   drawPopup(F("Insert Filament"), F("Press to Continue"), F(""), Proc_Confirm); break;
@@ -4376,6 +4524,115 @@ void JyersDWIN::optionControl() {
   dwinUpdateLCD();
 }
 
+#if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+bool CrealityDWINClass::find_and_decode_gcode_preview(char *name, uint8_t preview_type, uint16_t *address, bool onlyCachedFileIcon/*=false*/) {
+  // Won't work if we don't copy the name
+  // for (char *c = &name[0]; *c; c++) *c = tolower(*c);
+
+  char file_name[strlen(name) + 1]; // Room for filename and null
+  sprintf_P(file_name, "%s", name);
+  char file_path[strlen(name) + 1 + MAXPATHNAMELENGTH]; // Room for path, filename and null
+  sprintf_P(file_path, "%s/%s", card.getWorkDirName(), file_name);
+
+  // Check if cached
+  bool use_cache = preview_type == Thumnail_Icon;
+  if (use_cache) {
+    auto it = image_cache.find(file_path+to_string(Thumnail_Icon));
+    if (it != image_cache.end()) { // already cached
+      if (it->second == 0) return false; // no image available
+      *address = it->second;
+      return true;
+    } else if (onlyCachedFileIcon) return false;
+  }
+
+  const uint16_t buff_size = 256;
+  char public_buf[buff_size+1];
+  uint8_t output_buffer[6144];
+  uint32_t position_in_file = 0;
+  char *encoded_image = NULL;
+
+  card.openFileRead(file_name);
+  uint8_t n_reads = 0;
+  int16_t data_read = card.read(public_buf, buff_size);
+  card.setIndex(card.getIndex()+data_read);
+  char key[31] = "";
+  switch (preview_type) {
+    case Thumnail_Icon: strcpy_P(key, "; jpeg thumbnail begin 50x50"); break;
+    case Thumnail_Preview: strcpy_P(key, "; jpeg thumbnail begin 180x180"); break;
+  }
+  while(n_reads < 16 && data_read) { // Max 16 passes so we don't loop forever
+  if (Encoder_ReceiveAnalyze() != ENCODER_DIFF_NO) return false;
+    encoded_image = strstr(public_buf, key);
+    if (encoded_image) {
+      uint32_t index_bw = &public_buf[buff_size] - encoded_image;
+      position_in_file = card.getIndex() - index_bw;
+      break;
+    }
+
+    card.setIndex(card.getIndex()-32);
+    data_read = card.read(public_buf, buff_size);
+    card.setIndex(card.getIndex()+data_read);
+
+    n_reads++;
+  }
+
+  // If we found the image, decode it
+  if (encoded_image) {
+  memset(public_buf, 0, sizeof(public_buf));
+  card.setIndex(position_in_file+23); // ; thumbnail begin <move here>180x180 99999
+  while (card.get() != ' '); // ; thumbnail begin 180x180 <move here>180x180
+
+  char size_buf[10];
+  for (size_t i = 0; i < sizeof(size_buf); i++)
+  {
+    uint8_t c = card.get();
+    if (ISEOL(c)) {
+      size_buf[i] = 0;
+      break;
+    }
+    else
+      size_buf[i] = c;
+  }
+  uint16_t image_size = atoi(size_buf);
+  uint16_t stored_in_buffer = 0;
+  uint8_t encoded_image_data[image_size+1];
+  while (stored_in_buffer < image_size) {
+    char c = card.get();
+    if (ISEOL(c) || c == ';' || c == ' ') {
+      continue;
+    }
+    else {
+      encoded_image_data[stored_in_buffer] = c;
+      stored_in_buffer++;
+    }
+  }
+
+  encoded_image_data[stored_in_buffer] = 0;
+  unsigned int output_size = decode_base64(encoded_image_data, output_buffer);
+  if (next_available_address + output_size >= 0x7530) { // cache is full, invalidate it
+    next_available_address = 0;
+    image_cache.clear();
+    SERIAL_ECHOLNPGM("Preview cache full, cleaning up...");
+  }
+  DWIN_Save_JPEG_in_SRAM((uint8_t *)output_buffer, output_size, next_available_address);
+  *address = next_available_address;
+  if(use_cache) {
+    image_cache[file_path+to_string(preview_type)] = next_available_address;
+    next_available_address += output_size + 1;
+  }
+  } else if (use_cache)  // If we didn't find the image, but we are using the cache, mark it as image not available
+  {
+    //image_cache[file_path+to_string(preview_type)] = 0;
+    image_cache[file_path+to_string(preview_type)] = 0;
+  }
+
+  card.closefile();
+  gcode.process_subcommands_now(F("M117")); // Clear the message sent by the card API
+  return encoded_image;
+}
+#endif // DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW
+
+
 void JyersDWIN::fileControl() {
   typedef TextScroller<MENU_CHAR_LIMIT> Scroller;
   static Scroller scroller;
@@ -4394,7 +4651,7 @@ void JyersDWIN::fileControl() {
         Scroller::Buffer buf;
         const char* const name = scroller.scroll(pos, buf, filename);
         dwinDrawRectangle(1, COLOR_BG_BLACK, LBLX, MBASE(selection - scrollpos) - 14, 271, MBASE(selection - scrollpos) + 28);
-        drawMenuItem(selection - scrollpos, card.flag.filenameIsDir ? ICON_More : ICON_File, name);
+        drawMenuItem(selection - scrollpos, card.flag.filenameIsDir ? ICON_More : ICON_File, name, NULL, NULL, false, true);
         dwinUpdateLCD();
       }
     }
@@ -4413,6 +4670,12 @@ void JyersDWIN::fileControl() {
       dwinFrameAreaMove(1, 2, MLINE, COLOR_BG_BLACK, 0, 31, DWIN_WIDTH, 349);
       drawSDItem(selection, selection - scrollpos);
     }
+
+    #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+      thumbtime = millis() + SCROLL_WAIT;
+      name_scroll_time = millis() + SCROLL_WAIT;
+    #endif
+
     dwinDrawRectangle(1, getColor(eeprom_settings.cursor_color, COLOR_RECTANGLE), 0, MBASE(selection - scrollpos) - 18, 14, MBASE(selection - scrollpos) + 33);
   }
   else if (encoder_diffState == ENCODER_DIFF_CCW && selection > 0) {
@@ -4426,6 +4689,11 @@ void JyersDWIN::fileControl() {
       dwinFrameAreaMove(1, 3, MLINE, COLOR_BG_BLACK, 0, 31, DWIN_WIDTH, 349);
       drawSDItem(selection, selection - scrollpos);
     }
+    #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+      thumbtime = millis() + SCROLL_WAIT;
+      name_scroll_time = millis() + SCROLL_WAIT;
+    #endif
+
     dwinDrawRectangle(1, getColor(eeprom_settings.cursor_color, COLOR_RECTANGLE), 0, MBASE(selection - scrollpos) - 18, 14, MBASE(selection - scrollpos) + 33);
   }
   else if (encoder_diffState == ENCODER_DIFF_ENTER) {
@@ -4446,7 +4714,20 @@ void JyersDWIN::fileControl() {
         drawSDList();
       }
       else {
+        #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+        uint16_t image_address;
+        bool has_preview = find_and_decode_gcode_preview(card.filename, Thumnail_Preview, &image_address);
+        Popup_Handler(ConfirmStartPrint, has_preview);
+        Draw_Title("Print file ?");
+        if (has_preview) {
+          DWIN_SRAM_Memory_Icon_Display(48,78,image_address);
+        }
+        else {
+          gcode.process_subcommands_now(F("M117 Preview not found."));
+        }
+       #else
         card.openAndPrintFile(card.filename);
+       #endif
       }
     }
   }
@@ -4505,6 +4786,11 @@ void JyersDWIN::printScreenControl() {
 
 void JyersDWIN::popupControl() {
   EncoderState encoder_diffState = encoderReceiveAnalyze();
+  if (PopUp_FirstGoOn){
+    encoder_diffState = ENCODER_DIFF_ENTER;
+    selection = 0;
+    PopUp_FirstGoOn = false;
+  }
   if (encoder_diffState == ENCODER_DIFF_NO) return;
   if (encoder_diffState == ENCODER_DIFF_CW && selection < 1) {
     selection++;
@@ -4569,8 +4855,8 @@ void JyersDWIN::popupControl() {
       #if HAS_HOTEND
         case Popup_ETemp:
           if (selection == 0) {
-            thermalManager.setTargetHotend(EXTRUDE_MINTEMP, 0);
-            TERN_(HAS_FAN, thermalManager.set_fan_speed(0, MAX_FAN_SPEED));
+//          thermalManager.setTargetHotend(EXTRUDE_MINTEMP, 0);
+//          TERN_(HAS_FAN, thermalManager.set_fan_speed(0, MAX_FAN_SPEED));
             drawMenu(ID_PreheatHotend);
           }
           else
@@ -4619,6 +4905,14 @@ void JyersDWIN::popupControl() {
             else redrawMenu(true, true, active_menu == ID_PreheatHotend);
           }
           break;
+        case ConfirmStartPrint:
+          if (selection==0) {
+            card.openAndPrintFile(card.filename);}
+          else{
+            Redraw_Menu(true, true, true);
+            gcode.process_subcommands_now(F("M117"));}
+          break;
+
       #endif // ADVANCED_PAUSE_FEATURE
 
       #if HAS_MESH
@@ -4739,6 +5033,9 @@ void JyersDWIN::modifyOption(const uint8_t value, const char * const * options, 
 //
 
 void JyersDWIN::updateStatus(const char * const text) {
+
+  DEBUG_ECHOLNPGM("CrDwCl::Update_Status (", text, ")");
+
   if (strncmp_P(text, PSTR("<F>"), 3) == 0) {
     for (uint8_t i = 0; i < _MIN((size_t)LONG_FILENAME_LENGTH, strlen(text)); ++i) filename[i] = text[i + 3];
     filename[_MIN((size_t)LONG_FILENAME_LENGTH - 1, strlen(text))] = '\0';
@@ -4804,6 +5101,9 @@ void MarlinUI::update() { jyersDWIN.update(); }
 #endif
 
 void JyersDWIN::stateUpdate() {
+  if (DEBUG_INFOLINE(2)) {
+    DEBUG_ECHOLNPGM("StUpd:", dd_InfoLine2);
+  }
   if ((print_job_timer.isRunning() || print_job_timer.isPaused()) != printing) {
     if (!printing) startPrint(card.isFileOpen() || TERN0(POWER_LOSS_RECOVERY, recovery.valid()));
     else stopPrint();
@@ -4862,9 +5162,36 @@ void JyersDWIN::screenUpdate() {
   static bool mounted = card.isMounted();
   if (mounted != card.isMounted()) {
     mounted = card.isMounted();
+    #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+    image_cache.clear();
+    #endif
     if (process == Proc_File)
       drawSDList();
   }
+  #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+  if (eeprom_settings.show_gcode_thumbnails && ELAPSED(millis(), thumbtime)) {
+    thumbtime = millis() + 60000;
+    if (process == File){
+      // Draw_SD_List(!mounted, selection, scrollpos);
+      if (selection-scrollpos > MROWS) scrollpos = selection - MROWS;
+      LOOP_L_N(i, _MIN(card.get_num_Files()+1, TROWS)) {
+        if (Encoder_ReceiveAnalyze() != ENCODER_DIFF_NO) break;
+        if (i+scrollpos == 0) {
+          if (card.flag.workDirIsRoot)
+            Draw_Menu_Item(0, ICON_Back, "Back");
+          else
+            Draw_Menu_Item(0, ICON_Back, "..");
+        } else {
+          card.getfilename_sorted(SD_ORDER(i+scrollpos-1, card.get_num_Files()));
+
+          Draw_Menu_Item(i, card.flag.filenameIsDir ? ICON_More : ICON_File);
+        }
+        DWIN_UpdateLCD();
+      }
+      DWIN_Draw_Rectangle(1, GetColor(eeprom_settings.cursor_color, Rectangle_Color), 0, MBASE(selection-scrollpos) - 18, 8, MBASE(selection-scrollpos) + 31);
+    }
+  }
+  #endif
 
   #if HAS_HOTEND
     static int16_t hotendtarget = -1;
@@ -4878,7 +5205,7 @@ void JyersDWIN::screenUpdate() {
 
   #if HAS_ZOFFSET_ITEM
     static float lastzoffset = zoffsetvalue;
-    if (zoffsetvalue != lastzoffset) {
+    if (zoffsetvalue != lastzoffset && !printing) {
       lastzoffset = zoffsetvalue;
       #if HAS_BED_PROBE
         probe.offset.z = zoffsetvalue;
@@ -4970,6 +5297,9 @@ void JyersDWIN::audioFeedback(const bool success/*=true*/) {
 void JyersDWIN::saveSettings(char * const buff) {
   TERN_(AUTO_BED_LEVELING_UBL, eeprom_settings.tilt_grid_size = mesh_conf.tilt_grid - 1);
   eeprom_settings.corner_pos = corner_pos * 10;
+
+  TERN_(PREVENT_COLD_EXTRUSION, eeprom_settings.extrude_min_temp = _MIN(thermalManager.extrude_min_temp, 255));
+
   memcpy(buff, &eeprom_settings, _MIN(sizeof(eeprom_settings), eeprom_data_size));
 }
 
@@ -4978,6 +5308,10 @@ void JyersDWIN::loadSettings(const char * const buff) {
   TERN_(AUTO_BED_LEVELING_UBL, mesh_conf.tilt_grid = eeprom_settings.tilt_grid_size + 1);
   if (eeprom_settings.corner_pos == 0) eeprom_settings.corner_pos = 325;
   corner_pos = eeprom_settings.corner_pos / 10.0f;
+
+  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.extrude_min_temp   = eeprom_settings.extrude_min_temp);
+  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.allow_cold_extrude = (thermalManager.extrude_min_temp == 0));
+
   redrawScreen();
   #if ENABLED(POWER_LOSS_RECOVERY)
     static bool init = true;
@@ -4991,7 +5325,7 @@ void JyersDWIN::loadSettings(const char * const buff) {
 void JyersDWIN::resetSettings() {
   eeprom_settings.time_format_textual = false;
   TERN_(AUTO_BED_LEVELING_UBL, eeprom_settings.tilt_grid_size = 0);
-  eeprom_settings.corner_pos = 325;
+  eeprom_settings.corner_pos = 300;
   eeprom_settings.cursor_color = 0;
   eeprom_settings.menu_split_line = 0;
   eeprom_settings.menu_top_bg = 0;
@@ -5003,9 +5337,14 @@ void JyersDWIN::resetSettings() {
   eeprom_settings.status_area_text = 0;
   eeprom_settings.coordinates_text = 0;
   eeprom_settings.coordinates_split_line = 0;
+  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.extrude_min_temp = eeprom_settings.extrude_min_temp = EXTRUDE_MINTEMP);
+  TERN_(PREVENT_COLD_EXTRUSION, thermalManager.allow_cold_extrude = (thermalManager.extrude_min_temp == 0));
   TERN_(AUTO_BED_LEVELING_UBL, mesh_conf.tilt_grid = eeprom_settings.tilt_grid_size + 1);
   corner_pos = eeprom_settings.corner_pos / 10.0f;
   TERN_(SOUND_MENU_ITEM, ui.sound_on = ENABLED(SOUND_ON_DEFAULT));
+  #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+    eeprom_settings.show_gcode_thumbnails = true;
+  #endif
   redrawScreen();
 }
 
@@ -5030,10 +5369,16 @@ void MarlinUI::init_lcd() {
 
 #if ENABLED(ADVANCED_PAUSE_FEATURE)
   void MarlinUI::pause_show_message(const PauseMessage message, const PauseMode mode/*=PAUSE_MODE_SAME*/, const uint8_t extruder/*=active_extruder*/) {
+
+  DEBUG_ECHOLNPGM("MarlinUI::pause_show_message (message=", message, ", mode=", mode, ")");
+
     switch (message) {
       case PAUSE_MESSAGE_INSERT:  jyersDWIN.confirmHandler(Popup_FilInsert);  break;
       case PAUSE_MESSAGE_PURGE:
-      case PAUSE_MESSAGE_OPTION:  jyersDWIN.popupHandler(Popup_PurgeMore);  break;
+      case PAUSE_MESSAGE_OPTION:  
+        pause_menu_response = PAUSE_RESPONSE_WAIT_FOR;
+        jyersDWIN.popupHandler(Popup_PurgeMore);
+        break;
       case PAUSE_MESSAGE_HEAT:    jyersDWIN.confirmHandler(Popup_HeaterTime); break;
       case PAUSE_MESSAGE_WAITING: jyersDWIN.drawPrintScreen();          break;
       default: break;

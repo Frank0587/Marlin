@@ -32,3 +32,7 @@
 // color: color
 //  x/y: Upper-left coordinate of the first pixel
 void dwinDrawDegreeSymbol(uint16_t color, uint16_t x, uint16_t y);
+
+void dwinSaveJpegInSRAM(uint8_t *data, uint16_t size, uint16_t dest_addr);
+
+void dwinSRAMemoryIconDisplay(uint16_t x, uint16_t y, uint16_t source_addr);

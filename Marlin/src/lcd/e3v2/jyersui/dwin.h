@@ -70,7 +70,8 @@ enum PopupID : uint8_t {
   Popup_InvalidMesh,
   Popup_UI,
   Popup_Complete,
-  Popup_Custom
+  Popup_Custom,
+  Popup_ConfirmStartPrint
 };
 
 enum menuID : uint8_t {
@@ -131,6 +132,7 @@ enum menuID : uint8_t {
   #define ICON_Mesh                 203
   #define ICON_Tilt                 204
   #define ICON_Brightness           205
+  #define ICON_Preview              ICON_File
   #define ICON_AxisD                249
   #define ICON_AxisBR               250
   #define ICON_AxisTR               251
@@ -148,6 +150,7 @@ enum menuID : uint8_t {
   #define ICON_AxisBL               ICON_Axis
   #define ICON_AxisTL               ICON_Axis
   #define ICON_AxisC                ICON_Axis
+  #define ICON_Preview              ICON_File
 #endif
 
 enum colorID : uint8_t {
@@ -177,9 +180,14 @@ enum colorID : uint8_t {
 #define COLOR_CONFIRM       0x34B9
 #define COLOR_CANCEL        0x3186
 
+#if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+ #define Thumnail_Icon       0x00
+ #define Thumnail_Preview    0x01
+#endif
+
 class JyersDWIN {
 public:
-  static constexpr size_t eeprom_data_size = 48;
+  static constexpr size_t eeprom_data_size = 64;
   static struct EEPROM_Settings { // use bit fields to save space, max 48 bytes
     bool time_format_textual : 1;
     #if ENABLED(AUTO_BED_LEVELING_UBL)
@@ -197,6 +205,11 @@ public:
     uint8_t status_area_text : 4;
     uint8_t coordinates_text : 4;
     uint8_t coordinates_split_line : 4;
+    uint8_t extrude_min_temp : 8;
+    #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+      bool show_gcode_thumbnails : 1;
+    #endif
+    bool show_debug_on_LCD : 1;   // define always to enable compatibility
   } eeprom_settings;
 
   static constexpr const char * const color_names[11] = { "Default", "White", "Green", "Cyan", "Blue", "Magenta", "Red", "Orange", "Yellow", "Brown", "Black" };
@@ -209,8 +222,8 @@ public:
   static void drawCheckbox(const uint8_t row, const bool value);
   static void drawTitle(const char * const title);
   static void drawTitle(FSTR_P const title);
-  static void drawMenuItem(const uint8_t row, uint8_t icon=0, const char * const label1=nullptr, const char * const label2=nullptr, const bool more=false, const bool centered=false);
-  static void drawMenuItem(const uint8_t row, uint8_t icon=0, FSTR_P const flabel1=nullptr, FSTR_P const flabel2=nullptr, const bool more=false, const bool centered=false);
+  static void drawMenuItem(const uint16_t row, uint8_t icon=0, const char * const label1=nullptr, const char * const label2=nullptr, const bool more=false, const bool centered=false, const bool onlyCachedFileIcon=false);
+  static void drawMenuItem(const uint8_t row, uint8_t icon=0, FSTR_P const flabel1=nullptr, FSTR_P const flabel2=nullptr, const bool more=false, const bool centered=false, const bool onlyCachedFileIcon=false);
   static void drawMenu(const uint8_t menu, const uint8_t select=0, const uint8_t scroll=0);
   static void redrawMenu(const bool lastproc=true, const bool lastsel=false, const bool lastmenu=false);
   static void redrawScreen();
@@ -226,14 +239,19 @@ public:
   #endif
   static void drawPrintProgressElapsed();
   static void drawPrintConfirm();
-  static void drawSDItem(const uint8_t item, const uint8_t row);
-  static void drawSDList(const bool removed=false);
+  static void drawSDItem(const uint8_t item, const uint8_t row, bool onlyCachedFileIcon=false);
+  static void drawSDList(const bool removed=false, uint8_t select=0, uint8_t scroll=0, bool onlyCachedFileIcon=false);
   static void drawStatusArea(const bool icons=false);
   static void drawPopup(FSTR_P const line1, FSTR_P const line2, FSTR_P const line3, uint8_t mode, uint8_t icon=0);
   static void popupSelect();
   static void updateStatusBar(const bool refresh=false);
 
+  #if ENABLED(DWIN_CREALITY_LCD_JYERSUI_GCODE_PREVIEW)
+    static bool find_and_decode_gcode_preview(char *name, uint8_t preview_type, uint16_t *address, bool onlyCachedFileIcon=false);
+  #endif
+
   #if HAS_MESH
+    static void drawBedMesh(int16_t selected = -1, uint8_t gridline_width = 1, uint16_t padding_x = 8, uint16_t padding_y_top = 40 + 53 - 7);
     static void setMeshViewerStatus();
   #endif
 
