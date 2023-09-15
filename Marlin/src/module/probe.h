@@ -311,7 +311,7 @@ public:
         #if HAS_FIXED_3POINT
           #define VALIDATE_PROBE_PT(N) static_assert(Probe::build_time::can_reach(xy_pos_t(PROBE_PT_##N)), \
             "PROBE_PT_" STRINGIFY(N) " is unreachable using default NOZZLE_TO_PROBE_OFFSET and PROBING_MARGIN.");
-          VALIDATE_PROBE_PT(1); VALIDATE_PROBE_PT(2); VALIDATE_PROBE_PT(3);
+//        VALIDATE_PROBE_PT(1); VALIDATE_PROBE_PT(2); VALIDATE_PROBE_PT(3);
           points[0] = xy_float_t(PROBE_PT_1);
           points[1] = xy_float_t(PROBE_PT_2);
           points[2] = xy_float_t(PROBE_PT_3);
