@@ -53,6 +53,8 @@
   #define DGUS_LCD_UI_RELOADED 1
 #elif DGUS_UI_IS(IA_CREALITY)
   #define DGUS_LCD_UI_IA_CREALITY 1
+#elif DGUS_UI_IS(E3S1PRO)
+  #define DGUS_LCD_UI_E3S1PRO 1
 #endif
 
 /**
@@ -452,7 +454,7 @@
 // Shift register panels
 // ---------------------
 // 2 wire Non-latching LCD SR from:
-// https://bitbucket.org/fmalpartida/new-liquidcrystal/wiki/schematics#!shiftregister-connection
+// https://github.com/fmalpartida/New-LiquidCrystal/wiki/schematics#user-content-ShiftRegister_connection
 #if ENABLED(FF_INTERFACEBOARD)
   #define SR_LCD_3W_NL    // Non latching 3 wire shift register
   #define IS_ULTIPANEL 1
@@ -495,8 +497,6 @@
 // Aliases for LCD features
 #if ANY(DWIN_CREALITY_LCD, DWIN_LCD_PROUI)
   #define HAS_DWIN_E3V2_BASIC 1
-#endif
-#if ANY(HAS_DWIN_E3V2_BASIC, DWIN_CREALITY_LCD_JYERSUI)
   #define HAS_DWIN_E3V2 1
 #endif
 
@@ -510,6 +510,7 @@
 #if ENABLED(DWIN_LCD_PROUI)
   #define DO_LIST_BIN_FILES 1
   #define LCD_BRIGHTNESS_DEFAULT 127
+  #define LCD_BRIGHTNESS_DIM 5
 #endif
 
 // Serial Controllers require LCD_SERIAL_PORT
@@ -531,6 +532,20 @@
 #endif
 
 #if ANY(HAS_WIRED_LCD, EXTENSIBLE_UI, DWIN_LCD_PROUI, DWIN_CREALITY_LCD_JYERSUI)
+  /**
+   * HAS_DISPLAY indicates the display uses these MarlinUI methods...
+   *  - update
+   *  - abort_print
+   *  - pause_print
+   *  - resume_print
+   *  - poweroff        (for PSU_CONTROL and HAS_MARLINUI_MENU)
+   *
+   *  ...and implements these MarlinUI methods:
+   *  - zoffset_overlay (if BABYSTEP_GFX_OVERLAY or MESH_EDIT_GFX_OVERLAY are supported)
+   *  - draw_kill_screen
+   *  - kill_screen
+   *  - draw_status_message
+   */
   #define HAS_DISPLAY 1
 #endif
 
@@ -542,7 +557,7 @@
   #define HAS_UTF8_UTILS 1
 #endif
 
-#if HAS_DISPLAY || HAS_DWIN_E3V2
+#if ANY(HAS_DISPLAY, HAS_DWIN_E3V2)
   #define HAS_STATUS_MESSAGE 1
 #endif
 
@@ -1246,97 +1261,6 @@
   #endif
 #endif // FILAMENT_RUNOUT_SENSOR
 
-#if ENABLED(FILAMENT_SWITCH_AND_MOTION)
-  #if NUM_MOTION_SENSORS >= 1
-    #ifndef FIL_MOTION1_STATE
-      #define FIL_MOTION1_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION1_PULLUP
-      #define FIL_MOTION1_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION1_PULLDOWN
-      #define FIL_MOTION1_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-  #if NUM_MOTION_SENSORS >= 2
-    #ifndef FIL_MOTION2_STATE
-      #define FIL_MOTION2_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION2_PULLUP
-      #define FIL_MOTION2_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION2_PULLDOWN
-      #define FIL_MOTION2_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-  #if NUM_MOTION_SENSORS >= 3
-    #ifndef FIL_MOTION3_STATE
-      #define FIL_MOTION3_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION3_PULLUP
-      #define FIL_MOTION3_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION3_PULLDOWN
-      #define FIL_MOTION3_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-  #if NUM_MOTION_SENSORS >= 4
-    #ifndef FIL_MOTION4_STATE
-      #define FIL_MOTION4_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION4_PULLUP
-      #define FIL_MOTION4_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION4_PULLDOWN
-      #define FIL_MOTION4_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-  #if NUM_MOTION_SENSORS >= 5
-    #ifndef FIL_MOTION5_STATE
-      #define FIL_MOTION5_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION5_PULLUP
-      #define FIL_MOTION5_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION5_PULLDOWN
-      #define FIL_MOTION5_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-  #if NUM_MOTION_SENSORS >= 6
-    #ifndef FIL_MOTION6_STATE
-      #define FIL_MOTION6_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION6_PULLUP
-      #define FIL_MOTION6_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION6_PULLDOWN
-      #define FIL_MOTION6_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-  #if NUM_MOTION_SENSORS >= 7
-    #ifndef FIL_MOTION7_STATE
-      #define FIL_MOTION7_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION7_PULLUP
-      #define FIL_MOTION7_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION7_PULLDOWN
-      #define FIL_MOTION7_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-  #if NUM_MOTION_SENSORS >= 8
-    #ifndef FIL_MOTION8_STATE
-      #define FIL_MOTION8_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION8_PULLUP
-      #define FIL_MOTION8_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION8_PULLDOWN
-      #define FILMOTION8_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-#endif // FILAMENT_SWITCH_AND_MOTION
-
 // Homing to Min or Max
 #if HAS_X_AXIS
   #if X_HOME_DIR > 0
@@ -1406,23 +1330,25 @@
  * Conditionals based on the type of Bed Probe
  */
 #if HAS_BED_PROBE
+  #if ALL(DELTA, SENSORLESS_PROBING)
+    #define HAS_DELTA_SENSORLESS_PROBING 1
+  #else
+    #define HAS_REAL_BED_PROBE 1
+  #endif
+  #if HAS_REAL_BED_PROBE && NONE(Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN, Z_SPI_SENSORLESS)
+    #define NEED_Z_MIN_PROBE_PIN 1
+  #endif
+  #if Z_HOME_TO_MIN && (!NEED_Z_MIN_PROBE_PIN || ENABLED(USE_PROBE_FOR_Z_HOMING))
+    #define HOMING_Z_WITH_PROBE 1
+  #endif
   #if DISABLED(NOZZLE_AS_PROBE)
     #define HAS_PROBE_XY_OFFSET 1
   #endif
-  #if ALL(DELTA, SENSORLESS_PROBING)
-    #define HAS_DELTA_SENSORLESS_PROBING 1
-  #endif
-  #if NONE(Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN, HAS_DELTA_SENSORLESS_PROBING)
-    #define USE_Z_MIN_PROBE 1
-  #endif
-  #if Z_HOME_TO_MIN && (DISABLED(USE_Z_MIN_PROBE) || ENABLED(USE_PROBE_FOR_Z_HOMING))
-    #define HOMING_Z_WITH_PROBE 1
+  #if ANY(Z_PROBE_ALLEN_KEY, MAG_MOUNTED_PROBE)
+    #define PROBE_TRIGGERED_WHEN_STOWED_TEST 1 // Extra test for Allen Key Probe
   #endif
   #ifndef Z_PROBE_LOW_POINT
     #define Z_PROBE_LOW_POINT -5
-  #endif
-  #if ANY(Z_PROBE_ALLEN_KEY, MAG_MOUNTED_PROBE)
-    #define PROBE_TRIGGERED_WHEN_STOWED_TEST 1 // Extra test for Allen Key Probe
   #endif
   #if MULTIPLE_PROBING > 1
     #if EXTRA_PROBING > 0
@@ -1765,14 +1691,23 @@
 #elif ANY(TFT_1024x600_LTDC, TFT_1024x600_SIM)
   #define HAS_UI_1024x600 1
 #endif
-#if ANY(HAS_UI_320x240, HAS_UI_480x320, HAS_UI_480x272)
+
+// Number of text lines the screen can display (may depend on font used)
+// Touch screens leave space for extra buttons at the bottom
+#if ANY(HAS_UI_320x240, HAS_UI_480x272)
   #if ENABLED(TFT_COLOR_UI_PORTRAIT)
-    #define LCD_HEIGHT TERN(TOUCH_SCREEN, 8, 9) // Fewer lines with touch buttons onscreen
+    #define LCD_HEIGHT TERN(TOUCH_SCREEN, 8, 9)
   #else
-    #define LCD_HEIGHT TERN(TOUCH_SCREEN, 6, 7) // Fewer lines with touch buttons onscreen
+    #define LCD_HEIGHT TERN(TOUCH_SCREEN, 6, 7)
+  #endif
+#elif HAS_UI_480x320
+  #if ENABLED(TFT_COLOR_UI_PORTRAIT)
+    #define LCD_HEIGHT TERN(TOUCH_SCREEN, 9, 10)
+  #else
+    #define LCD_HEIGHT TERN(TOUCH_SCREEN, 6, 7)
   #endif
 #elif HAS_UI_1024x600
-  #define LCD_HEIGHT TERN(TOUCH_SCREEN, 12, 13) // Fewer lines with touch buttons onscreen
+  #define LCD_HEIGHT TERN(TOUCH_SCREEN, 12, 13)
 #endif
 
 // This emulated DOGM has 'touch/xpt2046', not 'tft/xpt2046'

@@ -87,7 +87,13 @@ EncoderState encoderReceiveAnalyze() {
       #if PIN_EXISTS(LCD_LED)
         //LED_Action();
       #endif
-      if (!ui.backlight) ui.refresh_brightness();
+      #if LCD_BACKLIGHT_TIMEOUT_MINS
+        ui.refresh_backlight_timeout();
+      #endif
+      if (!ui.backlight) {
+        ui.refresh_brightness();
+        return ENCODER_DIFF_NO;
+      }
       const bool was_waiting = wait_for_user;
       wait_for_user = false;
       return was_waiting ? ENCODER_DIFF_NO : ENCODER_DIFF_ENTER;
@@ -153,6 +159,12 @@ EncoderState encoderReceiveAnalyze() {
     if (encoderRate.encoderMoveValue < 0) encoderRate.encoderMoveValue = -encoderRate.encoderMoveValue;
 
     temp_diff = 0;
+  }
+  if (temp_diffState != ENCODER_DIFF_NO) {
+    #if LCD_BACKLIGHT_TIMEOUT_MINS
+      ui.refresh_backlight_timeout();
+    #endif
+    if (!ui.backlight) ui.refresh_brightness();
   }
   return temp_diffState;
 }

@@ -12,7 +12,7 @@ on:
 jobs:
   bump_date:
     name: Bump Distribution Date
-    if: github.repository == 'MarlinFirmware/Marlin'
+    if: github.repository == 'mriscoc/Ender3V2S1'
 
     runs-on: ubuntu-latest
 
@@ -21,7 +21,7 @@ jobs:
     - name: Check out bugfix-2.0.x
       uses: actions/checkout@v3
       with:
-        ref: bugfix-2.0.x
+        ref: bugfix-2.1.x
 
     - name: Bump Date (bugfix-2.0.x)
       run: |

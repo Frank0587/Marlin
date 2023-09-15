@@ -30,10 +30,6 @@
 
 #include "../inc/MarlinConfig.h"
 
-#if ALL(DWIN_LCD_PROUI, INDIVIDUAL_AXIS_HOMING_SUBMENU, MESH_BED_LEVELING)
-  #include "../lcd/e3v2/proui/dwin.h"
-#endif
-
 #if IS_SCARA
   #include "scara.h"
 #elif ENABLED(POLAR)
@@ -131,11 +127,20 @@ extern int16_t feedrate_percentage;
 inline float pgm_read_any(const float *p)   { return TERN(__IMXRT1062__, *p, pgm_read_float(p)); }
 inline int8_t pgm_read_any(const int8_t *p) { return TERN(__IMXRT1062__, *p, pgm_read_byte(p)); }
 
-#define XYZ_DEFS(T, NAME, OPT) \
-  inline T NAME(const AxisEnum axis) { \
-    static const XYZval<T> NAME##_P DEFS_PROGMEM = NUM_AXIS_ARRAY(X_##OPT, Y_##OPT, Z_##OPT, I_##OPT, J_##OPT, K_##OPT, U_##OPT, V_##OPT, W_##OPT); \
-    return pgm_read_any(&NAME##_P[axis]); \
-  }
+#if PROUI_EX
+  #define XYZ_DEFS(T, NAME, OPT) \
+    inline T NAME(const AxisEnum axis) { \
+      const XYZval<T> Value = NUM_AXIS_ARRAY(X_##OPT, Y_##OPT, Z_##OPT, I_##OPT, J_##OPT, K_##OPT, U_##OPT, V_##OPT, W_##OPT); \
+      return Value[axis]; \
+    }
+#else
+  #define XYZ_DEFS(T, NAME, OPT) \
+    inline T NAME(const AxisEnum axis) { \
+      static const XYZval<T> NAME##_P DEFS_PROGMEM = NUM_AXIS_ARRAY(X_##OPT, Y_##OPT, Z_##OPT, I_##OPT, J_##OPT, K_##OPT, U_##OPT, V_##OPT, W_##OPT); \
+      return pgm_read_any(&NAME##_P[axis]); \
+    }
+#endif
+
 XYZ_DEFS(float, base_min_pos,   MIN_POS);
 XYZ_DEFS(float, base_max_pos,   MAX_POS);
 XYZ_DEFS(float, base_home_pos,  HOME_POS);
@@ -146,12 +151,6 @@ inline float home_bump_mm(const AxisEnum axis) {
   static const xyz_pos_t home_bump_mm_P DEFS_PROGMEM = HOMING_BUMP_MM;
   return pgm_read_any(&home_bump_mm_P[axis]);
 }
-
-#if HAS_WORKSPACE_OFFSET
-  void update_workspace_offset(const AxisEnum axis);
-#else
-  inline void update_workspace_offset(const AxisEnum) {}
-#endif
 
 #if HAS_HOTEND_OFFSET
   extern xyz_pos_t hotend_offset[HOTENDS];
@@ -413,7 +412,8 @@ void restore_feedrate_and_scaling();
 
 #if HAS_Z_AXIS
   #if ALL(DWIN_LCD_PROUI, INDIVIDUAL_AXIS_HOMING_SUBMENU, MESH_BED_LEVELING)
-    #define Z_POST_CLEARANCE HMI_data.z_after_homing
+    #include "../lcd/e3v2/proui/dwin.h"
+    #define Z_POST_CLEARANCE hmiData.zAfterHoming
   #elif defined(Z_AFTER_HOMING)
     #define Z_POST_CLEARANCE Z_AFTER_HOMING
   #else
@@ -484,32 +484,23 @@ void home_if_needed(const bool keeplev=false);
 
 #define BABYSTEP_ALLOWED() ((ENABLED(BABYSTEP_WITHOUT_HOMING) || all_axes_trusted()) && (ENABLED(BABYSTEP_ALWAYS_AVAILABLE) || printer_busy()))
 
+#if HAS_HOME_OFFSET
+  extern xyz_pos_t home_offset;
+#endif
+
 /**
  * Workspace offsets
  */
-#if HAS_HOME_OFFSET || HAS_POSITION_SHIFT
-  #if HAS_HOME_OFFSET
-    extern xyz_pos_t home_offset;
-  #endif
-  #if HAS_POSITION_SHIFT
-    extern xyz_pos_t position_shift;
-  #endif
-  #if HAS_HOME_OFFSET && HAS_POSITION_SHIFT
-    extern xyz_pos_t workspace_offset;
-    #define _WS workspace_offset
-  #elif HAS_HOME_OFFSET
-    #define _WS home_offset
-  #else
-    #define _WS position_shift
-  #endif
-  #define NATIVE_TO_LOGICAL(POS, AXIS) ((POS) + _WS[AXIS])
-  #define LOGICAL_TO_NATIVE(POS, AXIS) ((POS) - _WS[AXIS])
-  FORCE_INLINE void toLogical(xy_pos_t &raw)   { raw += _WS; }
-  FORCE_INLINE void toLogical(xyz_pos_t &raw)  { raw += _WS; }
-  FORCE_INLINE void toLogical(xyze_pos_t &raw) { raw += _WS; }
-  FORCE_INLINE void toNative(xy_pos_t &raw)    { raw -= _WS; }
-  FORCE_INLINE void toNative(xyz_pos_t &raw)   { raw -= _WS; }
-  FORCE_INLINE void toNative(xyze_pos_t &raw)  { raw -= _WS; }
+#if HAS_WORKSPACE_OFFSET
+  extern xyz_pos_t workspace_offset;
+  #define NATIVE_TO_LOGICAL(POS, AXIS) ((POS) + workspace_offset[AXIS])
+  #define LOGICAL_TO_NATIVE(POS, AXIS) ((POS) - workspace_offset[AXIS])
+  FORCE_INLINE void toLogical(xy_pos_t &raw)   { raw += workspace_offset; }
+  FORCE_INLINE void toLogical(xyz_pos_t &raw)  { raw += workspace_offset; }
+  FORCE_INLINE void toLogical(xyze_pos_t &raw) { raw += workspace_offset; }
+  FORCE_INLINE void toNative(xy_pos_t &raw)    { raw -= workspace_offset; }
+  FORCE_INLINE void toNative(xyz_pos_t &raw)   { raw -= workspace_offset; }
+  FORCE_INLINE void toNative(xyze_pos_t &raw)  { raw -= workspace_offset; }
 #else
   #define NATIVE_TO_LOGICAL(POS, AXIS) (POS)
   #define LOGICAL_TO_NATIVE(POS, AXIS) (POS)
@@ -633,7 +624,7 @@ void home_if_needed(const bool keeplev=false);
 
 #endif
 
-#if HAS_M206_COMMAND
+#if HAS_HOME_OFFSET
   void set_home_offset(const AxisEnum axis, const_float_t v);
 #endif
 

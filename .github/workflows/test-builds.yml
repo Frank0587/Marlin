@@ -26,7 +26,7 @@ on:
 jobs:
   test_builds:
     name: Run All Tests
-    if: github.repository == 'MarlinFirmware/Marlin'
+    if: github.repository == 'mriscoc/Ender3V2S1'
 
     runs-on: ubuntu-latest
 
@@ -34,8 +34,7 @@ jobs:
       matrix:
         test-platform:
 
-        # Native
-        - linux_native
+        # STM32 (ST) Environments
 
         # AVR
         - mega2560
@@ -84,30 +83,9 @@ jobs:
         - mks_robin_nano_v1v2
         - PANDA_PI_V29
         - STM32F103RC_btt
-        - STM32F103RC_fysetc
         - STM32F103RE_btt
         - STM32F103RE_btt_USB
         - STM32F103RE_creality
-        - STM32F103VE_longer
-        #- mks_robin_mini
-        #- mks_robin_nano_v1_3_f4_usbmod
-        #- mks_robin_nano_v1v2_usbmod
-        #- STM32F103CB_malyan
-        #- STM32F103RC_btt_USB
-        #- STM32F103RE
-
-        # STM32F4
-        - ARMED
-        - BIGTREE_BTT002
-        - BIGTREE_GTR_V1_0
-        - BIGTREE_SKR_PRO
-        - FLYF407ZG
-        - FYSETC_S6
-        - LERDGEK
-        - LERDGEX
-        - mks_robin_pro2
-        - Opulo_Lumen_REV3
-        - rumba32
         - STM32F401RC_creality
         - STM32F407VE_black
         - I3DBEEZ9_V1

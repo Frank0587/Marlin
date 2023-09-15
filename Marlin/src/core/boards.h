@@ -179,6 +179,7 @@
 #define BOARD_GT2560_V4_A20           1328  // Geeetech GT2560 Rev B for A20(M/T/D)
 #define BOARD_PROTONEER_CNC_SHIELD_V3 1329  // Mega controller & Protoneer CNC Shield V3.00
 #define BOARD_WEEDO_62A               1330  // WEEDO 62A board (TINA2, Monoprice Cadet, etc.)
+#define BOARD_GT2560_V41B             1331  // Geeetech GT2560 V4.1B for A10(M/T/D)
 
 //
 // ATmega1281, ATmega2561
@@ -400,6 +401,11 @@
 #define BOARD_KEDI_CONTROLLER_V1_2    5069  // EDUTRONICS Kedi Controller V1.2 (STM32F103RC)
 
 //
+// Voxelab
+//
+#define BOARD_VOXELAB_AQUILA          5090  // Voxelab Aquila (GD32F103Rx)
+
+//
 // ARM Cortex-M4F
 //
 
@@ -458,7 +464,7 @@
 #define BOARD_CREALITY_F401RE         5245  // Creality CR4NS200141C13 (STM32F401RE) as found in the Ender-5 S1
 #define BOARD_BLACKPILL_CUSTOM        5246  // Custom board based on STM32F401CDU6.
 #define BOARD_I3DBEEZ9_V1             5247  // I3DBEEZ9 V1 (STM32F407ZG)
-
+#define BOARD_CREALITY_CR4NTxxC10     5301  // Creality STM32F401RE
 //
 // ARM Cortex-M7
 //
@@ -472,6 +478,7 @@
 #define BOARD_BTT_SKR_V3_0            6006  // BigTreeTech SKR V3.0 (STM32H743VI / STM32H723VG)
 #define BOARD_BTT_SKR_V3_0_EZ         6007  // BigTreeTech SKR V3.0 EZ (STM32H743VI / STM32H723VG)
 #define BOARD_BTT_OCTOPUS_MAX_EZ_V1_0 6008  // BigTreeTech Octopus Max EZ V1.0 (STM32H723ZE)
+#define BOARD_BTT_OCTOPUS_PRO_V1_1    6009  // BigTreeTech Octopus Pro v1.1 (STM32H723ZE)
 
 //
 // Espressif ESP32 WiFi

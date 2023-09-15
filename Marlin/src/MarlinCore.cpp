@@ -79,8 +79,6 @@
     #include "lcd/e3v2/creality/dwin.h"
   #elif ENABLED(DWIN_LCD_PROUI)
     #include "lcd/e3v2/proui/dwin.h"
-  #elif ENABLED(DWIN_CREALITY_LCD_JYERSUI)
-    #include "lcd/e3v2/jyersui/dwin.h"
   #endif
 #endif
 
@@ -356,9 +354,7 @@ void startOrResumeJob() {
     TERN_(GCODE_REPEAT_MARKERS, repeat.reset());
     TERN_(CANCEL_OBJECTS, cancelable.reset());
     TERN_(LCD_SHOW_E_TOTAL, e_move_accumulator = 0);
-    #if ENABLED(SET_REMAINING_TIME)
-      ui.reset_remaining_time();
-    #endif
+    TERN_(SET_REMAINING_TIME, ui.reset_remaining_time());
   }
   print_job_timer.start();
 }
@@ -1139,7 +1135,7 @@ void setup() {
   #if ENABLED(MARLIN_DEV_MODE)
     auto log_current_ms = [&](PGM_P const msg) {
       SERIAL_ECHO_START();
-      SERIAL_CHAR('['); SERIAL_ECHO(millis()); SERIAL_ECHOPGM("] ");
+      TSS('[', millis(), F("] ")).echo();
       SERIAL_ECHOLNPGM_P(msg);
     };
     #define SETUP_LOG(M) log_current_ms(PSTR(M))
@@ -1267,15 +1263,19 @@ void setup() {
   if (mcu & RST_WATCHDOG)  SERIAL_ECHOLNPGM(STR_WATCHDOG_RESET);
   if (mcu & RST_SOFTWARE)  SERIAL_ECHOLNPGM(STR_SOFTWARE_RESET);
 
-  // Identify myself as Marlin x.x.x
-  SERIAL_ECHOLNPGM("Marlin " SHORT_BUILD_VERSION);
-  #if defined(STRING_DISTRIBUTION_DATE) && defined(STRING_CONFIG_H_AUTHOR)
-    SERIAL_ECHO_MSG(
-      " Last Updated: " STRING_DISTRIBUTION_DATE
-      " | Author: " STRING_CONFIG_H_AUTHOR
-    );
+  #if PROUI_EX
+    proUIEx.C115();
+  #else
+    // Identify myself as Marlin x.x.x
+    SERIAL_ECHOLNPGM("Marlin " SHORT_BUILD_VERSION);
+    #if defined(STRING_DISTRIBUTION_DATE) && defined(STRING_CONFIG_H_AUTHOR)
+      SERIAL_ECHO_MSG(
+        " Last Updated: " STRING_DISTRIBUTION_DATE
+        " | Author: " STRING_CONFIG_H_AUTHOR
+      );
+    #endif
+    SERIAL_ECHO_MSG(" Compiled: " __DATE__);
   #endif
-  SERIAL_ECHO_MSG(" Compiled: " __DATE__);
   SERIAL_ECHO_MSG(STR_FREE_MEMORY, hal.freeMemory(), STR_PLANNER_BUFFER_BYTES, sizeof(block_t) * (BLOCK_BUFFER_SIZE));
 
   // Some HAL need precise delay adjustment
@@ -1339,7 +1339,7 @@ void setup() {
     SETUP_RUN(touchBt.init());
   #endif
 
-  TERN_(HAS_M206_COMMAND, current_position += home_offset); // Init current position based on home_offset
+  TERN_(HAS_HOME_OFFSET, current_position += home_offset); // Init current position based on home_offset
 
   sync_plan_position();               // Vital to init stepper/planner equivalent for current_position
 

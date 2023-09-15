@@ -217,7 +217,7 @@ bool load_filament(const_float_t slow_load_length/*=0*/, const_float_t fast_load
             REPEAT_1(NUM_RUNOUT_SENSORS, _CASE_INSERTED)
           }
         #else
-          if (READ(FIL_RUNOUT_PIN) != FIL_RUNOUT_STATE) wait_for_user = false;
+          if (READ(FIL_RUNOUT_PIN) != TERN(PROUI_EX, PRO_data.Runout_active_state, FIL_RUNOUT_STATE)) wait_for_user = false;
         #endif
       #endif
       idle_no_sleep();
@@ -431,6 +431,12 @@ bool pause_print(const_float_t retract, const xyz_pos_t &park_point, const bool 
   // Save current position
   resume_position = current_position;
 
+  // Force axes home to allow parking
+  #if PROUI_EX
+    gcode.process_subcommands_now(F("G28XYO"));
+    set_all_homed();
+  #endif
+
   // Will the nozzle be parking?
   const bool do_park = !axes_should_home();
 
@@ -546,7 +552,11 @@ void wait_for_confirmation(const bool is_reload/*=false*/, const int8_t max_beep
 
       TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_do(PROMPT_USER_CONTINUE, GET_TEXT_F(MSG_HEATER_TIMEOUT), GET_TEXT_F(MSG_REHEAT)));
 
-      TERN_(EXTENSIBLE_UI, ExtUI::onUserConfirmRequired(GET_TEXT_F(MSG_HEATER_TIMEOUT)));
+      #if ENABLED(TOUCH_UI_FTDI_EVE)
+        ExtUI::onUserConfirmRequired(GET_TEXT_F(MSG_FTDI_HEATER_TIMEOUT));
+      #elif ENABLED(EXTENSIBLE_UI)
+        ExtUI::onUserConfirmRequired(GET_TEXT_F(MSG_HEATER_TIMEOUT));
+      #endif
 
       TERN_(HAS_RESUME_CONTINUE, wait_for_user_response(0, true)); // Wait for LCD click or M108
 
