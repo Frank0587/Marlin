@@ -1,0 +1,1 @@
+pythonw Configurator.pyw
