@@ -4655,14 +4655,23 @@ bool CrealityDWINClass::find_and_decode_gcode_preview(char *name, uint8_t previe
   uint8_t n_reads = 0;
   int16_t data_read = card.read(public_buf, buff_size);
   card.setIndex(card.getIndex()+data_read);
-  char key[31] = "";
+  char key1[31] = "";
+  char key2[31] = "";
   switch (preview_type) {
-    case Thumnail_Icon: strcpy_P(key, "; jpeg thumbnail begin 50x50"); break;
-    case Thumnail_Preview: strcpy_P(key, "; jpeg thumbnail begin 180x180"); break;
+    case Thumnail_Icon:     
+        strcpy_P(key1, "; jpeg thumbnail begin 50x50");     // cura Syntax
+        strcpy_P(key2, "; thumbnail_JPG begin 50x50");      // orca Syntax
+        break;
+    case Thumnail_Preview:  
+        strcpy_P(key1, "; jpeg thumbnail begin 180x180");   // cura Syntax
+        strcpy_P(key2, "; thumbnail_JPG begin 180x180");    // orca Syntax
+        break;
   }
   while(n_reads < 16 && data_read) { // Max 16 passes so we don't loop forever
   if (Encoder_ReceiveAnalyze() != ENCODER_DIFF_NO) return false;
-    encoded_image = strstr(public_buf, key);
+    encoded_image = strstr(public_buf, key1);
+    if (encoded_image==0) 
+      encoded_image = strstr(public_buf, key2);
     if (encoded_image) {
       uint32_t index_bw = &public_buf[buff_size] - encoded_image;
       position_in_file = card.getIndex() - index_bw;
